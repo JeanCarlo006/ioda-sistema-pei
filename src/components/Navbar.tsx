@@ -189,7 +189,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       </div>
                     </button>
 
-                    {/* Pesquisa SUS (JICE) */}
+                    {/* Pesquisa & Google Forms (JICE 2026) */}
                     <button
                       type="button"
                       onClick={() => {
@@ -201,10 +201,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                       <Award className="w-4 h-4 text-emerald-700 shrink-0" />
                       <div>
                         <span className="text-xs font-bold text-slate-900 block">
-                          Validação de Usabilidade (SUS)
+                          Pesquisa & Forms (JICE 2026)
                         </span>
                         <span className="text-[11px] text-slate-500 block">
-                          Métricas e relatório científico da JICE 2026
+                          Coleta de dados com docentes via Google Forms
                         </span>
                       </div>
                     </button>

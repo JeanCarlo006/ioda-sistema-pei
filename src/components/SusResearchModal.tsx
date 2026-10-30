@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { AvaliacaoSUS } from '../types/pei';
+import React, { useState } from 'react';
 import {
   Award,
-  BarChart3,
   CheckCircle2,
   Copy,
+  ExternalLink,
+  FileSpreadsheet,
   GraduationCap,
-  HelpCircle,
+  Link,
+  MessageSquare,
   Sparkles,
   Users,
   X,
@@ -17,138 +18,58 @@ interface SusResearchModalProps {
   onClose: () => void;
 }
 
-const STORAGE_KEY_SUS = 'ioda_sus_evaluations_v1';
-
-const questoesSUS = [
-  { id: 1, texto: '1. Eu gostaria de usar o sistema Ioda com frequência no meu planejamento docente.', invertida: false },
-  { id: 2, texto: '2. Eu achei o sistema desnecessariamente complexo ou confuso.', invertida: true },
-  { id: 3, texto: '3. Eu achei o sistema fácil, limpo e direto de usar.', invertida: false },
-  { id: 4, texto: '4. Eu acho que precisaria do suporte de um técnico para conseguir usar o sistema.', invertida: true },
-  { id: 5, texto: '5. Eu achei que as várias funções (Plano de Aula, Estudo de Caso, Metas e PDF) estão bem integradas.', invertida: false },
-  { id: 6, texto: '6. Eu achei que havia muita inconsistência ou contradição na navegação do sistema.', invertida: true },
-  { id: 7, texto: '7. Eu imagino que a maioria dos professores do IFTO aprenderia a usar o sistema rapidamente.', invertida: false },
-  { id: 8, texto: '8. Eu achei o sistema visualmente cansativo ou burocrático de operar.', invertida: true },
-  { id: 9, texto: '9. Eu me senti seguro e confiante ao usar o Ioda para flexibilizar minha disciplina.', invertida: false },
-  { id: 10, texto: '10. Eu precisei aprender muitas instruções técnicas prévias antes de conseguir utilizá-lo.', invertida: true },
-];
+const STORAGE_KEY_FORMS_URL = 'ioda_google_forms_url_v1';
 
 export const SusResearchModal: React.FC<SusResearchModalProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
-  const [respostas, setRespostas] = useState<number[]>([5, 1, 5, 1, 5, 1, 5, 1, 5, 1]);
-  const [avaliadorNome, setAvaliadorNome] = useState('');
-  const [papelAvaliador, setPapelAvaliador] = useState<'Docente TI' | 'Docente Geral' | 'Equipe NAPNE' | 'Gestão'>('Docente TI');
-  const [comentario, setComentario] = useState('');
-  const [avaliacoesSalvas, setAvaliacoesSalvas] = useState<AvaliacaoSUS[]>([]);
-  const [copiado, setCopiado] = useState(false);
+  const [formsUrl, setFormsUrl] = useState<string>(() => {
+    return (
+      localStorage.getItem(STORAGE_KEY_FORMS_URL) ||
+      'https://docs.google.com/forms'
+    );
+  });
+  const [isEditingUrl, setIsEditingUrl] = useState(false);
+  const [copiadoPerguntas, setCopiadoPerguntas] = useState(false);
+  const [copiadoMetodologia, setCopiadoMetodologia] = useState(false);
 
-  // Load evaluations from localStorage
-  useEffect(() => {
-    try {
-      const data = localStorage.getItem(STORAGE_KEY_SUS);
-      if (data) {
-        setAvaliacoesSalvas(JSON.parse(data));
-      } else {
-        // Mock sample data for demonstration if empty
-        const sample: AvaliacaoSUS[] = [
-          {
-            id: 'sus_1',
-            data: '28/10/2026',
-            avaliador: 'Prof. Anderson (TI / Redes)',
-            respostas: [5, 1, 5, 1, 4, 1, 5, 2, 5, 1],
-            score: 95,
-            comentario: 'A geração do PDF oficial salvou horas de preenchimento manual no SEI.',
-          },
-          {
-            id: 'sus_2',
-            data: '29/10/2026',
-            avaliador: 'Profa. Renata (NAPNE)',
-            respostas: [5, 1, 5, 1, 5, 1, 5, 1, 5, 1],
-            score: 100,
-            comentario: 'O alinhamento estrito com a Portaria MEC 421/2026 traz muita segurança jurídica.',
-          },
-          {
-            id: 'sus_3',
-            data: '30/10/2026',
-            avaliador: 'Prof. Carlos (Algoritmos / BSI)',
-            respostas: [4, 2, 4, 1, 5, 1, 4, 1, 4, 2],
-            score: 82.5,
-            comentario: 'Gostei muito da limpeza dos botões de neurodivergência sem poluição visual.',
-          },
-        ];
-        setAvaliacoesSalvas(sample);
-        localStorage.setItem(STORAGE_KEY_SUS, JSON.stringify(sample));
-      }
-    } catch {
-      // ignore
-    }
-  }, []);
-
-  // Compute live SUS score for current form
-  const calcularScoreSUS = (itens: number[]) => {
-    let soma = 0;
-    itens.forEach((val, idx) => {
-      if (idx % 2 === 0) {
-        // Odd item (1, 3, 5, 7, 9) -> val - 1
-        soma += val - 1;
-      } else {
-        // Even item (2, 4, 6, 8, 10) -> 5 - val
-        soma += 5 - val;
-      }
-    });
-    return soma * 2.5;
+  const handleSaveFormsUrl = (newUrl: string) => {
+    setFormsUrl(newUrl);
+    localStorage.setItem(STORAGE_KEY_FORMS_URL, newUrl);
+    setIsEditingUrl(false);
   };
 
-  const currentScore = calcularScoreSUS(respostas);
+  const roteiroPerguntasForms = `QUESTIONÁRIO DE AVALIAÇÃO DE USABILIDADE DO IODA (JICE 2026 / IFTO)
+Instrução: Escala linear de 1 a 5 (onde 1 = Péssimo / Discordo Totalmente e 5 = Excelente / Concordo Totalmente).
 
-  // Compute average of all stored assessments
-  const mediaTotal = avaliacoesSalvas.length > 0
-    ? (avaliacoesSalvas.reduce((acc, curr) => acc + curr.score, 0) / avaliacoesSalvas.length).toFixed(1)
-    : currentScore.toFixed(1);
+PERGUNTAS FECHADAS (1 a 5):
+1. [Facilidade de Uso] O sistema Ioda é intuitivo e fácil de navegar sem necessidade de treinamento técnico prévio?
+2. [Redução de Carga Cognitiva] A visualização limpa do PEI (sem textos excessivos na tela) facilita a consulta no dia a dia?
+3. [Guia Prático de Aula] O Roteiro de 100 minutos e as 3 etapas de divisão da tarefa (chunking) são aplicáveis à sua disciplina?
+4. [Apoio ao Estudante] O checklist de metas simplificado e os recursos de acessibilidade atendem às necessidades reais dos estudantes?
+5. [Exportação Oficial] A geração direta do PDF no padrão oficial do IFTO/NAPNE agiliza o processo no SEI?
+6. [Integração e DUA] As estratégias DUA 3.0 (Engajamento, Representação, Ação e Expressão) são claras e viáveis na prática?
 
-  const getClassificacao = (score: number) => {
-    if (score >= 85) return { texto: 'Excelente / Melhor da Categoria (Grau A+)', cor: 'text-emerald-700 bg-emerald-50 border-emerald-200' };
-    if (score >= 70) return { texto: 'Boa Usabilidade / Acima da Média (Grau B)', cor: 'text-blue-700 bg-blue-50 border-blue-200' };
-    if (score >= 50) return { texto: 'Regular / Aceitável Marginalmente (Grau C)', cor: 'text-amber-700 bg-amber-50 border-amber-200' };
-    return { texto: 'Inaceitável / Carga Cognitiva Excessiva (Grau F)', cor: 'text-rose-700 bg-rose-50 border-rose-200' };
+PERGUNTAS ABERTAS (Qualitativas):
+7. Qual funcionalidade do Ioda você achou mais relevante para o seu planejamento docente?
+8. Quais sugestões ou melhorias você recomenda para as próximas versões do sistema?`;
+
+  const textoMetodologiaJice = `METODOLOGIA DE VALIDAÇÃO COM DOCENTES E NAPNE (JICE 2026):
+A avaliação de usabilidade e aplicabilidade prática do sistema Ioda foi realizada por meio de pesquisa empírica com docentes e profissionais do Núcleo de Atendimento às Pessoas com Necessidades Específicas (NAPNE) do IFTO Campus Paraíso do Tocantins.
+Os participantes tiveram acesso ao protótipo funcional em ambiente web e avaliaram o sistema por meio de questionário estruturado no Google Forms, composto por itens em escala Likert de 5 pontos (1 = Discordo Totalmente a 5 = Concordo Totalmente) e questões abertas de retorno qualitativo.
+As respostas foram consolidadas em planilha automatizada, permitindo a análise da taxa de aceitação, tempo economizado na redação do PEI e alinhamento com as diretrizes do DUA 3.0 (CAST 2024) e da Portaria MEC nº 421/2026.`;
+
+  const handleCopiarPerguntas = () => {
+    navigator.clipboard.writeText(roteiroPerguntasForms);
+    setCopiadoPerguntas(true);
+    setTimeout(() => setCopiadoPerguntas(false), 3000);
   };
 
-  const handleSalvarAvaliacao = (e: React.FormEvent) => {
-    e.preventDefault();
-    const novaAvaliacao: AvaliacaoSUS = {
-      id: `sus_${Date.now()}`,
-      data: new Date().toLocaleDateString('pt-BR'),
-      avaliador: avaliadorNome.trim() ? `${avaliadorNome} (${papelAvaliador})` : `Avaliador Anônimo (${papelAvaliador})`,
-      respostas,
-      score: currentScore,
-      comentario: comentario.trim() || undefined,
-    };
-
-    const atualizadas = [novaAvaliacao, ...avaliacoesSalvas];
-    setAvaliacoesSalvas(atualizadas);
-    try {
-      localStorage.setItem(STORAGE_KEY_SUS, JSON.stringify(atualizadas));
-    } catch {
-      // ignore
-    }
-
-    setAvaliadorNome('');
-    setComentario('');
+  const handleCopiarMetodologia = () => {
+    navigator.clipboard.writeText(textoMetodologiaJice);
+    setCopiadoMetodologia(true);
+    setTimeout(() => setCopiadoMetodologia(false), 3000);
   };
-
-  const handleCopiarMetodologiaJice = () => {
-    const textoJice = `METODOLOGIA DE AVALIAÇÃO DE USABILIDADE (JICE 2026):
-Para mensurar a eficácia, eficiência e satisfação subjetiva dos usuários do sistema Ioda, aplicou-se o questionário padronizado System Usability Scale (SUS - Brooke, 1986; ISO 9241-11), composto por 10 assertivas em escala Likert de 5 pontos (1 = Discordo Totalmente; 5 = Concordo Totalmente).
-A amostra foi composta por docentes e equipe técnica do NAPNE do IFTO Campus Paraíso do Tocantins (N = ${avaliacoesSalvas.length}).
-RESULTADOS PRELIMINARES:
-O índice médio de usabilidade obtido foi de SUS Score = ${mediaTotal}/100, classificando a interface no patamar "Excelente / Melhor da Categoria" (Bangor, Kortum & Miller, 2008), evidenciando que a refatoração orientada ao Desenho Universal para a Aprendizagem (DUA 3.0) eliminou a sobrecarga cognitiva e viabilizou a adoção célere por docentes da Rede Federal.`;
-
-    navigator.clipboard.writeText(textoJice);
-    setCopiado(true);
-    setTimeout(() => setCopiado(false), 3000);
-  };
-
-  const classifAtual = getClassificacao(currentScore);
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
@@ -164,7 +85,7 @@ O índice médio de usabilidade obtido foi de SUS Score = ${mediaTotal}/100, cla
                 Metodologia Científica · JICE 2026
               </span>
               <h2 className="text-base sm:text-lg font-extrabold text-white">
-                Validação de Usabilidade (SUS - ISO 9241-11)
+                Pesquisa & Validação Docente (Google Forms)
               </h2>
             </div>
           </div>
@@ -176,155 +97,143 @@ O índice médio de usabilidade obtido foi de SUS Score = ${mediaTotal}/100, cla
           </button>
         </div>
 
-        {/* Scientific Indicator Banner */}
-        <div className="bg-slate-50 border-b border-slate-200 p-4 sm:p-5 flex flex-wrap items-center justify-between gap-4 text-xs">
-          <div className="flex items-center gap-3">
-            <div className="px-3.5 py-1.5 rounded-xl bg-emerald-700 text-white font-extrabold text-sm sm:text-base">
-              Média SUS: {mediaTotal} / 100
-            </div>
-            <div>
-              <span className="font-bold text-slate-800 block">
-                Amostra Validada: N = {avaliacoesSalvas.length} avaliações
-              </span>
-              <span className="text-slate-500 text-[11px]">
-                Docentes e NAPNE do IFTO Campus Paraíso
-              </span>
-            </div>
+        {/* Action Header Card */}
+        <div className="bg-emerald-50/70 border-b border-emerald-200/60 p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs">
+          <div>
+            <h3 className="font-extrabold text-slate-900 text-sm">
+              Coleta de Dados Centralizada para o Artigo
+            </h3>
+            <p className="text-slate-600 mt-0.5">
+              Envie o link do app para os professores e colete as notas em um Google Forms oficial.
+            </p>
           </div>
 
-          <button
-            type="button"
-            onClick={handleCopiarMetodologiaJice}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-800 bg-white border border-slate-300 hover:bg-slate-100 transition-colors shadow-2xs cursor-pointer"
+          <a
+            href={formsUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs bg-emerald-800 hover:bg-emerald-900 text-white transition-colors shadow-sm cursor-pointer whitespace-nowrap"
           >
-            {copiado ? (
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-            ) : (
-              <Copy className="w-4 h-4 text-slate-600" />
-            )}
-            <span>{copiado ? 'Texto Copiado!' : 'Copiar Texto p/ Artigo JICE'}</span>
-          </button>
+            <ExternalLink className="w-4 h-4 text-emerald-300" />
+            <span>Abrir Formulário no Google Forms</span>
+          </a>
         </div>
 
         {/* Body Content */}
-        <div className="p-6 overflow-y-auto space-y-6 flex-1">
-          <div className="text-xs text-slate-600 leading-relaxed bg-blue-50/60 p-3.5 rounded-2xl border border-blue-200 flex items-start gap-2.5">
-            <GraduationCap className="w-4 h-4 text-blue-700 shrink-0 mt-0.5" />
-            <span>
-              <strong>Para a banca avaliadora da JICE:</strong> O SUS (System Usability Scale) é o instrumento internacional mais aceito na literatura de IHC e Engenharia de Software para comprovar cientificamente que uma solução tecnológica é intuitiva e reduz a sobrecarga de trabalho.
-            </span>
-          </div>
-
-          {/* Form */}
-          <form onSubmit={handleSalvarAvaliacao} className="space-y-5">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-              <div>
-                <label className="font-bold text-slate-800 block mb-1">
-                  Nome do Avaliador (Opcional):
-                </label>
-                <input
-                  type="text"
-                  value={avaliadorNome}
-                  onChange={(e) => setAvaliadorNome(e.target.value)}
-                  placeholder="Ex: Prof. Silva (TI)"
-                  className="w-full p-2.5 rounded-xl border border-slate-300 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600"
-                />
-              </div>
-
-              <div>
-                <label className="font-bold text-slate-800 block mb-1">
-                  Perfil de Atuação no Campus:
-                </label>
-                <select
-                  value={papelAvaliador}
-                  onChange={(e) => setPapelAvaliador(e.target.value as any)}
-                  className="w-full p-2.5 rounded-xl border border-slate-300 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600"
-                >
-                  <option value="Docente TI">Docente de TI (BSI / Técnico)</option>
-                  <option value="Docente Geral">Docente de Formação Geral</option>
-                  <option value="Equipe NAPNE">Equipe Especializada do NAPNE</option>
-                  <option value="Gestão">Gestão de Ensino / COTEC</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Questions Table */}
-            <div className="space-y-3 pt-2">
-              <span className="text-xs font-extrabold uppercase tracking-wide text-slate-800 block">
-                Itens de Avaliação (1 = Discordo Totalmente · 5 = Concordo Totalmente):
+        <div className="p-6 overflow-y-auto space-y-6 flex-1 text-xs">
+          {/* Configurar Link do Google Forms */}
+          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-slate-800 flex items-center gap-1.5">
+                <Link className="w-4 h-4 text-emerald-700" />
+                <span>Link do seu Google Forms da Pesquisa:</span>
               </span>
-
-              {questoesSUS.map((q, idx) => (
-                <div
-                  key={q.id}
-                  className="p-3 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs"
-                >
-                  <span className="text-slate-800 font-medium flex-1">{q.texto}</span>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    {[1, 2, 3, 4, 5].map((val) => (
-                      <button
-                        key={val}
-                        type="button"
-                        onClick={() => {
-                          const updated = [...respostas];
-                          updated[idx] = val;
-                          setRespostas(updated);
-                        }}
-                        className={`w-7 h-7 rounded-lg font-bold text-xs transition-all cursor-pointer ${
-                          respostas[idx] === val
-                            ? 'bg-emerald-700 text-white shadow-2xs'
-                            : 'bg-white text-slate-600 border border-slate-300 hover:bg-slate-100'
-                        }`}
-                      >
-                        {val}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Live Score Preview */}
-            <div className={`p-4 rounded-2xl border flex items-center justify-between gap-4 text-xs ${classifAtual.cor}`}>
-              <div>
-                <span className="font-bold text-sm block">
-                  Pontuação Desta Avaliação: {currentScore} / 100
-                </span>
-                <span className="text-[11px] font-medium">{classifAtual.texto}</span>
-              </div>
               <button
-                type="submit"
-                className="px-4 py-2 rounded-xl font-bold text-xs bg-slate-900 text-white hover:bg-slate-800 transition-colors shadow-xs cursor-pointer shrink-0"
+                type="button"
+                onClick={() => setIsEditingUrl(!isEditingUrl)}
+                className="text-emerald-700 font-bold hover:underline cursor-pointer"
               >
-                Registrar no Banco de Dados
+                {isEditingUrl ? 'Cancelar' : 'Alterar Link'}
               </button>
             </div>
-          </form>
 
-          {/* Historic list */}
-          <div className="pt-4 border-t border-slate-200 space-y-3">
-            <span className="text-xs font-bold text-slate-800 block uppercase tracking-wide">
-              Avaliações Registradas da Pesquisa:
-            </span>
-            <div className="space-y-2 max-h-40 overflow-y-auto">
-              {avaliacoesSalvas.map((av) => (
-                <div
-                  key={av.id}
-                  className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs"
+            {isEditingUrl ? (
+              <div className="flex items-center gap-2 pt-1">
+                <input
+                  type="url"
+                  defaultValue={formsUrl}
+                  placeholder="https://docs.google.com/forms/d/e/.../viewform"
+                  id="input-forms-url"
+                  className="w-full p-2.5 rounded-xl border border-slate-300 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const el = document.getElementById('input-forms-url') as HTMLInputElement;
+                    if (el) handleSaveFormsUrl(el.value);
+                  }}
+                  className="px-4 py-2.5 rounded-xl font-bold bg-slate-900 text-white hover:bg-slate-800 cursor-pointer"
                 >
-                  <div>
-                    <strong className="text-slate-900">{av.avaliador}</strong>
-                    <span className="text-slate-500 ml-2 text-[11px]">({av.data})</span>
-                    {av.comentario && (
-                      <p className="text-[11px] text-slate-600 italic mt-0.5">"{av.comentario}"</p>
-                    )}
-                  </div>
-                  <span className="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800 font-bold shrink-0">
-                    {av.score} pts
-                  </span>
-                </div>
-              ))}
+                  Salvar
+                </button>
+              </div>
+            ) : (
+              <p className="text-slate-600 font-mono text-[11px] truncate bg-white p-2 rounded-lg border border-slate-200">
+                {formsUrl}
+              </p>
+            )}
+          </div>
+
+          {/* Roteiro de Perguntas Pronto */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-extrabold text-slate-900 text-sm flex items-center gap-2">
+                  <FileSpreadsheet className="w-4 h-4 text-emerald-700" />
+                  <span>Modelo de Perguntas Pronto para Copiar e Colar</span>
+                </h4>
+                <p className="text-slate-500 text-[11px] mt-0.5">
+                  Todas as notas são diretas de 1 a 5 (onde 5 é sempre o melhor e 1 é o menor).
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleCopiarPerguntas}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold text-slate-800 bg-white border border-slate-300 hover:bg-slate-100 transition-colors shadow-2xs cursor-pointer shrink-0"
+              >
+                {copiadoPerguntas ? (
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                ) : (
+                  <Copy className="w-3.5 h-3.5 text-slate-600" />
+                )}
+                <span>{copiadoPerguntas ? 'Copiado!' : 'Copiar Perguntas'}</span>
+              </button>
             </div>
+
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5 text-slate-700 font-sans leading-relaxed">
+              <div className="font-semibold text-slate-900 pb-1 border-b border-slate-200">
+                Perguntas de Escala Linear (1 = Discordo Totalmente / 5 = Concordo Totalmente):
+              </div>
+              <p>• <strong>1. Facilidade de Uso:</strong> O sistema Ioda é intuitivo e fácil de navegar sem necessidade de treinamento técnico prévio?</p>
+              <p>• <strong>2. Redução de Carga Cognitiva:</strong> A visualização limpa do PEI (sem textos excessivos na tela) facilita a consulta no dia a dia?</p>
+              <p>• <strong>3. Guia Prático de Aula:</strong> O Roteiro de 100 minutos e as 3 etapas de divisão da tarefa (chunking) são aplicáveis à sua disciplina?</p>
+              <p>• <strong>4. Apoio ao Estudante:</strong> O checklist de metas simplificado e os recursos de acessibilidade atendem às necessidades reais dos estudantes?</p>
+              <p>• <strong>5. Exportação Oficial:</strong> A geração direta do PDF no padrão oficial do IFTO/NAPNE agiliza o processo no SEI?</p>
+              <p>• <strong>6. Integração e DUA:</strong> As estratégias DUA 3.0 (Engajamento, Representação, Ação e Expressão) são claras e viáveis na prática?</p>
+
+              <div className="font-semibold text-slate-900 pt-2 pb-1 border-b border-slate-200">
+                Perguntas Abertas (Qualitativas):
+              </div>
+              <p>• <strong>7. Relevância:</strong> Qual funcionalidade do Ioda você achou mais relevante para o seu planejamento docente?</p>
+              <p>• <strong>8. Sugestões:</strong> Quais melhorias você recomenda para as próximas versões do sistema?</p>
+            </div>
+          </div>
+
+          {/* Texto de Metodologia para o Artigo da JICE */}
+          <div className="p-4 rounded-2xl bg-blue-50/70 border border-blue-200 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-blue-950 flex items-center gap-1.5">
+                <GraduationCap className="w-4 h-4 text-blue-800" />
+                <span>Texto Pronto para a Metodologia do Artigo / Banner:</span>
+              </span>
+
+              <button
+                type="button"
+                onClick={handleCopiarMetodologia}
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg font-bold text-[11px] text-blue-900 bg-white border border-blue-300 hover:bg-blue-50 transition-colors cursor-pointer"
+              >
+                {copiadoMetodologia ? (
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                ) : (
+                  <Copy className="w-3.5 h-3.5 text-blue-700" />
+                )}
+                <span>{copiadoMetodologia ? 'Copiado!' : 'Copiar Texto'}</span>
+              </button>
+            </div>
+            <p className="text-slate-700 leading-relaxed text-[11px]">
+              {textoMetodologiaJice}
+            </p>
           </div>
         </div>
       </div>
