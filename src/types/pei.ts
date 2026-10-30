@@ -161,3 +161,24 @@ export interface PreferenciasDUA {
   modoContraste: ModoContraste;
 }
 
+export interface AvaliacaoSUS {
+  id: string;
+  data: string;
+  avaliador: string;
+  respostas: number[]; // 10 itens (1 a 5)
+  score: number; // 0 a 100
+  comentario?: string;
+}
+
+export interface DisciplinaPpcPreset {
+  id: string;
+  codigo: string;
+  nome: string;
+  periodo: string;
+  curso: 'BSI' | 'Técnico' | 'Geral';
+  ementa: string;
+  competencias: string;
+  barreirasComunsTi: string[];
+  adaptacaoSugeridaPadrao: string;
+}
+

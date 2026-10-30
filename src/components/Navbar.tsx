@@ -15,6 +15,11 @@ import {
   Settings,
   BarChart3,
   X,
+  Shield,
+  ShieldCheck,
+  FileCode,
+  Award,
+  RotateCcw,
 } from 'lucide-react';
 import { EscalaFonte, ModoContraste } from '../types/pei';
 
@@ -29,6 +34,11 @@ interface NavbarProps {
   onMudarFonte: (escala: EscalaFonte) => void;
   modoContraste: ModoContraste;
   onMudarContraste: (modo: ModoContraste) => void;
+  isPresentationMode: boolean;
+  onTogglePresentationMode: () => void;
+  onOpenPpcAnalyzer: () => void;
+  onOpenSusResearch: () => void;
+  onResetToDefault?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -42,6 +52,11 @@ export const Navbar: React.FC<NavbarProps> = ({
   onMudarFonte,
   modoContraste,
   onMudarContraste,
+  isPresentationMode,
+  onTogglePresentationMode,
+  onOpenPpcAnalyzer,
+  onOpenSusResearch,
+  onResetToDefault,
 }) => {
   const [showSupportMenu, setShowSupportMenu] = useState(false);
 
@@ -100,6 +115,27 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Right Actions */}
           <div className="flex items-center gap-2">
+            {/* Presentation Mode (LGPD / Scientific Fair) Button */}
+            <button
+              type="button"
+              onClick={onTogglePresentationMode}
+              className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
+                isPresentationMode
+                  ? 'bg-blue-900 text-white border-blue-900 shadow-2xs'
+                  : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+              }`}
+              title="Modo Apresentação: Oculta nomes e matrículas para proteger dados sensíveis na JICE / CEP"
+            >
+              {isPresentationMode ? (
+                <ShieldCheck className="w-4 h-4 text-blue-300" />
+              ) : (
+                <Shield className="w-4 h-4 text-slate-500" />
+              )}
+              <span className="hidden sm:inline">
+                {isPresentationMode ? 'LGPD Ativo' : 'Apresentação'}
+              </span>
+            </button>
+
             {/* Support & Accessibility Dropdown */}
             <div className="relative">
               <button
@@ -110,7 +146,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     ? 'bg-slate-900 text-white border-slate-900'
                     : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                 }`}
-                title="Opções de Fonte, Contraste e Banco de Metodologias"
+                title="Opções de Fonte, Contraste, PPC e Pesquisa JICE"
               >
                 <Settings className="w-4 h-4 text-emerald-600" />
                 <span className="hidden sm:inline">Opções e Apoio</span>
@@ -133,6 +169,46 @@ export const Navbar: React.FC<NavbarProps> = ({
 
                   {/* Recursos de Apoio */}
                   <div className="space-y-1.5">
+                    {/* Ementas & PPC TI */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowSupportMenu(false);
+                        onOpenPpcAnalyzer();
+                      }}
+                      className="w-full p-2.5 rounded-xl bg-slate-50 hover:bg-emerald-50 border border-slate-200 flex items-center gap-2.5 text-left transition-colors cursor-pointer"
+                    >
+                      <FileCode className="w-4 h-4 text-emerald-700 shrink-0" />
+                      <div>
+                        <span className="text-xs font-bold text-slate-900 block">
+                          Analisador de Ementas (PPC TI)
+                        </span>
+                        <span className="text-[11px] text-slate-500 block">
+                          Cruzar matérias do IFTO com neurodivergências
+                        </span>
+                      </div>
+                    </button>
+
+                    {/* Pesquisa SUS (JICE) */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowSupportMenu(false);
+                        onOpenSusResearch();
+                      }}
+                      className="w-full p-2.5 rounded-xl bg-slate-50 hover:bg-emerald-50 border border-slate-200 flex items-center gap-2.5 text-left transition-colors cursor-pointer"
+                    >
+                      <Award className="w-4 h-4 text-emerald-700 shrink-0" />
+                      <div>
+                        <span className="text-xs font-bold text-slate-900 block">
+                          Validação de Usabilidade (SUS)
+                        </span>
+                        <span className="text-[11px] text-slate-500 block">
+                          Métricas e relatório científico da JICE 2026
+                        </span>
+                      </div>
+                    </button>
+
                     <button
                       type="button"
                       onClick={() => {
@@ -189,6 +265,27 @@ export const Navbar: React.FC<NavbarProps> = ({
                         </span>
                       </div>
                     </button>
+
+                    {onResetToDefault && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowSupportMenu(false);
+                          onResetToDefault();
+                        }}
+                        className="w-full p-2.5 rounded-xl bg-slate-50 hover:bg-rose-50 border border-slate-200 flex items-center gap-2.5 text-left transition-colors cursor-pointer"
+                      >
+                        <RotateCcw className="w-4 h-4 text-rose-600 shrink-0" />
+                        <div>
+                          <span className="text-xs font-bold text-slate-900 block">
+                            Restaurar Casos Iniciais
+                          </span>
+                          <span className="text-[11px] text-slate-500 block">
+                            Voltar dados demonstrativos padrão do NAPNE
+                          </span>
+                        </div>
+                      </button>
+                    )}
                   </div>
 
                   {/* Tamanho da Fonte */}

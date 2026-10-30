@@ -1,6 +1,1 @@
-{
-  "name": "Ioda - Sistema de PEI, PAEE e DUA 3.0",
-  "description": "Sistema integrado de documentação pedagógica inclusiva, Estudo de Caso, PAEE, PEI e PEI-Painel baseado na PNEEI, Decreto nº 12.686/2025 e Portaria MEC nº 421/2026.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
+{"name":"Ioda - Sistema de PEI, PAEE e DUA 3.0","description":"Sistema integrado de documentação pedagógica inclusiva, Estudo de Caso, PAEE, PEI e PEI-Painel baseado na PNEEI, Decreto nº 12.686/2025 e Portaria MEC nº 421/2026.","requestFramePermissions":[],"majorCapabilities":["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]}

@@ -317,6 +317,74 @@ export const PeiView: React.FC<PeiViewProps> = ({
                 </p>
               </div>
             </div>
+
+            {/* Sub-bloco Prático: Roteiro de Aula de Laboratório (100 min) & Manejo de Crises */}
+            <div className="pt-4 border-t border-slate-100 space-y-4">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-800 block">
+                Roteiro de Bolso para o Professor · Laboratório de TI (100 Minutos)
+              </span>
+
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
+                <div className="p-3.5 rounded-xl bg-emerald-50/60 border border-emerald-200/80">
+                  <span className="text-[10px] font-extrabold uppercase text-emerald-800 block">
+                    00 - 15 min · Ancoragem
+                  </span>
+                  <p className="text-slate-700 mt-1 leading-relaxed">
+                    Exibir o software ou projeto funcionando antes de falar de sintaxe de código.
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+                  <span className="text-[10px] font-extrabold uppercase text-slate-800 block">
+                    15 - 55 min · Prática Guiada
+                  </span>
+                  <p className="text-slate-700 mt-1 leading-relaxed">
+                    Atividades em blocos de 20 min com pausa sensorial de 5 min (descanso visual).
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+                  <span className="text-[10px] font-extrabold uppercase text-slate-800 block">
+                    55 - 80 min · Programação em Pares
+                  </span>
+                  <p className="text-slate-700 mt-1 leading-relaxed">
+                    Pair programming com papéis claros (um digita, outro pesquisa documentação).
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+                  <span className="text-[10px] font-extrabold uppercase text-slate-800 block">
+                    80 - 100 min · Fechamento
+                  </span>
+                  <p className="text-slate-700 mt-1 leading-relaxed">
+                    Checagem individual na bancada, sem constrangimento ou exposição pública.
+                  </p>
+                </div>
+              </div>
+
+              {/* Protocolo do Cartão de Pausa Discreta & Ferramentas de TI */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+                <div className="p-4 rounded-xl bg-amber-50/50 border border-amber-200 text-xs">
+                  <div className="flex items-center gap-2 font-bold text-amber-900 mb-1.5">
+                    <Clock className="w-4 h-4 text-amber-700" />
+                    <span>Protocolo do "Cartão de Pausa Discreta"</span>
+                  </div>
+                  <p className="text-slate-700 leading-relaxed">
+                    Acordo prévio: o estudante pode colocar um cartão discreto na bancada e retirar-se por até 5 minutos para regular a sobrecarga sensorial no corredor ou bebedouro, sem precisar pedir autorização em voz alta.
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+                  <div className="flex items-center gap-2 font-bold text-slate-900 mb-1.5">
+                    <Wrench className="w-4 h-4 text-emerald-700" />
+                    <span>Kit de TI Acessível no Laboratório</span>
+                  </div>
+                  <p className="text-slate-700 leading-relaxed">
+                    Configurações sugeridas no VS Code do aluno: Fonte <strong>OpenDyslexic</strong>, tema Dark High Contrast, extensão <strong>CodeSpell</strong> e ativação do leitor de tela nativo (NVDA / Narrador).
+                  </p>
+                </div>
+              </div>
+            </div>
           </section>
 
           {/* BLOCO 2: EMENTA E FLEXIBILIZAÇÃO CURRICULAR */}
