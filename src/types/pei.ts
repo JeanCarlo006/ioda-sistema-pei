@@ -1,0 +1,163 @@
+export interface CabecalhoPEI {
+  estudante: string;
+  codigo_matricula: string;
+  idade: string;
+  curso: string;
+  componente_curricular: string;
+  modulo_periodo: string;
+  data_elaboracao: string;
+  docente_regente: string;
+  docente_aee: string;
+  profissional_apoio: string;
+  coordenacao_napne: string;
+}
+
+export interface HistoricoNAPNE {
+  breve_historico_clinico_familiar: string;
+  descricao_condicao_especifica: string;
+  informacoes_dos_pais: string;
+  status_diagnostico?: 'confirmado' | 'em_investigacao_hipotese';
+  categoria_neurodivergencia?: string;
+  cid_ou_hipotese?: string;
+}
+
+export interface EstatisticasCampusParaiso {
+  campus: string;
+  estudantes_geral: number;
+  estudantes_medio: number;
+  estudantes_superior: number;
+  com_diagnostico_confirmado: number;
+  sem_diagnostico_hipotese: number;
+  data_atualizacao: string;
+}
+
+export interface BarreiraItem {
+  id: string;
+  categoria: 'metodologica' | 'tecnologica' | 'comunicacional' | 'atitudinal' | 'arquitetonica';
+  descricao: string;
+  impacto: string;
+  estrategia_enfrentamento: string;
+}
+
+export interface PotencialidadeItem {
+  id: string;
+  area: string;
+  descricao: string;
+  apoio_demandado: string;
+}
+
+export interface EstudoDeCaso {
+  barreiras: BarreiraItem[];
+  potencialidades: PotencialidadeItem[];
+  recursos_ta: string[];
+  sintese_observacao: {
+    interacao_professores: string;
+    interacao_colegas: string;
+    tarefas_coletivas: string;
+    interesses_centrais: string;
+    habilidades_tecnicas: string;
+    autonomia_rotina: string;
+  };
+}
+
+export interface MetaPEI {
+  id_meta: string;
+  descricao_meta: string;
+  prazo: string;
+  indicador_sucesso: string;
+  progresso_percentual: number;
+  status: 'nao_iniciada' | 'em_andamento' | 'alcancada';
+}
+
+export interface DUAConfig {
+  engajamento: string[];
+  representacao: string[];
+  acao_e_expressao: string[];
+}
+
+export interface GestaoSalaDeAula {
+  organizacao_espacial: string;
+  rotina_e_pausas: string;
+  agrupamentos_e_tutoria: string;
+  suporte_docente_semanal: string;
+}
+
+export interface EstrategiasAvaliacao {
+  formato_acessivel: string;
+  criterio_de_sucesso: string;
+  grau_mediacao: 'com_mediacao' | 'sem_mediacao' | 'pouca_mediacao';
+  tempo_e_espaco: string;
+  recursos_utilizados: string[];
+}
+
+export interface GuiaPraticoSalaAula {
+  passo_a_passo_explicacao: string;
+  divisao_tarefa_chunking: [string, string, string] | string[];
+  avaliacao_pratica: string;
+  manejo_e_acolhimento: string;
+}
+
+export interface PlanejamentoPEI {
+  conteudo_ementa_oficial: string;
+  competencias_habilidades_ementa: string;
+  adaptacao_flexibilizacao_curricular: string;
+  objetivos_e_metas: MetaPEI[];
+  flexibilizacao_metodologica_dua: DUAConfig;
+  gestao_sala_de_aula: GestaoSalaDeAula;
+  estrategias_avaliacao: EstrategiasAvaliacao;
+  observacoes_docente: string;
+  guia_pratico_sala_de_aula?: GuiaPraticoSalaAula;
+}
+
+export interface PostItPainel {
+  id: string;
+  autor: string;
+  papel: 'Regente' | 'AEE' | 'Apoio' | 'Coordenação' | 'Estudante' | 'Família';
+  categoria: 'objetivos' | 'apoio' | 'avaliacao' | 'recursos_ta' | 'rotina';
+  conteudo: string;
+  data: string;
+  cor: 'yellow' | 'pink' | 'blue' | 'green' | 'orange';
+}
+
+export interface PEICompleto {
+  id: string;
+  cabecalho: CabecalhoPEI;
+  historico_napne: HistoricoNAPNE;
+  estudo_de_caso: EstudoDeCaso;
+  planejamento_pei: PlanejamentoPEI;
+  painel_notas: PostItPainel[];
+  metricas: {
+    percentual_metas_alcancadas: number;
+    nivel_autonomia: number;
+    engajamento: number;
+    sessoes_semanais_realizadas: number;
+    status_geral: 'EM_ANDAMENTO' | 'CONCLUIDO' | 'REVISAO_NECESSARIA';
+  };
+  parecer_pedagogico: string;
+  sugestoes_proximo_ciclo: string[];
+}
+
+export interface SolucaoCondicao {
+  id: string;
+  titulo: string;
+  condicao: string;
+  nivelSugerido: 'Médio Técnico' | 'Superior TI' | 'Ambos';
+  descricaoProblema: string;
+  remediosSugeridos: {
+    engajamento: string;
+    representacao: string;
+    acaoExpressao: string;
+    recursosTA: string[];
+    avaliacaoAcessivel: string;
+  };
+  guiaPratico?: GuiaPraticoSalaAula;
+}
+
+export type EscalaFonte = 'normal' | 'ampliada' | 'grande';
+export type ModoContraste = 'padrao' | 'alto-contraste' | 'conforto';
+
+export interface PreferenciasDUA {
+  escalaFonte: EscalaFonte;
+  modoContraste: ModoContraste;
+}
+

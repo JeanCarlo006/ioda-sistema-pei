@@ -1,0 +1,137 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    letter-spacing: -0.011em;
+  }
+}
+
+/* DUA 3.0: Personalização de Tamanho de Fonte */
+html.font-scale-normal {
+  font-size: 16px;
+}
+html.font-scale-ampliada {
+  font-size: 18px;
+}
+html.font-scale-grande {
+  font-size: 20px;
+}
+
+/* DUA 3.0: Temas de Contraste e Conforto Visual */
+body.theme-alto-contraste {
+  background-color: #09090b !important;
+  color: #f4f4f5 !important;
+}
+
+body.theme-alto-contraste .bg-white {
+  background-color: #121215 !important;
+  color: #f4f4f5 !important;
+  border-color: #3f3f46 !important;
+}
+
+body.theme-alto-contraste .bg-slate-50,
+body.theme-alto-contraste .bg-slate-100 {
+  background-color: #1c1c21 !important;
+  color: #f4f4f5 !important;
+  border-color: #52525b !important;
+}
+
+body.theme-alto-contraste .text-slate-900,
+body.theme-alto-contraste .text-slate-800,
+body.theme-alto-contraste .text-slate-700 {
+  color: #ffffff !important;
+}
+
+body.theme-alto-contraste .text-slate-600,
+body.theme-alto-contraste .text-slate-500 {
+  color: #d4d4d8 !important;
+}
+
+body.theme-alto-contraste input,
+body.theme-alto-contraste textarea,
+body.theme-alto-contraste select {
+  background-color: #18181b !important;
+  color: #ffffff !important;
+  border-color: #a1a1aa !important;
+}
+
+body.theme-alto-contraste .border-slate-200,
+body.theme-alto-contraste .border-slate-100,
+body.theme-alto-contraste .border-slate-300 {
+  border-color: #3f3f46 !important;
+}
+
+/* Modo Conforto Visual (Sépia / Leitura Suave) */
+body.theme-conforto {
+  background-color: #fcf9f2 !important;
+  color: #292524 !important;
+}
+
+body.theme-conforto .bg-white {
+  background-color: #f7f3e8 !important;
+  border-color: #e7dec8 !important;
+}
+
+body.theme-conforto .bg-slate-50,
+body.theme-conforto .bg-slate-100 {
+  background-color: #efe9d9 !important;
+  border-color: #ded3bd !important;
+}
+
+body.theme-conforto input,
+body.theme-conforto textarea,
+body.theme-conforto select {
+  background-color: #fcf9f2 !important;
+  border-color: #cfc2a7 !important;
+}
+
+/* CSS Oficial de Impressão (@media print) */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 12px !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .official-print-sheet {
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  table {
+    page-break-inside: auto;
+  }
+
+  tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+}
