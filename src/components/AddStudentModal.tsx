@@ -5,6 +5,11 @@ import {
   bancoDeSolucoesPedagogicas,
 } from '../data/initialCases';
 import {
+  requestPeiGenerationWithLgpd,
+  sanitizePeiPayloadForLgpd,
+} from '../services/geminiService';
+import { CuradoriaDocenteBanner } from './CuradoriaDocenteBanner';
+import {
   UserPlus,
   X,
   Sparkles,
@@ -21,6 +26,12 @@ import {
   Check,
   ChevronDown,
   ChevronUp,
+  AlertTriangle,
+  History,
+  Layers,
+  Info,
+  Plus,
+  ShieldCheck,
 } from 'lucide-react';
 
 interface AddStudentModalProps {
@@ -51,6 +62,7 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
   );
   const [mostrarOutrasCondicoes, setMostrarOutrasCondicoes] = useState(false);
   const [verResumoTecnico, setVerResumoTecnico] = useState(false);
+  const [showTriggerTooltip, setShowTriggerTooltip] = useState(false);
 
   const [nome, setNome] = useState('');
   const [matricula, setMatricula] = useState('');
@@ -62,6 +74,25 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
   const [potencialidades, setPotentialidades] = useState('');
   const [assistiveTech, setAssistiveTech] = useState('');
   const [selectedSolucoes, setSelectedSolucoes] = useState<string[]>(['sol-tdah']);
+  const [customComorbidities, setCustomComorbidities] = useState<string[]>([]);
+  const [novaComorbidadeInput, setNovaComorbidadeInput] = useState('');
+
+  // NOVO BLOCO 1: Mapeamento de Gatilhos e Comportamento (Análise Funcional)
+  const [mapeamentoGatilhos, setMapeamentoGatilhos] = useState(
+    'Ruídos altos no laboratório, instruções verbais longas sem apoio visual e mudanças bruscas de rotina.'
+  );
+
+  // NOVO BLOCO 2: Histórico ETEP / Boas Práticas Anteriores
+  const [historicoEtepTexto, setHistoricoEtepTexto] = useState(
+    'Roteiros passo a passo antecipados no Moodle e divisão de projetos práticos em micro-entregas (chunking).'
+  );
+  const [etepTags, setEtepTags] = useState<string[]>([
+    'Tempo adicional (+50%) em provas práticas',
+    'Programação em Pares (Pair Programming)',
+    'Cartão de Pausa Sensorial Discreta',
+  ]);
+  const [novaTagEtep, setNovaTagEtep] = useState('');
+
   const [docenteRegente, setDocenteRegente] = useState('Prof. Docente da Disciplina');
   const [docenteAee] = useState('Profª. Renata Cavalcanti (NAPNE · Campus Paraíso)');
 
@@ -152,7 +183,11 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
     }
   };
 
-  const syncSelectedConditions = (ids: string[], discOverride?: string) => {
+  const syncSelectedConditions = (
+    ids: string[],
+    discOverride?: string,
+    extraComorbidities: string[] = customComorbidities
+  ) => {
     const finalIds = ids.length > 0 ? ids : ['sol-tdah'];
     setSelectedSolucoes(finalIds);
 
@@ -161,7 +196,10 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
       .filter(Boolean);
 
     if (solucoesObjs.length > 0) {
-      const titulosCombinados = solucoesObjs.map((s) => s!.titulo).join(' + ');
+      const titulosCombinados = [
+        ...solucoesObjs.map((s) => s!.titulo),
+        ...extraComorbidities,
+      ].join(' + ');
       setCategoriaNeurodivergencia(titulosCombinados);
 
       const currentDisc = discOverride ?? disciplina;
@@ -189,6 +227,8 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
           'Raciocínio ágil, resolução criativa de bugs lógicos e foco em desafios práticos de codificação quando divididos em etapas curtas',
         'sol-tea':
           'Atenção meticulosa aos detalhes, raciocínio lógico estruturado e facilidade para identificar padrões em código e testes',
+        'sol-ahsd':
+          'Alta velocidade de abstração lógica, domínio rápido de arquiteturas complexas e hiperfoco criativo em projetos desafiadores',
         'sol-ansiedade':
           'Comprometimento com entregas de qualidade e ótimo desempenho em projetos práticos desenvolvidos no próprio ritmo',
         'sol-aprendizagem':
@@ -212,6 +252,32 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
       );
       setPotentialidades(Array.from(new Set(potList)).join('; ') + '.');
 
+      // Auto-populate functional triggers based on selected intersection
+      const gatilhosSugeridos: string[] = [];
+      if (finalIds.includes('sol-tea')) {
+        gatilhosSugeridos.push(
+          'Ruídos altos no laboratório, luzes piscantes e mudanças bruscas de rotina sem aviso prévio'
+        );
+      }
+      if (finalIds.includes('sol-tdah')) {
+        gatilhosSugeridos.push(
+          'Instruções verbais longas sem apoio visual e tarefas extensas sem checkpoints intermediários'
+        );
+      }
+      if (finalIds.includes('sol-ansiedade') || finalIds.includes('sol-misto-ansioso-depressivo')) {
+        gatilhosSugeridos.push(
+          'Exposição oral imprevista perante a turma e cronômetros regressivos visíveis em provas'
+        );
+      }
+      if (finalIds.includes('sol-ahsd')) {
+        gatilhosSugeridos.push(
+          'Exercícios mecânicos repetitivos sem desafio conceitual e perfeccionismo em escopos abertos'
+        );
+      }
+      if (gatilhosSugeridos.length > 0) {
+        setMapeamentoGatilhos(gatilhosSugeridos.join('; ') + '.');
+      }
+
       if (finalIds.includes('sol-hipotese-sem-laudo')) {
         setStatusDiagnostico('em_investigacao_hipotese');
       }
@@ -229,6 +295,44 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
     syncSelectedConditions(nextIds);
   };
 
+  const handleApplyIntersectionPreset = (ids: string[]) => {
+    syncSelectedConditions(ids);
+  };
+
+  const handleAddCustomComorbidity = () => {
+    const trimmed = novaComorbidadeInput.trim();
+    if (!trimmed) return;
+    if (!customComorbidities.includes(trimmed)) {
+      const updated = [...customComorbidities, trimmed];
+      setCustomComorbidities(updated);
+      syncSelectedConditions(selectedSolucoes, undefined, updated);
+    }
+    setNovaComorbidadeInput('');
+  };
+
+  const handleRemoveCustomComorbidity = (item: string) => {
+    const updated = customComorbidities.filter((c) => c !== item);
+    setCustomComorbidities(updated);
+    syncSelectedConditions(selectedSolucoes, undefined, updated);
+  };
+
+  const handleToggleEtepTag = (tag: string) => {
+    if (etepTags.includes(tag)) {
+      setEtepTags(etepTags.filter((t) => t !== tag));
+    } else {
+      setEtepTags([...etepTags, tag]);
+    }
+  };
+
+  const handleAddCustomEtepTag = () => {
+    const trimmed = novaTagEtep.trim();
+    if (!trimmed) return;
+    if (!etepTags.includes(trimmed)) {
+      setEtepTags([...etepTags, trimmed]);
+    }
+    setNovaTagEtep('');
+  };
+
   const isStep2Valid = nome.trim().length > 0 && disciplina.trim().length > 0;
 
   const handleFinalSubmit = async () => {
@@ -239,7 +343,29 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
 
     setIsGenerating(true);
     const modalidadeDesc = perfilModalidade === 'superior_ti' ? 'Superior em TI' : 'Médio Técnico em TI';
-    setStepMessage(`Gerando estratégias práticas de sala de aula para ${modalidadeDesc}...`);
+    setStepMessage(
+      `Sanitizando dados (LGPD · ESTUDANTE_01) e gerando PEI para ${modalidadeDesc}...`
+    );
+
+    const gatilhosArray = mapeamentoGatilhos
+      .split(/[;\n]+/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    const historicoEtepArray = [
+      ...historicoEtepTexto
+        .split(/[;\n]+/)
+        .map((s) => s.trim())
+        .filter(Boolean),
+      ...etepTags,
+    ];
+
+    const neuroTitles = [
+      ...selectedSolucoes
+        .map((sid) => bancoDeSolucoesPedagogicas.find((s) => s.id === sid)?.titulo)
+        .filter((t): t is string => Boolean(t)),
+      ...customComorbidities,
+    ];
 
     try {
       let finalPei: PEICompleto | null = null;
@@ -257,102 +383,132 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
         solucaoBaseIds: selectedSolucoes,
         statusDiagnostico,
         categoriaNeurodivergencia,
+        mapeamentoGatilhos: gatilhosArray,
+        historicoEtep: historicoEtepArray,
+        interseccaoCondicoes: neuroTitles,
       });
 
       try {
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Timeout')), 7000)
-        );
-
-        const fetchPromise = fetch('/api/gemini/generate-pei', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Accept: 'application/json',
-          },
-          body: JSON.stringify({
-            studentName: nome.trim(),
-            grade: modulo.trim(),
-            course: curso.trim(),
-            subject: disciplina.trim(),
-            barriers: condicao.trim(),
-            potentialities: potencialidades.trim(),
-            assistiveTech: assistiveTech.trim(),
-            docenteRegente: docenteRegente.trim(),
-            docenteAee: docenteAee.trim(),
-            age: idade.trim(),
-            perfilModalidade,
-            statusDiagnostico,
-            campus: 'Campus Paraíso',
-            selectedIds: selectedSolucoes,
-            selectedNeurodivergences: selectedSolucoes
-              .map((sid) => bancoDeSolucoesPedagogicas.find((s) => s.id === sid)?.titulo)
-              .filter(Boolean),
-          }),
+        const { success, data: gen } = await requestPeiGenerationWithLgpd({
+          studentName: nome.trim(),
+          grade: modulo.trim(),
+          course: curso.trim(),
+          subject: disciplina.trim(),
+          barriers: condicao.trim(),
+          potentialities: potencialidades.trim(),
+          assistiveTech: assistiveTech.trim(),
+          triggersAndBehavior: mapeamentoGatilhos.trim(),
+          etepHistory: historicoEtepTexto.trim(),
+          etepTags,
+          docenteRegente: docenteRegente.trim(),
+          docenteAee: docenteAee.trim(),
+          age: idade.trim(),
+          perfilModalidade,
+          statusDiagnostico,
+          campus: 'Campus Paraíso',
+          selectedIds: selectedSolucoes,
+          selectedNeurodivergences: neuroTitles,
+          customComorbidities,
         });
 
-        const response: any = await Promise.race([fetchPromise, timeoutPromise]);
-        const contentType = response.headers?.get('content-type') || '';
+        if (success && gen) {
+          const metasGeradas =
+            Array.isArray(gen.planejamento_pedagogico_pei?.metas_e_objetivos) &&
+            gen.planejamento_pedagogico_pei.metas_e_objetivos.length > 0
+              ? gen.planejamento_pedagogico_pei.metas_e_objetivos
+              : Array.isArray((gen.planejamento_pedagogico_pei as any)?.objetivos_e_metas_adaptadas)
+              ? (gen.planejamento_pedagogico_pei as any).objetivos_e_metas_adaptadas
+              : [];
 
-        if (contentType.includes('application/json')) {
-          const resData = await response.json();
-          if (resData.success && resData.data) {
-            const gen = resData.data;
+          const duaGerado =
+            gen.planejamento_pedagogico_pei?.estrategias_preventivas_e_dua_3_0 ||
+            (gen.planejamento_pedagogico_pei as any)?.flexibilizacao_metodologica_dua;
 
-            finalPei = {
-              ...localTemplate,
-              id: `PEI-${Date.now().toString().slice(-4)}`,
-              cabecalho: {
-                ...localTemplate.cabecalho,
-                estudante: gen.cabecalho?.estudante || nome.trim(),
-                codigo_matricula:
-                  gen.cabecalho?.codigo_matricula ||
-                  matricula.trim() ||
-                  localTemplate.cabecalho.codigo_matricula,
-                curso: gen.cabecalho?.curso || curso.trim(),
-                componente_curricular: gen.cabecalho?.componente_curricular || disciplina.trim(),
-                modulo_periodo: gen.cabecalho?.modulo_periodo || modulo.trim(),
+          finalPei = {
+            ...localTemplate,
+            id: `PEI-${Date.now().toString().slice(-4)}`,
+            cabecalho: {
+              ...localTemplate.cabecalho,
+              // Restauramos localmente o nome real apenas na interface do professor (jamais enviado em texto aberto à IA)
+              estudante: nome.trim(),
+              codigo_matricula:
+                matricula.trim() ||
+                gen.cabecalho?.codigo_matricula ||
+                localTemplate.cabecalho.codigo_matricula,
+              curso: curso.trim(),
+              componente_curricular: disciplina.trim(),
+              modulo_periodo: modulo.trim(),
+              docente_regente: docenteRegente.trim(),
+            },
+            historico_napne: {
+              ...localTemplate.historico_napne,
+              condicoes_associadas: neuroTitles,
+            },
+            estudo_de_caso: {
+              ...localTemplate.estudo_de_caso,
+              mapeamento_de_gatilhos_e_crises:
+                Array.isArray(gen.estudo_de_caso_sintese?.mapeamento_de_gatilhos_e_crises) &&
+                gen.estudo_de_caso_sintese.mapeamento_de_gatilhos_e_crises.length > 0
+                  ? gen.estudo_de_caso_sintese.mapeamento_de_gatilhos_e_crises
+                  : gatilhosArray,
+              historico_boas_praticas_etep:
+                Array.isArray(gen.estudo_de_caso_sintese?.historico_boas_praticas_etep) &&
+                gen.estudo_de_caso_sintese.historico_boas_praticas_etep.length > 0
+                  ? gen.estudo_de_caso_sintese.historico_boas_praticas_etep
+                  : historicoEtepArray,
+              interseccao_condicoes: neuroTitles,
+            },
+            planejamento_pei: {
+              ...localTemplate.planejamento_pei,
+              conteudo_ementa_oficial:
+                gen.planejamento_pedagogico_pei?.conteudo_ementa_oficial ||
+                localTemplate.planejamento_pei.conteudo_ementa_oficial,
+              competencias_habilidades_ementa:
+                gen.planejamento_pedagogico_pei?.competencias_habilidades_ementa ||
+                localTemplate.planejamento_pei.competencias_habilidades_ementa,
+              adaptacao_flexibilizacao_curricular:
+                gen.planejamento_pedagogico_pei?.adaptacao_flexibilizacao_curricular ||
+                localTemplate.planejamento_pei.adaptacao_flexibilizacao_curricular,
+              objetivos_e_metas:
+                metasGeradas.length > 0
+                  ? metasGeradas.map((m: any, idx: number) => ({
+                      id_meta: m.id_meta || `M${idx + 1}`,
+                      descricao_meta: m.descricao_meta,
+                      prazo: m.prazo || 'Mensal (4 semanas)',
+                      indicador_sucesso: m.indicador_sucesso,
+                      progresso_percentual: 50,
+                      status: 'em_andamento',
+                    }))
+                  : localTemplate.planejamento_pei.objetivos_e_metas,
+              flexibilizacao_metodologica_dua: {
+                engajamento:
+                  duaGerado?.engajamento_e_autorregulacao ||
+                  duaGerado?.engajamento ||
+                  localTemplate.planejamento_pei.flexibilizacao_metodologica_dua.engajamento,
+                representacao:
+                  duaGerado?.representacao ||
+                  localTemplate.planejamento_pei.flexibilizacao_metodologica_dua.representacao,
+                acao_e_expressao:
+                  duaGerado?.acao_e_expressao ||
+                  localTemplate.planejamento_pei.flexibilizacao_metodologica_dua.acao_e_expressao,
               },
-              planejamento_pei: {
-                ...localTemplate.planejamento_pei,
-                conteudo_ementa_oficial:
-                  gen.planejamento_pedagogico_pei?.conteudo_ementa_oficial ||
-                  localTemplate.planejamento_pei.conteudo_ementa_oficial,
-                competencias_habilidades_ementa:
-                  gen.planejamento_pedagogico_pei?.competencias_habilidades_ementa ||
-                  localTemplate.planejamento_pei.competencias_habilidades_ementa,
-                adaptacao_flexibilizacao_curricular:
-                  gen.planejamento_pedagogico_pei?.adaptacao_flexibilizacao_curricular ||
-                  localTemplate.planejamento_pei.adaptacao_flexibilizacao_curricular,
-                objetivos_e_metas:
-                  Array.isArray(gen.planejamento_pedagogico_pei?.objetivos_e_metas_adaptadas) &&
-                  gen.planejamento_pedagogico_pei.objetivos_e_metas_adaptadas.length > 0
-                    ? gen.planejamento_pedagogico_pei.objetivos_e_metas_adaptadas.map((m: any) => ({
-                        id_meta: m.id_meta || 'M1',
-                        descricao_meta: m.descricao_meta,
-                        prazo: m.prazo || 'Mensal (4 semanas)',
-                        indicador_sucesso: m.indicador_sucesso,
-                        progresso_percentual: 50,
-                        status: 'em_andamento',
-                      }))
-                    : localTemplate.planejamento_pei.objetivos_e_metas,
-                flexibilizacao_metodologica_dua: {
-                  engajamento:
-                    gen.planejamento_pedagogico_pei?.flexibilizacao_metodologica_dua?.engajamento ||
-                    localTemplate.planejamento_pei.flexibilizacao_metodologica_dua.engajamento,
-                  representacao:
-                    gen.planejamento_pedagogico_pei?.flexibilizacao_metodologica_dua?.representacao ||
-                    localTemplate.planejamento_pei.flexibilizacao_metodologica_dua.representacao,
-                  acao_e_expressao:
-                    gen.planejamento_pedagogico_pei?.flexibilizacao_metodologica_dua?.acao_e_expressao ||
-                    localTemplate.planejamento_pei.flexibilizacao_metodologica_dua.acao_e_expressao,
-                },
-                guia_pratico_sala_de_aula:
-                  gen.planejamento_pedagogico_pei?.guia_pratico_sala_de_aula ||
-                  localTemplate.planejamento_pei.guia_pratico_sala_de_aula,
+              estrategias_avaliacao: {
+                ...localTemplate.planejamento_pei.estrategias_avaliacao,
+                formato_acessivel:
+                  gen.planejamento_pedagogico_pei?.estrategias_de_avaliacao?.formato_acessivel ||
+                  localTemplate.planejamento_pei.estrategias_avaliacao.formato_acessivel,
+                criterio_de_sucesso:
+                  gen.planejamento_pedagogico_pei?.estrategias_de_avaliacao?.criterio_de_sucesso ||
+                  localTemplate.planejamento_pei.estrategias_avaliacao.criterio_de_sucesso,
               },
-            };
-          }
+              guia_pratico_sala_de_aula:
+                gen.planejamento_pedagogico_pei?.guia_pratico_sala_de_aula ||
+                localTemplate.planejamento_pei.guia_pratico_sala_de_aula,
+            },
+            parecer_pedagogico:
+              gen.painel_de_acompanhamento?.parecer_sintetico ||
+              localTemplate.parecer_pedagogico,
+          };
         }
       } catch {
         // Fallback to localTemplate
@@ -366,10 +522,11 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
     }
   };
 
-  // Clean Chip / Checkbox list for the 9 primary neurodivergences
+  // Clean Chip / Checkbox list for primary neurodivergences including AH/SD
   const chipsNeurodivergencias = [
     { id: 'sol-tdah', label: 'TDAH (Déficit de Atenção e Hiperatividade)' },
     { id: 'sol-tea', label: 'TEA (Espectro Autista)' },
+    { id: 'sol-ahsd', label: 'AH/SD (Altas Habilidades / Superdotação)' },
     { id: 'sol-ansiedade', label: 'Transtornos de Ansiedade' },
     { id: 'sol-aprendizagem', label: 'Dislexia / Disgrafia / Discalculia' },
     { id: 'sol-def-intelectual', label: 'Deficiência Intelectual' },
@@ -379,6 +536,15 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
     { id: 'sol-epilepsia', label: 'Epilepsia e Crises Convulsivas' },
   ];
 
+  // Quick Intersection Presets (Comorbidades / Dupla Excepcionalidade)
+  const combosInterseccao = [
+    { label: 'Autismo (TEA) + TDAH', ids: ['sol-tea', 'sol-tdah'] },
+    { label: 'AH/SD + Ansiedade', ids: ['sol-ahsd', 'sol-ansiedade'] },
+    { label: 'AH/SD + TDAH (2e)', ids: ['sol-ahsd', 'sol-tdah'] },
+    { label: 'TEA + Ansiedade', ids: ['sol-tea', 'sol-ansiedade'] },
+    { label: 'TDAH + Dislexia', ids: ['sol-tdah', 'sol-aprendizagem'] },
+  ];
+
   const outrasCondicoesChips = [
     { id: 'sol-baixa-visao', label: 'Baixa Visão / Cegueira' },
     { id: 'sol-motora', label: 'Deficiência Física / Motora' },
@@ -386,25 +552,56 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
     { id: 'sol-hipotese-sem-laudo', label: 'Em Investigação (Sem Laudo)' },
   ];
 
+  const sugestoesGatilhosRapidos = [
+    'Ruídos altos no laboratório',
+    'Luzes piscantes / brilho excessivo',
+    'Instruções verbais longas sem apoio visual',
+    'Mudanças bruscas de rotina ou prazos',
+    'Apresentação oral imprevista em público',
+  ];
+
+  const sugestoesTagsEtep = [
+    'Tempo adicional (+50%) em provas práticas',
+    'Programação em Pares (Pair Programming)',
+    'Cartão de Pausa Sensorial Discreta',
+    'Roteiros em Markdown antecipados no Moodle',
+    'Substituição de defesa oral por vídeo curto (Loom)',
+    'Fonte OpenDyslexic / Alto Contraste no VS Code',
+  ];
+
   const solucoesSelecionadasObjs = selectedSolucoes
     .map((id) => bancoDeSolucoesPedagogicas.find((s) => s.id === id))
     .filter(Boolean);
 
+  const previewLgpd = sanitizePeiPayloadForLgpd(
+    {
+      studentName: nome || 'Estudante',
+      docenteRegente,
+      course: curso,
+      subject: disciplina,
+      barriers: condicao,
+      triggersAndBehavior: mapeamentoGatilhos,
+      etepHistory: historicoEtepTexto,
+      etepTags,
+    },
+    1
+  );
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
-      <div className="bg-white rounded-2xl max-w-2xl w-full p-5 sm:p-6 shadow-2xl border border-slate-200 my-4 max-h-[92vh] flex flex-col overflow-hidden">
+      <div className="bg-white rounded-2xl max-w-3xl w-full p-5 sm:p-6 shadow-2xl border border-slate-200 my-4 max-h-[94vh] flex flex-col overflow-hidden">
         {/* Clean Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-slate-100 shrink-0">
+        <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-emerald-600 flex items-center justify-center text-white">
               <UserPlus className="w-5 h-5" />
             </div>
             <div>
               <h3 className="text-base sm:text-lg font-bold text-slate-900">
-                Novo Plano de Aula (PEI)
+                Gerador de PEI Assistido · Agente Ioda
               </h3>
               <p className="text-xs text-slate-500">
-                Passo {currentStep} de 4 — Preenchimento rápido e simplificado
+                Passo {currentStep} de 4 — Coleta pedagógica modular (DUA 3.0, Análise Funcional & Histórico ETEP)
               </p>
             </div>
           </div>
@@ -460,14 +657,19 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
           </div>
         </div>
 
+        {/* REQUISITO 2: AVISO DE CURADORIA DOCENTE NO TOPO DO GERADOR DE PEI */}
+        <div className="pt-3 shrink-0">
+          <CuradoriaDocenteBanner variant="compact" />
+        </div>
+
         {/* Clean Stepper Bar */}
         <div className="py-3 border-b border-slate-100 shrink-0">
           <div className="grid grid-cols-4 gap-2">
             {[
               { step: 1, label: '1. Modalidade' },
               { step: 2, label: '2. Aluno & Aula' },
-              { step: 3, label: '3. Condições' },
-              { step: 4, label: '4. Gerar PEI' },
+              { step: 3, label: '3. Perfil, Gatilhos & ETEP' },
+              { step: 4, label: '4. Revisar & Gerar' },
             ].map((item) => {
               const isCurrent = currentStep === item.step;
               const isDone = currentStep > item.step;
@@ -495,7 +697,7 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
         </div>
 
         {/* Step Content Body */}
-        <div className="flex-1 overflow-y-auto py-5 px-1 space-y-5">
+        <div className="flex-1 overflow-y-auto py-5 px-1 space-y-6">
           {/* PASSO 1: MODALIDADE */}
           {currentStep === 1 && (
             <div className="space-y-4">
@@ -577,10 +779,13 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
                     type="text"
                     value={nome}
                     onChange={(e) => setNome(e.target.value)}
-                    placeholder="Digite o nome completo do aluno"
+                    placeholder="Digite o nome completo do aluno (protegido por pseudonimização LGPD)"
                     className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-none text-sm"
                     required
                   />
+                  <span className="text-[11px] text-emerald-700 font-medium mt-1 block">
+                    Privacidade LGPD: O nome será substituído por código anônimo (ESTUDANTE_01) antes da chamada à IA.
+                  </span>
                 </div>
 
                 <div>
@@ -676,54 +881,95 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
             </div>
           )}
 
-          {/* PASSO 3: SELEÇÃO LIMPA DE NEURODIVERGÊNCIAS (CHIPS / CHECKBOXES) */}
+          {/* PASSO 3: TRÊS NOVOS BLOCOS PEDAGÓGICOS EM LAYOUT MODULAR (BENTO GRID) */}
           {currentStep === 3 && (
-            <div className="space-y-5">
+            <div className="space-y-6">
               {/* Situação do Laudo */}
-              <div>
+              <div className="bg-slate-50/80 border border-slate-200 rounded-2xl p-4">
                 <label className="text-xs font-bold text-slate-800 block mb-2">
-                  Situação do Diagnóstico:
+                  Situação do Acompanhamento (Portaria MEC nº 421/2026 — Não exige laudo médico):
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   <button
                     type="button"
                     onClick={() => setStatusDiagnostico('confirmado')}
-                    className={`p-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                    className={`p-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
                       statusDiagnostico === 'confirmado'
                         ? 'bg-emerald-700 text-white border-emerald-700'
                         : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
                     }`}
                   >
                     <FileCheck2 className="w-4 h-4" />
-                    <span>Com Laudo Confirmado</span>
+                    <span>Com Laudo / Prontuário NAPNE</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setStatusDiagnostico('em_investigacao_hipotese')}
-                    className={`p-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                    className={`p-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
                       statusDiagnostico === 'em_investigacao_hipotese'
                         ? 'bg-amber-600 text-white border-amber-600'
                         : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
                     }`}
                   >
                     <HelpCircle className="w-4 h-4" />
-                    <span>Sem Laudo (Em Observação)</span>
+                    <span>Sem Laudo (Em Observação Pedagógica)</span>
                   </button>
                 </div>
               </div>
 
-              {/* Chips / Checkboxes de Neurodivergências (LIMPOS, SEM TEXTOS LONGOS) */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold text-slate-800">
-                    Selecione uma ou mais condições do estudante:
-                  </label>
-                  <span className="text-xs font-semibold text-emerald-700">
-                    {selectedSolucoes.length} selecionada(s)
+              {/* ================================================================= */}
+              {/* BLOCO DE ENTRADA 1: INTERSECÇÃO DE NEURODIVERGÊNCIAS E CONDIÇÕES   */}
+              {/* ================================================================= */}
+              <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4 shadow-2xs">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center">
+                      <Layers className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-slate-900">
+                        1. Intersecção de Neurodivergências e Condições Associadas
+                      </h4>
+                      <p className="text-xs text-slate-500">
+                        Selecione múltiplas condições ou comorbidades (ex: Autismo + TDAH, AH/SD + Ansiedade) para uma visão holística e não estigmatizante
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-1 rounded-full">
+                    {selectedSolucoes.length + customComorbidities.length} condição(ões) ativa(s)
                   </span>
                 </div>
 
+                {/* Atalhos Rápidos de Intersecção / Comorbidades */}
+                <div>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block mb-1.5">
+                    Combinações Frequentes (Intersecção / Dupla Excepcionalidade):
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {combosInterseccao.map((combo) => {
+                      const isComboActive =
+                        combo.ids.every((id) => selectedSolucoes.includes(id)) &&
+                        selectedSolucoes.length === combo.ids.length;
+                      return (
+                        <button
+                          key={combo.label}
+                          type="button"
+                          onClick={() => handleApplyIntersectionPreset(combo.ids)}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
+                            isComboActive
+                              ? 'bg-emerald-700 text-white border-emerald-700 shadow-2xs'
+                              : 'bg-slate-50 text-slate-700 border-slate-200 hover:border-emerald-400 hover:bg-emerald-50/40'
+                          }`}
+                        >
+                          {combo.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Grade de Seleção Múltipla */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   {chipsNeurodivergencias.map((item) => {
                     const isSelected = selectedSolucoes.includes(item.id);
@@ -732,7 +978,7 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
                         key={item.id}
                         type="button"
                         onClick={() => handleTogglePredefinedSolution(item.id)}
-                        className={`px-3.5 py-3 rounded-xl border text-left text-xs font-semibold flex items-center gap-3 transition-all cursor-pointer ${
+                        className={`px-3.5 py-2.5 rounded-xl border text-left text-xs font-semibold flex items-center gap-3 transition-all cursor-pointer ${
                           isSelected
                             ? 'bg-emerald-50 border-emerald-600 text-emerald-950 ring-1 ring-emerald-600'
                             : 'bg-white border-slate-200 text-slate-800 hover:border-slate-300 hover:bg-slate-50'
@@ -753,7 +999,55 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
                   })}
                 </div>
 
-                {/* Botão discreto para outras condições */}
+                {/* Registro de Outra Condição / Comorbidade Específica */}
+                <div className="pt-2 border-t border-slate-100 space-y-2">
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <input
+                      type="text"
+                      value={novaComorbidadeInput}
+                      onChange={(e) => setNovaComorbidadeInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAddCustomComorbidity();
+                        }
+                      }}
+                      placeholder="Adicionar outra condição associada ou especificidade (ex: TPS, Burnout Acadêmico)..."
+                      className="flex-1 px-3 py-2 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-emerald-600 focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddCustomComorbidity}
+                      className="inline-flex items-center justify-center gap-1 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-emerald-800 text-white text-xs font-bold cursor-pointer shrink-0"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Incluir na Intersecção</span>
+                    </button>
+                  </div>
+
+                  {customComorbidities.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      {customComorbidities.map((c) => (
+                        <span
+                          key={c}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-950 text-xs font-semibold"
+                        >
+                          <span>{c}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveCustomComorbidity(c)}
+                            className="text-emerald-700 hover:text-red-600 cursor-pointer"
+                            title="Remover condição"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Botões discretos para outras condições e resumo */}
                 <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
                   <button
                     type="button"
@@ -763,7 +1057,7 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
                     {mostrarOutrasCondicoes ? (
                       <>
                         <ChevronUp className="w-3.5 h-3.5" />
-                        <span>Ocultar condições visuais/motoras/auditivas</span>
+                        <span>Ocultar condições sensoriais/motoras</span>
                       </>
                     ) : (
                       <>
@@ -773,7 +1067,6 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
                     )}
                   </button>
 
-                  {/* Botão discreto "Ver resumo" fechado por padrão */}
                   <button
                     type="button"
                     onClick={() => setVerResumoTecnico(!verResumoTecnico)}
@@ -782,12 +1075,12 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
                     {verResumoTecnico ? (
                       <>
                         <ChevronUp className="w-3.5 h-3.5" />
-                        <span>Ocultar resumo</span>
+                        <span>Ocultar síntese combinada</span>
                       </>
                     ) : (
                       <>
                         <ChevronDown className="w-3.5 h-3.5" />
-                        <span>Ver resumo das condições selecionadas</span>
+                        <span>Ver síntese da intersecção selecionada</span>
                       </>
                     )}
                   </button>
@@ -836,24 +1129,189 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
                 )}
               </div>
 
-              {/* Observações e Potencialidades (Digitação Tradicional Limpa) */}
-              <div className="space-y-4 pt-2 border-t border-slate-100">
+              {/* ================================================================= */}
+              {/* BLOCO DE ENTRADA 2 & 3 EM BENTO GRID (GATILHOS + HISTÓRICO ETEP)   */}
+              {/* ================================================================= */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {/* BLOCO 2: MAPEAMENTO DE GATILHOS E COMPORTAMENTO (ANÁLISE FUNCIONAL) */}
+                <div className="bg-white border border-amber-200/90 rounded-2xl p-5 space-y-3.5 shadow-2xs flex flex-col justify-between">
+                  <div className="space-y-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
+                          <AlertTriangle className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-bold text-slate-900">
+                            2. Mapeamento de Gatilhos e Comportamento (Análise Funcional)
+                          </h4>
+                          <p className="text-[11px] text-slate-500">
+                            Gatilhos sensoriais, ambientais ou rotineiros que podem gerar sobrecarga ou ansiedade
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Tooltip / Dica de Interface Oficial */}
+                      <div className="relative">
+                        <button
+                          type="button"
+                          onClick={() => setShowTriggerTooltip(!showTriggerTooltip)}
+                          onMouseEnter={() => setShowTriggerTooltip(true)}
+                          onMouseLeave={() => setShowTriggerTooltip(false)}
+                          title="Ex: ruídos altos, luzes piscantes, instruções verbais longas sem apoio visual, mudanças bruscas de rotina."
+                          aria-label="Dica sobre mapeamento de gatilhos"
+                          className="p-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 cursor-pointer"
+                        >
+                          <Info className="w-4 h-4" />
+                        </button>
+                        {showTriggerTooltip && (
+                          <div className="absolute right-0 top-9 z-20 w-72 p-3 rounded-xl bg-slate-900 text-white text-xs shadow-xl leading-relaxed">
+                            <strong>Dica de preenchimento:</strong> Ex: ruídos altos, luzes piscantes, instruções verbais longas sem apoio visual, mudanças bruscas de rotina.
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Dica visível e acessível */}
+                    <div className="p-2.5 rounded-xl bg-amber-50/70 border border-amber-200/80 text-[11px] text-amber-950 leading-relaxed">
+                      <strong>Dica:</strong>{' '}
+                      <em>
+                        &ldquo;Ex: ruídos altos, luzes piscantes, instruções verbais longas sem apoio visual, mudanças bruscas de rotina.&rdquo;
+                      </em>
+                    </div>
+
+                    <textarea
+                      value={mapeamentoGatilhos}
+                      onChange={(e) => setMapeamentoGatilhos(e.target.value)}
+                      rows={3}
+                      placeholder="Ex: ruídos altos, luzes piscantes, instruções verbais longas sem apoio visual, mudanças bruscas de rotina."
+                      className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none text-xs leading-relaxed"
+                    />
+                  </div>
+
+                  {/* Atalhos rápidos de gatilhos */}
+                  <div className="pt-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">
+                      Adicionar gatilho observado (+):
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {sugestoesGatilhosRapidos.map((g) => (
+                        <button
+                          key={g}
+                          type="button"
+                          onClick={() => {
+                            if (!mapeamentoGatilhos.toLowerCase().includes(g.toLowerCase())) {
+                              setMapeamentoGatilhos((prev) =>
+                                prev.trim() ? `${prev.replace(/\.$/, '')}; ${g}.` : `${g}.`
+                              );
+                            }
+                          }}
+                          className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-amber-100 text-slate-700 hover:text-amber-950 text-[11px] font-medium transition-colors cursor-pointer"
+                        >
+                          + {g}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* BLOCO 3: HISTÓRICO ETEP / BOAS PRÁTICAS ANTERIORES */}
+                <div className="bg-white border border-emerald-200/90 rounded-2xl p-5 space-y-3.5 shadow-2xs flex flex-col justify-between">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0">
+                        <History className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-slate-900">
+                          3. Histórico ETEP / Boas Práticas Anteriores
+                        </h4>
+                        <p className="text-[11px] text-slate-500">
+                          Recupere estratégias que já funcionaram em ciclos anteriores sem &ldquo;reinventar a roda&rdquo;
+                        </p>
+                      </div>
+                    </div>
+
+                    <textarea
+                      value={historicoEtepTexto}
+                      onChange={(e) => setHistoricoEtepTexto(e.target.value)}
+                      rows={3}
+                      placeholder="Registre adaptações da ETEP/NAPNE e docentes anteriores que tiveram êxito com o estudante..."
+                      className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-none text-xs leading-relaxed"
+                    />
+
+                    {/* Sistema de Tags de Boas Práticas Anteriores */}
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1.5">
+                        Tags de Estratégias Validadas (Clique para ativar/desativar):
+                      </span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {sugestoesTagsEtep.map((tag) => {
+                          const active = etepTags.includes(tag);
+                          return (
+                            <button
+                              key={tag}
+                              type="button"
+                              onClick={() => handleToggleEtepTag(tag)}
+                              className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-all cursor-pointer flex items-center gap-1 ${
+                                active
+                                  ? 'bg-emerald-700 text-white border-emerald-700'
+                                  : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                              }`}
+                            >
+                              {active && <Check className="w-3 h-3" />}
+                              <span>{tag}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Adicionar nova tag ETEP */}
+                  <div className="flex gap-1.5 pt-2 border-t border-slate-100">
+                    <input
+                      type="text"
+                      value={novaTagEtep}
+                      onChange={(e) => setNovaTagEtep(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAddCustomEtepTag();
+                        }
+                      }}
+                      placeholder="Nova tag de boa prática ETEP..."
+                      className="flex-1 px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-emerald-600 focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddCustomEtepTag}
+                      className="px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold cursor-pointer"
+                    >
+                      + Tag
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Observações e Potencialidades Complementares */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-100">
                 <div>
                   <label className="block text-xs font-bold text-slate-800 mb-1.5">
-                    Dificuldades / Barreiras Observadas em Aula
+                    Barreiras Contextuais na Disciplina
                   </label>
                   <textarea
                     value={condicao}
                     onChange={(e) => setCondicao(e.target.value)}
                     rows={2}
-                    placeholder="Descreva as barreiras ou dificuldades observadas no laboratório e na sala de aula..."
+                    placeholder="Descreva as barreiras metodológicas ou tecnológicas observadas em aula..."
                     className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-none text-xs"
                   />
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold text-slate-800 mb-1.5">
-                    Interesses e Pontos Fortes do Estudante
+                    Potencialidades e Interesses do Estudante
                   </label>
                   <textarea
                     value={potencialidades}
@@ -867,32 +1325,69 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
             </div>
           )}
 
-          {/* PASSO 4: REVISÃO SIMPLES */}
+          {/* PASSO 4: REVISÃO MODULAR E AUDITORIA DE PRIVACIDADE LGPD */}
           {currentStep === 4 && (
             <div className="space-y-4">
-              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-3">
-                <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-3">
                   <div>
                     <h4 className="text-base font-bold text-slate-900">{nome || 'Estudante'}</h4>
-                    <p className="text-xs text-slate-500">{curso} · {modulo}</p>
+                    <p className="text-xs text-slate-500">
+                      {curso} · {modulo}
+                    </p>
                   </div>
                   <span className="text-xs font-bold bg-emerald-100 text-emerald-900 px-3 py-1 rounded-full">
                     {perfilModalidade === 'superior_ti' ? 'Superior TI' : 'Médio Técnico'}
                   </span>
                 </div>
 
-                <div className="space-y-2 text-xs">
-                  <div>
-                    <span className="text-slate-500 font-semibold">Disciplina: </span>
-                    <span className="text-slate-900 font-bold">{disciplina}</span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  <div className="p-3 bg-white rounded-xl border border-slate-200">
+                    <span className="text-slate-500 font-semibold block mb-0.5">Disciplina & Docente:</span>
+                    <span className="text-slate-900 font-bold block">{disciplina}</span>
+                    <span className="text-slate-600">{docenteRegente}</span>
                   </div>
-                  <div>
-                    <span className="text-slate-500 font-semibold">Professor(a): </span>
-                    <span className="text-slate-800">{docenteRegente}</span>
+
+                  <div className="p-3 bg-white rounded-xl border border-slate-200">
+                    <span className="text-slate-500 font-semibold block mb-0.5">
+                      Intersecção de Condições:
+                    </span>
+                    <span className="text-emerald-800 font-bold block">{categoriaNeurodivergencia}</span>
                   </div>
-                  <div>
-                    <span className="text-slate-500 font-semibold">Condições Selecionadas: </span>
-                    <span className="text-emerald-800 font-bold">{categoriaNeurodivergencia}</span>
+
+                  <div className="p-3 bg-white rounded-xl border border-amber-200">
+                    <span className="text-amber-900 font-bold block mb-0.5">
+                      Mapeamento de Gatilhos (Análise Funcional):
+                    </span>
+                    <span className="text-slate-700 leading-relaxed">{mapeamentoGatilhos}</span>
+                  </div>
+
+                  <div className="p-3 bg-white rounded-xl border border-emerald-200">
+                    <span className="text-emerald-900 font-bold block mb-0.5">
+                      Histórico ETEP / Boas Práticas ({etepTags.length} tags):
+                    </span>
+                    <span className="text-slate-700 leading-relaxed block">{historicoEtepTexto}</span>
+                  </div>
+                </div>
+
+                {/* Indicador de Sanitização / Pseudonimização LGPD */}
+                <div className="p-3.5 rounded-xl bg-emerald-950 text-emerald-50 border border-emerald-800 text-xs flex items-start gap-3">
+                  <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+                  <div className="space-y-1">
+                    <span className="font-bold text-white block">
+                      Camada de Privacidade Ativa — LGPD (Lei nº 13.709/2018) & Art. 12, § 5º do Decreto nº 12.686/2025
+                    </span>
+                    <p className="text-emerald-200/90 leading-relaxed">
+                      Antes de enviar a requisição à API do Gemini, o nome real é pseudonimizado para{' '}
+                      <code className="px-1.5 py-0.5 rounded bg-emerald-900 text-emerald-300 font-mono">
+                        {previewLgpd.anonymousStudentCode}
+                      </code>{' '}
+                      e o docente para{' '}
+                      <code className="px-1.5 py-0.5 rounded bg-emerald-900 text-emerald-300 font-mono">
+                        {previewLgpd.anonymousDocenteCode}
+                      </code>
+                      , removendo CPFs, fotos ou dados clínicos sensíveis do payload externo.
+                    </p>
                   </div>
                 </div>
               </div>

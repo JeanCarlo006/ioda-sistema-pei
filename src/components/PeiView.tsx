@@ -428,16 +428,16 @@ export const PeiView: React.FC<PeiViewProps> = ({
             </div>
           </section>
 
-          {/* BLOCO 3: ESTRATÉGIAS DUA (ENGAJAMENTO, REPRESENTAÇÃO E AÇÃO) */}
+          {/* BLOCO 3: ESTRATÉGIAS PREVENTIVAS E DUA 3.0 (ENGAJAMENTO E AUTORREGULAÇÃO, REPRESENTAÇÃO E AÇÃO/TA-CAA) */}
           <section className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-7 space-y-5">
             <div className="flex items-center gap-2 border-b border-slate-100 pb-4">
               <Layers className="w-5 h-5 text-emerald-600" />
               <div>
                 <h3 className="text-base font-bold text-slate-900">
-                  3. Estratégias de Ensino (Desenho Universal)
+                  3. Estratégias Preventivas e DUA 3.0 (Desenho Universal para a Aprendizagem)
                 </h3>
                 <p className="text-xs text-slate-500">
-                  Formas de motivar, apresentar o material e permitir que o estudante demonstre o que aprendeu
+                  Prevenção de gatilhos e autorregulação, materiais multissensoriais acessíveis e múltiplas vias de expressão com Recursos de TA/CAA
                 </p>
               </div>
             </div>
@@ -445,7 +445,7 @@ export const PeiView: React.FC<PeiViewProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               <div className="p-5 bg-slate-50 border border-slate-200 rounded-xl space-y-2.5">
                 <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
-                  Como Engajar e Motivar
+                  Engajamento e Autorregulação (Prevenção de Gatilhos)
                 </h4>
                 <ul className="space-y-2">
                   {planejamento_pei.flexibilizacao_metodologica_dua.engajamento.map((item, i) => (
@@ -458,7 +458,7 @@ export const PeiView: React.FC<PeiViewProps> = ({
 
               <div className="p-5 bg-slate-50 border border-slate-200 rounded-xl space-y-2.5">
                 <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
-                  Como Apresentar o Material
+                  Representação Multissensorial
                 </h4>
                 <ul className="space-y-2">
                   {planejamento_pei.flexibilizacao_metodologica_dua.representacao.map((item, i) => (
@@ -471,7 +471,7 @@ export const PeiView: React.FC<PeiViewProps> = ({
 
               <div className="p-5 bg-slate-50 border border-slate-200 rounded-xl space-y-2.5">
                 <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
-                  Atividades Práticas e Expressão
+                  Ação e Expressão (TA / CAA)
                 </h4>
                 <ul className="space-y-2">
                   {planejamento_pei.flexibilizacao_metodologica_dua.acao_e_expressao.map(
@@ -481,6 +481,49 @@ export const PeiView: React.FC<PeiViewProps> = ({
                       </li>
                     )
                   )}
+                </ul>
+              </div>
+            </div>
+
+            {/* Bento Grid: Mapeamento de Gatilhos (Análise Funcional) + Histórico ETEP */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-2 border-t border-slate-100">
+              <div className="p-4 rounded-xl bg-amber-50/50 border border-amber-200 space-y-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-amber-900 block">
+                  Mapeamento de Gatilhos e Crises (Análise Funcional)
+                </span>
+                <ul className="space-y-1.5 text-xs text-slate-700">
+                  {(estudo_de_caso.mapeamento_de_gatilhos_e_crises &&
+                  estudo_de_caso.mapeamento_de_gatilhos_e_crises.length > 0
+                    ? estudo_de_caso.mapeamento_de_gatilhos_e_crises
+                    : [
+                        'Ruídos altos no laboratório e instruções verbais longas sem apoio visual.',
+                        'Mudanças bruscas de rotina ou prazos sem antecipação.',
+                      ]
+                  ).map((g, idx) => (
+                    <li key={idx} className="leading-relaxed">
+                      • {g}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="p-4 rounded-xl bg-emerald-50/50 border border-emerald-200 space-y-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-emerald-900 block">
+                  Histórico ETEP / Boas Práticas Anteriores
+                </span>
+                <ul className="space-y-1.5 text-xs text-slate-700">
+                  {(estudo_de_caso.historico_boas_praticas_etep &&
+                  estudo_de_caso.historico_boas_praticas_etep.length > 0
+                    ? estudo_de_caso.historico_boas_praticas_etep
+                    : [
+                        'Fracionamento de atividades práticas em entregas curtas (chunking).',
+                        'Roteiros estruturados antecipados no Moodle e tempo adicional (+50%).',
+                      ]
+                  ).map((h, idx) => (
+                    <li key={idx} className="leading-relaxed">
+                      • {h}
+                    </li>
+                  ))}
                 </ul>
               </div>
             </div>

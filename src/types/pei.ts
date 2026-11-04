@@ -19,6 +19,7 @@ export interface HistoricoNAPNE {
   status_diagnostico?: 'confirmado' | 'em_investigacao_hipotese';
   categoria_neurodivergencia?: string;
   cid_ou_hipotese?: string;
+  condicoes_associadas?: string[];
 }
 
 export interface EstatisticasCampusParaiso {
@@ -50,6 +51,9 @@ export interface EstudoDeCaso {
   barreiras: BarreiraItem[];
   potencialidades: PotencialidadeItem[];
   recursos_ta: string[];
+  mapeamento_de_gatilhos_e_crises?: string[];
+  historico_boas_praticas_etep?: string[];
+  interseccao_condicoes?: string[];
   sintese_observacao: {
     interacao_professores: string;
     interacao_colegas: string;
@@ -137,6 +141,46 @@ export interface PEICompleto {
   sugestoes_proximo_ciclo: string[];
 }
 
+export interface IodaGeminiPeiSchema {
+  estudo_de_caso_sintese: {
+    barreiras_contextuais: string[];
+    potencialidades_e_interesses: string[];
+    mapeamento_de_gatilhos_e_crises: string[];
+    historico_boas_praticas_etep: string[];
+  };
+  planejamento_pedagogico_pei: {
+    conteudo_ementa_oficial: string;
+    metas_e_objetivos: {
+      id_meta: string;
+      descricao_meta: string;
+      indicador_sucesso: string;
+      prazo?: string;
+    }[];
+    estrategias_preventivas_e_dua_3_0: {
+      engajamento_e_autorregulacao: string[];
+      representacao: string[];
+      acao_e_expressao: string[];
+    };
+    estrategias_de_avaliacao: {
+      formato_acessivel: string;
+      criterio_de_sucesso: string;
+    };
+    competencias_habilidades_ementa?: string;
+    adaptacao_flexibilizacao_curricular?: string;
+    guia_pratico_sala_de_aula?: GuiaPraticoSalaAula;
+  };
+  painel_de_acompanhamento: {
+    status_ciclo: 'EM_ANDAMENTO' | 'CONCLUIDO' | 'REVISAO_NECESSARIA' | string;
+    metricas_numericas: {
+      percentual_metas_alcancadas: number;
+      nivel_autonomia_1_a_5: number;
+      engajamento_nas_atividades_1_a_5: number;
+    };
+    parecer_sintetico: string;
+    sugestoes_proximo_ciclo?: string[];
+  };
+}
+
 export interface SolucaoCondicao {
   id: string;
   titulo: string;
@@ -181,4 +225,3 @@ export interface DisciplinaPpcPreset {
   barreirasComunsTi: string[];
   adaptacaoSugeridaPadrao: string;
 }
-

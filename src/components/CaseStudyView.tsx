@@ -7,6 +7,10 @@ import {
   Eye,
   FileText,
   Users,
+  History,
+  Layers,
+  ShieldAlert,
+  CheckCircle2,
 } from 'lucide-react';
 
 interface CaseStudyViewProps {
@@ -16,16 +20,122 @@ interface CaseStudyViewProps {
 export const CaseStudyView: React.FC<CaseStudyViewProps> = ({ pei }) => {
   const { estudo_de_caso, historico_napne } = pei;
 
+  const gatilhosList =
+    estudo_de_caso.mapeamento_de_gatilhos_e_crises &&
+    estudo_de_caso.mapeamento_de_gatilhos_e_crises.length > 0
+      ? estudo_de_caso.mapeamento_de_gatilhos_e_crises
+      : [
+          'Ruídos altos e estímulos sonoros concorrentes no laboratório de informática sem apoio de abafador.',
+          'Instruções verbais longas sem apoio visual ou roteiro passo a passo.',
+          'Mudanças bruscas de rotina ou cobrança sob pressão temporal restrita.',
+        ];
+
+  const historicoEtepList =
+    estudo_de_caso.historico_boas_praticas_etep &&
+    estudo_de_caso.historico_boas_praticas_etep.length > 0
+      ? estudo_de_caso.historico_boas_praticas_etep
+      : [
+          'Fracionamento de atividades práticas em entregas curtas (chunking) validado nos semestres anteriores.',
+          'Disponibilização antecipada de roteiros no Moodle e tempo adicional (+50%) em avaliações práticas.',
+          'Programação em pares (Pair Programming) com papéis técnicos bem definidos.',
+        ];
+
+  const condicoesInterseccao =
+    estudo_de_caso.interseccao_condicoes && estudo_de_caso.interseccao_condicoes.length > 0
+      ? estudo_de_caso.interseccao_condicoes
+      : (historico_napne.categoria_neurodivergencia || 'Acompanhamento Pedagógico Individualizado')
+          .split('+')
+          .map((s) => s.trim())
+          .filter(Boolean);
+
   return (
     <div className="space-y-8">
-      {/* Clean Page Title */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-5">
-        <h2 className="text-lg font-bold text-slate-900">
-          Estudo de Caso do Estudante
-        </h2>
-        <p className="text-xs text-slate-500 mt-0.5">
-          Resumo pedagógico das dificuldades observadas, pontos fortes e recursos de apoio utilizados
-        </p>
+      {/* Clean Page Title + Intersection Badges */}
+      <div className="bg-white border border-slate-200 rounded-2xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-bold text-slate-900">
+            Estudo de Caso Sintetizado (Análise Funcional & Histórico ETEP)
+          </h2>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Visão holística e biopsicossocial das barreiras contextuais, gatilhos, potencialidades e boas práticas anteriores
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-slate-500 mr-1">
+            <Layers className="w-3.5 h-3.5 text-emerald-600" />
+            Intersecção:
+          </span>
+          {condicoesInterseccao.map((cond, idx) => (
+            <span
+              key={idx}
+              className="px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-bold"
+            >
+              {cond}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* BENTO GRID NOVO: MAPEAMENTO DE GATILHOS (ANÁLISE FUNCIONAL) + HISTÓRICO ETEP */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Mapeamento de Gatilhos e Comportamento */}
+        <div className="bg-white border border-amber-200 rounded-2xl p-6 space-y-4 shadow-2xs">
+          <div className="flex items-center gap-2.5 border-b border-slate-100 pb-3">
+            <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
+              <ShieldAlert className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-slate-900">
+                Mapeamento de Gatilhos e Comportamento (Análise Funcional)
+              </h3>
+              <p className="text-xs text-slate-500">
+                Fatores sensoriais, ambientais ou rotineiros a prevenir para evitar sobrecarga ou ansiedade
+              </p>
+            </div>
+          </div>
+
+          <ul className="space-y-2.5">
+            {gatilhosList.map((gatilho, idx) => (
+              <li
+                key={idx}
+                className="p-3.5 rounded-xl bg-amber-50/50 border border-amber-200/80 text-xs sm:text-sm text-slate-800 flex items-start gap-2.5 leading-relaxed"
+              >
+                <AlertTriangle className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+                <span>{gatilho}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Histórico ETEP / Boas Práticas Anteriores */}
+        <div className="bg-white border border-emerald-200 rounded-2xl p-6 space-y-4 shadow-2xs">
+          <div className="flex items-center gap-2.5 border-b border-slate-100 pb-3">
+            <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0">
+              <History className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-slate-900">
+                Histórico ETEP / Boas Práticas Anteriores
+              </h3>
+              <p className="text-xs text-slate-500">
+                Estratégias e adaptações validadas em ciclos anteriores pela equipe pedagógica
+              </p>
+            </div>
+          </div>
+
+          <ul className="space-y-2.5">
+            {historicoEtepList.map((pratica, idx) => (
+              <li
+                key={idx}
+                className="p-3.5 rounded-xl bg-emerald-50/50 border border-emerald-200/80 text-xs sm:text-sm text-slate-800 flex items-start gap-2.5 leading-relaxed"
+              >
+                <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
+                <span>{pratica}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
 
       {/* Bloco 1: Contexto e Parceria Familiar */}
@@ -51,7 +161,7 @@ export const CaseStudyView: React.FC<CaseStudyViewProps> = ({ pei }) => {
         <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-3">
           <div className="flex items-center gap-2 text-sm font-bold text-slate-900">
             <Users className="w-4 h-4 text-emerald-600" />
-            <h3>Diálogo com o Estudante e Família</h3>
+            <h3>Diálogo com o Estudante, Família e ETEP</h3>
           </div>
           <p className="text-sm text-slate-700 leading-relaxed">
             {historico_napne.informacoes_dos_pais}
@@ -59,7 +169,7 @@ export const CaseStudyView: React.FC<CaseStudyViewProps> = ({ pei }) => {
         </div>
       </div>
 
-      {/* Bloco 2: Dificuldades Observadas vs Pontos Fortes */}
+      {/* Bloco 2: Barreiras Contextuais vs Potencialidades e Interesses */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Barreiras */}
         <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4">
@@ -67,7 +177,7 @@ export const CaseStudyView: React.FC<CaseStudyViewProps> = ({ pei }) => {
             <AlertTriangle className="w-5 h-5 text-amber-600" />
             <div>
               <h3 className="text-base font-bold text-slate-900">
-                Barreiras Identificadas na Escola
+                Barreiras Contextuais Identificadas
               </h3>
               <p className="text-xs text-slate-500">
                 Obstáculos que dificultam o aprendizado e como superá-los
@@ -101,7 +211,7 @@ export const CaseStudyView: React.FC<CaseStudyViewProps> = ({ pei }) => {
             <Sparkles className="w-5 h-5 text-emerald-600" />
             <div>
               <h3 className="text-base font-bold text-slate-900">
-                Pontos Fortes e Interesses
+                Potencialidades e Interesses
               </h3>
               <p className="text-xs text-slate-500">
                 Habilidades e interesses do estudante para apoiar o ensino
@@ -136,7 +246,7 @@ export const CaseStudyView: React.FC<CaseStudyViewProps> = ({ pei }) => {
           <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
             <Cpu className="w-5 h-5 text-emerald-600" />
             <h3 className="text-base font-bold text-slate-900">
-              Recursos e Tecnologias de Apoio
+              Recursos de TA / CAA e Tecnologias de Apoio
             </h3>
           </div>
 

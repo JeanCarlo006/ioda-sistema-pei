@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { PEICompleto } from '../types/pei';
 import { Printer, Download, Edit3, Save, CheckCircle2 } from 'lucide-react';
 import { exportOfficialPeiPdf } from '../utils/exportOfficialPdf';
+import { CuradoriaDocenteBanner } from './CuradoriaDocenteBanner';
 
 interface OfficialTemplateViewProps {
   pei: PEICompleto;
@@ -44,12 +45,18 @@ export const OfficialTemplateView: React.FC<OfficialTemplateViewProps> = ({
     window.print();
   };
 
-  const { cabecalho, historico_napne, planejamento_pei } = editedPei;
+  const { cabecalho, historico_napne, estudo_de_caso, planejamento_pei } = editedPei;
 
   const textoMetodologiaCombinada = [
-    `Engajamento: ${planejamento_pei.flexibilizacao_metodologica_dua.engajamento.join(' ')}`,
-    `Representação: ${planejamento_pei.flexibilizacao_metodologica_dua.representacao.join(' ')}`,
-    `Ação e Expressão: ${planejamento_pei.flexibilizacao_metodologica_dua.acao_e_expressao.join(' ')}`,
+    `Engajamento e Autorregulação (Prevenção de Gatilhos): ${planejamento_pei.flexibilizacao_metodologica_dua.engajamento.join(' ')}`,
+    `Representação Multissensorial: ${planejamento_pei.flexibilizacao_metodologica_dua.representacao.join(' ')}`,
+    `Ação e Expressão (TA/CAA): ${planejamento_pei.flexibilizacao_metodologica_dua.acao_e_expressao.join(' ')}`,
+    estudo_de_caso.mapeamento_de_gatilhos_e_crises && estudo_de_caso.mapeamento_de_gatilhos_e_crises.length > 0
+      ? `Mapeamento de Gatilhos (Análise Funcional): ${estudo_de_caso.mapeamento_de_gatilhos_e_crises.join('; ')}`
+      : '',
+    estudo_de_caso.historico_boas_praticas_etep && estudo_de_caso.historico_boas_praticas_etep.length > 0
+      ? `Histórico ETEP / Boas Práticas Anteriores: ${estudo_de_caso.historico_boas_praticas_etep.join('; ')}`
+      : '',
     planejamento_pei.guia_pratico_sala_de_aula
       ? `Passo a Passo em Aula: ${planejamento_pei.guia_pratico_sala_de_aula.passo_a_passo_explicacao} | Divisão de Tarefas: ${planejamento_pei.guia_pratico_sala_de_aula.divisao_tarefa_chunking.join(' ')}`
       : '',
@@ -66,6 +73,9 @@ export const OfficialTemplateView: React.FC<OfficialTemplateViewProps> = ({
 
   return (
     <div className="space-y-6">
+      {/* Aviso de Curadoria Docente no Cabeçalho da Visualização Final */}
+      <CuradoriaDocenteBanner />
+
       {/* Top Action Bar (hidden in print) */}
       <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-2xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 no-print">
         <div>

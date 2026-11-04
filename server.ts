@@ -3,6 +3,12 @@ import { GoogleGenAI } from '@google/genai';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
+import {
+  sanitizePeiPayloadForLgpd,
+  buildIodaSystemInstruction,
+  buildSanitizedUserPrompt,
+  IODA_GEMINI_RESPONSE_SCHEMA,
+} from './src/services/geminiService';
 
 dotenv.config();
 
@@ -26,42 +32,46 @@ const ai = new GoogleGenAI({
 
 // Advanced Ioda Pedagogical Engine for TI (Ensino Médio Técnico e Superior)
 function synthesizeIodaPei(params: any) {
+  // Sanitize incoming data for LGPD compliance (Lei nº 13.709/2018 & Art. 12, § 5º Decreto nº 12.686/2025)
+  const sanitized = sanitizePeiPayloadForLgpd(params, 1);
+
   const {
-    studentName = 'Estudante',
+    anonymousStudentCode,
+    anonymousDocenteCode,
     grade,
     course,
     subject,
-    barriers = 'Dificuldade motora ou visual no laboratório de informática',
-    potentialities = 'Raciocínio lógico e dedutivo para tecnologia',
-    assistiveTech = 'Softwares adaptados e tempo ampliado',
-    docenteRegente = 'Prof. Responsável da Disciplina',
-    docenteAee = 'Profª. Renata Cavalcanti (NAPNE · Campus Paraíso)',
-    perfilModalidade = 'medio_tecnico',
-    statusDiagnostico = 'confirmado',
-  } = params;
+    barriers,
+    potentialities,
+    triggersAndBehavior,
+    etepHistory,
+    etepTags,
+    perfilModalidade,
+    statusDiagnostico,
+    selectedIds,
+    selectedNeurodivergences,
+  } = sanitized;
 
   const isSuperior =
     perfilModalidade === 'superior_ti' ||
-    (course && (
-      course.toLowerCase().includes('superior') ||
-      course.toLowerCase().includes('sistemas') ||
-      course.toLowerCase().includes('ciência') ||
-      course.toLowerCase().includes('engenharia')
-    )) ||
+    (course &&
+      (course.toLowerCase().includes('superior') ||
+        course.toLowerCase().includes('sistemas') ||
+        course.toLowerCase().includes('ciência') ||
+        course.toLowerCase().includes('engenharia'))) ||
     (grade && grade.toLowerCase().includes('semestre'));
 
-  const finalCourse = course || (isSuperior
-    ? 'Bacharelado em Sistemas de Informação (TI)'
-    : 'Curso Técnico Integrado ao Ensino Médio em Informática');
+  const finalCourse =
+    course ||
+    (isSuperior
+      ? 'Bacharelado em Sistemas de Informação (TI)'
+      : 'Curso Técnico Integrado ao Ensino Médio em Informática');
 
   const finalGrade = grade || (isSuperior ? '4º Semestre / Noturno' : '2º Ano / Diurno');
-  const finalSubject = subject || (isSuperior ? 'Banco de Dados Relacional e SQL' : 'Programação Web e Algoritmos');
+  const finalSubject =
+    subject || (isSuperior ? 'Banco de Dados Relacional e SQL' : 'Programação Web e Algoritmos');
 
-  const selectedIds: string[] = Array.isArray(params.selectedIds) ? params.selectedIds : [];
-  const selectedNeurodivergences: string[] = Array.isArray(params.selectedNeurodivergences)
-    ? params.selectedNeurodivergences
-    : [];
-  const combinedContext = `${barriers} ${selectedIds.join(' ')} ${selectedNeurodivergences.join(' ')}`.toLowerCase();
+  const combinedContext = `${barriers} ${triggersAndBehavior} ${selectedIds.join(' ')} ${selectedNeurodivergences.join(' ')}`.toLowerCase();
 
   const isEngSoft =
     finalSubject.toLowerCase().includes('engenharia de software') ||
@@ -97,6 +107,12 @@ function synthesizeIodaPei(params: any) {
     combinedContext.includes('déficit de atenção') ||
     combinedContext.includes('hiperativid') ||
     combinedContext.includes('sol-tdah');
+
+  const isHighAbilities =
+    combinedContext.includes('ah/sd') ||
+    combinedContext.includes('altas habilidades') ||
+    combinedContext.includes('superdot') ||
+    combinedContext.includes('sol-ahsd');
 
   const isAnxiety =
     combinedContext.includes('ansied') ||
@@ -135,14 +151,19 @@ function synthesizeIodaPei(params: any) {
     combinedContext.includes('crise') ||
     combinedContext.includes('sol-epilepsia');
 
-  // Dynamic cumulative DUA 3.0 recommendations tailored for ALL selected neurodivergences
-  const engajamento: string[] = [];
+  // Dynamic cumulative DUA 3.0 recommendations tailored for ALL selected neurodivergences & triggers
+  const engajamentoAutorregulacao: string[] = [];
+  if (triggersAndBehavior && triggersAndBehavior.trim().length > 0) {
+    engajamentoAutorregulacao.push(
+      `Prevenção Funcional de Gatilhos: Manejo preventivo para (${triggersAndBehavior}) por meio de antecipação de rotina, protocolo de Cartão de Pausa Discreta (5-10 min) e controle de estímulos no laboratório.`
+    );
+  }
   if (isEngSoft) {
-    engajamento.push(
+    engajamentoAutorregulacao.push(
       'Metodologia ágil com ciclos curtos de teste (TDD red-green-refactor) e rastreamento visual de tarefas e bugs no Jira / GitHub Projects (Plano de Ensino BAC.0406).'
     );
   } else {
-    engajamento.push(
+    engajamentoAutorregulacao.push(
       isSuperior
         ? 'Contextualização em problemas corporativos reais de engenharia de software, modelagem de dados e arquitetura de sistemas do PPC do BSI.'
         : 'Projetos práticos de desenvolvimento integrados à formação técnica e comunitária no IFTO Campus Paraíso.'
@@ -150,53 +171,55 @@ function synthesizeIodaPei(params: any) {
   }
 
   if (isAdhd) {
-    engajamento.push(
+    engajamentoAutorregulacao.push(
       'TDAH: Divisão das atividades de laboratório (LABIN/LADES) em micro-sprints com técnica Pomodoro (25min foco / 5min pausa) e entregas graduais.'
     );
   }
   if (isAutism) {
-    engajamento.push(
-      'TEA: Previsibilidade com cronograma semanal antecipado no Moodle, rotina metódica de testes, papéis técnicos definidos e cartão de pausa sensorial.'
+    engajamentoAutorregulacao.push(
+      'TEA: Previsibilidade com cronograma semanal antecipado no Moodle, rotina metódica de testes, papéis técnicos definidos e uso livre de abafador acústico.'
+    );
+  }
+  if (isHighAbilities) {
+    engajamentoAutorregulacao.push(
+      'AH/SD (Altas Habilidades / Superdotação): Enriquecimento curricular com desafios avançados de arquitetura de software, pesquisa aplicada e mentoria técnica.'
     );
   }
   if (isAnxiety) {
-    engajamento.push(
+    engajamentoAutorregulacao.push(
       'Ansiedade: Ambiente de laboratório acolhedor, substituição de defesas orais abertas por vídeos curtos (Loom) ou banca reservada e rubricas analíticas prévias.'
     );
   }
   if (isOCD) {
-    engajamento.push(
+    engajamentoAutorregulacao.push(
       'TOC: Critérios explícitos de aceite (Definition of Done) para interromper refatorações excessivas com validação automática por pipeline de CI/CD.'
     );
   }
   if (isDepression) {
-    engajamento.push(
+    engajamentoAutorregulacao.push(
       'Humor/Depressão: Acolhimento contínuo com metas graduais de recomposição da autoeficácia, acesso assíncrono ao Moodle e duplas colaborativas.'
     );
   }
   if (isEpilepsy) {
-    engajamento.push(
+    engajamentoAutorregulacao.push(
       'Epilepsia: Ambiente calmo sem sobrecarga de estresse temporal, pausas a cada 45 minutos e protocolo de segurança alinhado.'
     );
   }
   if (isLearning) {
-    engajamento.push(
+    engajamentoAutorregulacao.push(
       'Aprendizagem (Dislexia/Disgrafia/Discalculia): Acolhimento que remove punição por erros sintáticos de digitação, valorizando o raciocínio algorítmico.'
     );
   }
   if (isIntellectual) {
-    engajamento.push(
+    engajamentoAutorregulacao.push(
       'Desenvolvimento Intelectual: Mediação assistida de monitor de TI, desafios contextualizados e valorização imediata de cada etapa concluída.'
     );
   }
   if (isMotor) {
-    engajamento.push(
+    engajamentoAutorregulacao.push(
       'Motora: Metodologia de Pair Programming com rodízio orientado (estudante atua como arquiteto da lógica e dos casos de teste).'
     );
   }
-  engajamento.push(
-    'Sessões de alinhamento contínuo com a coordenação pedagógica do NAPNE e docente regente no Campus Paraíso.'
-  );
 
   const representacao: string[] = [];
   if (isEngSoft) {
@@ -218,9 +241,9 @@ function synthesizeIodaPei(params: any) {
       'TEA / TOC: Roteiros de laboratório passo a passo com critérios de aceite objetivos e linguagem direta sem ambiguidades.'
     );
   }
-  if (isAdhd) {
+  if (isAdhd || isHighAbilities) {
     representacao.push(
-      'TDAH: Instruções fracionadas em checklists interativos com destaque visual das entregas prioritárias e linters em tempo real.'
+      'TDAH / AH-SD: Instruções fracionadas em checklists interativos com destaque visual das entregas prioritárias, mapas arquiteturais (Mermaid) e linters em tempo real.'
     );
   }
   if (isVisual) {
@@ -250,9 +273,9 @@ function synthesizeIodaPei(params: any) {
       'Opção de gravação de vídeo/screencast curto (Loom) ou apresentação individual ao docente em substituição a exposições orais para toda a turma.'
     );
   }
-  if (isAdhd || isAutism) {
+  if (isAdhd || isAutism || isHighAbilities) {
     acaoExpressao.push(
-      'Entregas contínuas fracionadas por sprint no GitHub/Jira em substituição a avaliações únicas extensas, com uso de templates estruturados.'
+      'Entregas contínuas fracionadas por sprint no GitHub/Jira em substituição a avaliações únicas extensas, com uso de templates estruturados e Recursos de TA/CAA.'
     );
   }
   if (isVisual) {
@@ -286,6 +309,9 @@ function synthesizeIodaPei(params: any) {
   if (isAutism) {
     taList.push('Abafador de ruídos circum-aural (27dB+) e cartão de pausa sensorial para uso no LABIN');
   }
+  if (isHighAbilities) {
+    taList.push('Ambiente de prototipagem avançada, repositórios de desafio técnico e documentação dinâmica em Mermaid.js');
+  }
   if (isAnxiety || isDepression) {
     taList.push('Ferramenta de gravação de tela Loom e rubricas analíticas antecipadas no Moodle');
   }
@@ -307,13 +333,9 @@ function synthesizeIodaPei(params: any) {
   if (isMotor) {
     taList.push('Teclado mecânico com apoio de punho regulável e mouse vertical ergonômico');
   }
-  if (isEngSoft) {
-    taList.push('Frameworks de automação de testes (JUnit, Selenium) e rastreamento de defeitos (Jira)');
-  }
   taList.push('Tempo estendido (+50%) assegurado em avaliações práticas de computação');
   taList.push('Bancada de laboratório acessível nos laboratórios LABIN 1/2/3 e LADES do Campus Paraíso');
 
-  // Specific SMART goals tailored for modality, discipline, and combined neurodivergences
   const metas: any[] = [
     {
       id_meta: 'M1',
@@ -341,87 +363,128 @@ function synthesizeIodaPei(params: any) {
     },
   ];
 
-  if (isAutism && isAdhd) {
+  if (selectedNeurodivergences.length > 1) {
     metas.push({
       id_meta: 'M3',
-      descricao_meta:
-        'Consolidar rotina combinada de autorregulação sensorial (uso de abafador e roteiros previsíveis para TEA) e autogestão executiva por micro-sprints (Pomodoro e Kanban para TDAH) durante os laboratórios práticos.',
+      descricao_meta: `Integrar os apoios de Tecnologia Assistiva, autorregulação sensorial e flexibilizações de tempo/espaço para atender de forma holística à intersecção: ${selectedNeurodivergences.join(' + ')}.`,
       prazo: 'Semestral (12 semanas)',
       indicador_sucesso:
-        'Conclusão de 85% das micro-entregas semanais sem sobrecarga sensorial ou bloqueio executivo nos laboratórios LABIN/LADES.',
-      progresso_percentual: 40,
-      status: 'em_andamento',
-    });
-  } else if (selectedNeurodivergences.length > 1) {
-    metas.push({
-      id_meta: 'M3',
-      descricao_meta: `Integrar os apoios de Tecnologia Assistiva e flexibilizações de tempo/espaço para atender conjuntamente às necessidades de ${selectedNeurodivergences.join(' + ')}.`,
-      prazo: 'Semestral (12 semanas)',
-      indicador_sucesso:
-        'Participação autônoma e segura nas atividades avaliativas com alcance pleno dos objetivos técnicos da ementa.',
+        'Participação autônoma, prevenção de sobrecarga e alcance pleno dos objetivos técnicos da ementa.',
       progresso_percentual: 40,
       status: 'em_andamento',
     });
   }
 
+  const gatilhosMapeados = triggersAndBehavior
+    ? triggersAndBehavior
+        .split(/[;\n]+/)
+        .map((s: string) => s.trim())
+        .filter(Boolean)
+    : [
+        'Ruídos intensos e simultâneos no laboratório de informática sem uso de abafador acústico.',
+        'Instruções verbais longas sem apoio visual ou checklist passo a passo.',
+        'Mudanças bruscas de rotina ou prazos de entrega sem aviso prévio.',
+      ];
+
+  const historicoEtepList = [
+    ...(etepHistory
+      ? etepHistory
+          .split(/[;\n]+/)
+          .map((s: string) => s.trim())
+          .filter(Boolean)
+      : []),
+    ...(Array.isArray(etepTags) ? etepTags : []),
+  ];
+
+  if (historicoEtepList.length === 0) {
+    historicoEtepList.push(
+      'Fracionamento de atividades extensas em entregas curtas (chunking) validado nos semestres anteriores.',
+      'Disponibilização prévia de roteiros práticos no Moodle e tempo adicional de 50% em avaliações.'
+    );
+  }
+
+  const barreirasContextuais = [
+    `Barreiras Metodológicas: Aulas práticas de ${finalSubject} com formato único sem diversificação de vias DUA 3.0.`,
+    `Barreiras Ambientais e Sensoriais: Estímulos concorrentes no laboratório capazes de acionar gatilhos de sobrecarga (${gatilhosMapeados[0] || 'estímulos intensos'}).`,
+    `Barreiras Tecnológicas: Computadores de laboratório sem perfil prévio de acessibilidade para ${selectedNeurodivergences.join(' + ') || 'a condição acompanhada'}.`,
+  ];
+
+  const potencialidadesInteresses = [
+    potentialities,
+    `Capacidade de raciocínio dedutivo e pensamento computacional quando garantidos os apoios necessários para ${isSuperior ? 'projetos complexos de TI' : 'o aprendizado prático de TI'}.`,
+    'Excelente cooperação em metodologias ativas com papéis técnicos claros e previsíveis.',
+  ];
+
+  const parecerTexto = `PEI estruturado pelo Agente Ioda em estrita conformidade com a LGPD (Lei nº 13.709/2018), Art. 12, § 5º do Decreto nº 12.686/2025 e Portaria MEC nº 421/2026 para assegurar permanência e êxito em ${finalCourse}. Sugestões sujeitas à revisão e validação pelo docente regente e equipe pedagógica (NAPNE/ETEP).`;
+
   return {
     cabecalho: {
-      estudante: studentName,
+      estudante: anonymousStudentCode,
       codigo_matricula: `TI-${Math.floor(1000 + Math.random() * 9000)}`,
-      idade: params.age || (isSuperior ? '21 anos' : '17 anos'),
+      idade: sanitized.age || (isSuperior ? '21 anos' : '17 anos'),
       curso: finalCourse,
       componente_curricular: finalSubject,
       modulo_periodo: finalGrade,
       data_elaboracao: new Date().toISOString().split('T')[0],
-      docente_regente: docenteRegente,
-      docente_aee: docenteAee,
-      profissional_apoio: isSuperior ? 'Monitor de Acessibilidade Digital' : 'Monitor de Tecnologia Assistiva / Apoio Escolar',
+      docente_regente: anonymousDocenteCode,
+      docente_aee: 'Equipe Multiprofissional NAPNE / ETEP',
+      profissional_apoio: isSuperior
+        ? 'Monitor de Acessibilidade Digital'
+        : 'Monitor de Tecnologia Assistiva / Apoio Escolar',
       coordenacao_napne: 'Coordenação NAPNE · Campus Paraíso',
     },
     historico_e_condicao_napne: {
-      breve_historico_clinico_familiar: `Estudante matriculado no ${finalCourse} no Campus Paraíso (${isSuperior ? 'Ensino Superior em TI' : 'Ensino Médio Técnico Integrado'}). Acompanhado pelo NAPNE com foco na garantia do direito à educação inclusiva e acessibilidade curricular nos termos da PNEEI (Decreto nº 12.686/2025) e Portaria MEC nº 421/2026.${
+      breve_historico_clinico_familiar: `Estudante (${anonymousStudentCode}) matriculado no ${finalCourse} no Campus Paraíso (${isSuperior ? 'Ensino Superior em TI' : 'Ensino Médio Técnico Integrado'}). Acompanhado pelo NAPNE e ETEP com foco na garantia do direito à educação inclusiva e acessibilidade curricular nos termos do Decreto nº 12.686/2025 (Art. 12, § 5º) e Portaria MEC nº 421/2026.${
         statusDiagnostico === 'em_investigacao_hipotese'
           ? ' Atendimento garantido sem dependência de laudo médico pericial prévio (investigação pedagógica pelo NAPNE).'
           : ''
       }`,
       descricao_condicao_especifica: barriers,
-      informacoes_dos_pais: isSuperior
-        ? 'Estudante com autonomia acadêmica universitária em contato com o NAPNE e coordenação do curso.'
-        : 'Estudante e responsáveis em contato constante com o NAPNE Campus Paraíso e coordenação do curso.',
+      informacoes_dos_pais:
+        'Dados familiares e clínicos sob guarda sigilosa do NAPNE/ETEP em conformidade com a LGPD (Lei nº 13.709/2018).',
     },
+    // Estrutura expandida exigida pelo Schema JSON oficial (Requisito 4) + compatibilidade retroativa
     estudo_de_caso_sintese: {
-      barreiras_identificadas: [
-        `Barreiras Metodológicas: Aulas práticas de ${finalSubject} com formato tradicional sem diversificação de vias DUA 3.0.`,
-        `Barreiras Tecnológicas: Computadores de laboratório sem perfil prévio de acessibilidade para a condição do estudante.`,
-        `Barreiras Atitudinais: Risco de pressupostos capacitistas sobre a capacidade de desenvolvimento técnico em ${isSuperior ? 'nível superior' : 'nível médio integrado'}.`,
-      ],
-      potencialidades_interesses: [
-        potentialities,
-        `Capacidade de raciocínio dedutivo e pensamento computacional quando garantidos os apoios necessários para ${isSuperior ? 'projetos complexos de TI' : 'o aprendizado prático de TI'}.`,
-        'Excelente cooperação em metodologias ativas com papéis técnicos definidos.',
-      ],
+      barreiras_contextuais: barreirasContextuais,
+      potencialidades_e_interesses: potencialidadesInteresses,
+      mapeamento_de_gatilhos_e_crises: gatilhosMapeados,
+      historico_boas_praticas_etep: historicoEtepList,
+      // Aliases retrocompatíveis
+      barreiras_identificadas: barreirasContextuais,
+      potencialidades_interesses: potencialidadesInteresses,
       recursos_tecnologia_assistiva: taList,
     },
     planejamento_pedagogico_pei: {
       conteudo_ementa_oficial: `Ementa Oficial do Componente Curricular: ${finalSubject}. Conteúdos teóricos e desenvolvimento de aplicações práticas no ${finalCourse}.`,
       competencias_habilidades_ementa: `Desenvolver competências de análise, modelagem e codificação em ${finalSubject}, aplicando boas práticas de desenvolvimento de software e pensamento computacional.`,
-      adaptacao_flexibilizacao_curricular:
-        `Garantia do currículo de TI pleno (${isSuperior ? 'Superior' : 'Médio Técnico'}) sem rebaixamento de conteúdos. Acessibilização assegurada pela diversificação das vias de representação, engajamento e de ação técnica.`,
+      adaptacao_flexibilizacao_curricular: `Garantia do currículo de TI pleno (${isSuperior ? 'Superior' : 'Médio Técnico'}) sem rebaixamento de conteúdos. Acessibilização assegurada pela diversificação das vias de representação, engajamento/autorregulação e de ação técnica, integrando o histórico ETEP.`,
+      metas_e_objetivos: metas.map((m) => ({
+        id_meta: m.id_meta,
+        descricao_meta: m.descricao_meta,
+        indicador_sucesso: m.indicador_sucesso,
+        prazo: m.prazo,
+      })),
       objetivos_e_metas_adaptadas: metas,
+      estrategias_preventivas_e_dua_3_0: {
+        engajamento_e_autorregulacao: engajamentoAutorregulacao,
+        representacao,
+        acao_e_expressao: acaoExpressao,
+      },
       flexibilizacao_metodologica_dua: {
-        engajamento,
+        engajamento: engajamentoAutorregulacao,
         representacao,
         acao_e_expressao: acaoExpressao,
       },
       gestao_sala_de_aula: [
         'Bancada de laboratório reservada com layout ergonômico e ferramentas de acessibilidade instaladas.',
-        'Pausas programadas a cada 45-60 minutos para prevenção de fadiga física, visual ou cognitiva.',
-        'Sessões de suporte semanais garantidas na carga horária docente entre o professor técnico e o NAPNE Campus Paraíso.',
+        'Pausas programadas a cada 45-60 minutos e protocolo de Cartão de Pausa Discreta para prevenção de gatilhos.',
+        'Sessões de alinhamento semanais entre o docente regente, ETEP e NAPNE Campus Paraíso.',
       ],
       estrategias_de_avaliacao: {
         formato_acessivel:
-          'Avaliação formativa processual com entregas graduais no Git, testes práticos em laboratório e tempo estendido (+50%).',
-        criterio_de_sucesso: 'Compreensão substantiva da lógica e capacidade de aplicação prática na disciplina.',
+          'Avaliação formativa processual com entregas graduais no Git, testes práticos em laboratório, múltiplas vias de expressão e tempo estendido (+50%).',
+        criterio_de_sucesso:
+          'Compreensão substantiva da lógica e capacidade de aplicação prática na disciplina, sem penalização por barreiras sensoriais ou motoras.',
       },
       guia_pratico_sala_de_aula: {
         passo_a_passo_explicacao: isEngSoft
@@ -435,20 +498,28 @@ function synthesizeIodaPei(params: any) {
         avaliacao_pratica:
           'Prova/trabalho dividido em partes menores com tempo adicional de 50%, enunciados diretos sem pegadinhas e opção de defesa prática comentada na máquina.',
         manejo_e_acolhimento:
-          'Se o estudante travar, apresentar ansiedade ou sobrecarga sensorial, permita pausa de 5 a 10 minutos, reduza a cobrança imediata e retome a partir do último ponto que funcionou.',
+          'Se o estudante apresentar sinais de gatilho, ansiedade ou sobrecarga sensorial, permita pausa imediata de 5 a 10 minutos (Cartão de Pausa), reduza estímulos do ambiente e retome a partir do último ponto validado no Histórico ETEP.',
       },
     },
     painel_de_acompanhamento: {
+      status_ciclo: 'EM_ANDAMENTO',
+      metricas_numericas: {
+        percentual_metas_alcancadas: 45,
+        nivel_autonomia_1_a_5: 4,
+        engajamento_nas_atividades_1_a_5: 5,
+      },
+      parecer_sintetico: parecerTexto,
+      // Aliases retrocompatíveis
       status_periodo: 'EM_ANDAMENTO',
       metricas_grafico: {
         percentual_metas_alcancadas: 45,
         nivel_autonomia_1_a_5: 4,
         engajamento_nas_atividades_1_a_5: 5,
       },
-      parecer_pedagogico: `PEI estruturado pelo agente Ioda em estrita conformidade com a Portaria MEC nº 421/2026 e Decreto nº 12.686/2025 para assegurar a permanência e êxito em ${finalCourse}.`,
+      parecer_pedagogico: parecerTexto,
       sugestoes_proximo_ciclo: [
-        'Manter reuniões semanais de suporte entre a equipe técnica e o NAPNE Campus Paraíso.',
-        `Avançar para projeto prático integrador de ${isSuperior ? 'nível superior' : 'nível médio técnico'} no período seguinte.`,
+        'Manter reuniões semanais de suporte entre a equipe técnica, ETEP e o NAPNE Campus Paraíso.',
+        `Consolidar no portfólio ETEP as adaptações que tiveram maior eficácia no ciclo atual.`,
       ],
     },
   };
@@ -465,105 +536,45 @@ function triggerQuotaCooldown(durationMs = 300000) {
   quotaCooldownUntil = Date.now() + durationMs;
 }
 
-// API Route: Generate PEI with Ioda AI
+// API Route: Generate PEI with Ioda AI (LGPD Sanitized + Structured JSON Schema)
 app.post('/api/gemini/generate-pei', async (req: Request, res: Response) => {
   res.setHeader('Content-Type', 'application/json');
 
   try {
-    const {
-      studentName,
-      grade,
-      course,
-      subject,
-      barriers,
-      potentialities,
-      assistiveTech,
-      perfilModalidade = 'medio_tecnico',
-      statusDiagnostico = 'confirmado',
-    } = req.body;
-
+    // 1. Camada de Privacidade e Tratamento de Dados (LGPD - Lei nº 13.709/2018 & Art. 12, § 5º Decreto nº 12.686/2025)
+    const sanitizedPayload = sanitizePeiPayloadForLgpd(req.body || {}, 1);
     const isSuperior =
-      perfilModalidade === 'superior_ti' ||
-      (course && course.toLowerCase().includes('superior'));
+      sanitizedPayload.perfilModalidade === 'superior_ti' ||
+      sanitizedPayload.course.toLowerCase().includes('superior');
 
     // Check if API key is not configured or currently on quota cooldown
     if (!process.env.GEMINI_API_KEY || isQuotaOnCooldown()) {
-      console.log('[Ioda Engine] Utilizando Motor Pedagógico Ioda DUA 3.0 com benchmark de TI.');
+      console.log('[Ioda Engine] Utilizando Motor Pedagógico Ioda DUA 3.0 com proteção LGPD.');
       const synthesized = synthesizeIodaPei(req.body);
       return res.json({
         success: true,
         data: synthesized,
         isIodaEngine: true,
+        lgpdSanitized: true,
         notice: `PEI estruturado pelo Motor Pedagógico Ioda (DUA 3.0 · ${isSuperior ? 'Superior em TI' : 'Médio Técnico em TI'})`,
       });
     }
 
-    const modalityGuidelines = isSuperior
-      ? `PERFIL SELECIONADO: ENSINO SUPERIOR EM TI (Bacharelado / Tecnologia em Sistemas de Informação - 14 estudantes no Campus Paraíso).
-Diretrizes Pedagógicas para Superior em TI:
-- Foco em autonomia acadêmica, raciocínio lógico avançado e arquitetura de software.
-- Instrumentos de avaliação: entregas contínuas em repositório Git, sustentação oral das decisões arquiteturais e avaliações práticas baseadas em projetos com tempo estendido (+50%).`
-      : `PERFIL SELECIONADO: ENSINO MÉDIO TÉCNICO INTEGRADO EM INFORMÁTICA (15 estudantes no Campus Paraíso).
-Diretrizes Pedagógicas para Médio Técnico em TI:
-- Formação Profissional Técnica articulada à BNCC.
-- Acomodações de laboratório de informática: duplas colaborativas, roteiros passo a passo em Markdown, acompanhamento de monitoria e garantia de permanência e êxito.`;
+    const systemPrompt = buildIodaSystemInstruction(isSuperior);
+    const userPrompt = buildSanitizedUserPrompt(sanitizedPayload);
 
-    const systemPrompt = `Você é o agente Ioda (Inclusion on Diversity Agent), especialista sênior em Educação Especial Inclusiva do Brasil e NAPNE, focado em Tecnologia da Informação (TI).
-Legislação e Referências:
-- Decreto nº 12.686/2025 e Portaria MEC nº 421/2026 - O PEI NÃO depende de laudo médico pericial.
-- DUA 3.0 (CAST 2024): Engajamento, Representação, Ação e Expressão.
-- Princípio Inegociável: O currículo de TI deve ser acessível sem empobrecimento ou rebaixamento cognitivo.
-
-${modalityGuidelines}
-
-Retorne estritamente um JSON estruturado com:
-{
-  "cabecalho": { "estudante": "", "codigo_matricula": "", "idade": "", "curso": "", "componente_curricular": "", "modulo_periodo": "", "docente_regente": "", "docente_aee": "" },
-  "historico_e_condicao_napne": { "breve_historico_clinico_familiar": "", "descricao_condicao_especifica": "", "informacoes_dos_pais": "" },
-  "estudo_de_caso_sintese": { "barreiras_identificadas": [], "potencialidades_interesses": [], "recursos_tecnologia_assistiva": [] },
-  "planejamento_pedagogico_pei": {
-    "conteudo_ementa_oficial": "",
-    "competencias_habilidades_ementa": "",
-    "adaptacao_flexibilizacao_curricular": "",
-    "objetivos_e_metas_adaptadas": [{ "id_meta": "M1", "descricao_meta": "", "prazo": "", "indicador_sucesso": "" }],
-    "flexibilizacao_metodologica_dua": { "engajamento": [], "representacao": [], "acao_e_expressao": [] },
-    "gestao_sala_de_aula": [],
-    "estrategias_de_avaliacao": { "formato_acessivel": "", "criterio_de_sucesso": "" },
-    "guia_pratico_sala_de_aula": {
-      "passo_a_passo_explicacao": "Como explicar o conteúdo específico da disciplina de forma tangível para o perfil do estudante",
-      "divisao_tarefa_chunking": ["Etapa 1...", "Etapa 2...", "Etapa 3..."],
-      "avaliacao_pratica": "Formato concreto da prova/trabalho adaptado e critérios de correção justos",
-      "manejo_e_acolhimento": "O que fazer na prática se o aluno travar ou se desregular"
-    }
-  },
-  "painel_de_acompanhamento": { "status_periodo": "EM_ANDAMENTO", "parecer_pedagogico": "", "sugestoes_proximo_ciclo": [] }
-}`;
-
-    const neuroList = Array.isArray(req.body?.selectedNeurodivergences) && req.body.selectedNeurodivergences.length > 0
-      ? req.body.selectedNeurodivergences.join(' + ')
-      : 'Neurodivergência / Condição específica';
-
-    const userPrompt = `Gere o PEI completo pelo agente Ioda para o perfil ${isSuperior ? 'SUPERIOR EM TI' : 'MÉDIO TÉCNICO EM INFORMÁTICA'}:
-Aluno: ${studentName || 'Estudante'}
-Nível / Modalidade: ${isSuperior ? 'Ensino Superior em TI' : 'Ensino Médio Técnico Integrado em Informática'}
-Curso: ${course || (isSuperior ? 'Bacharelado em Sistemas de Informação' : 'Curso Técnico Integrado ao Ensino Médio em Informática')} (${grade || (isSuperior ? '4º Semestre' : '2º Ano')})
-Disciplina de TI: ${subject || (isSuperior ? 'Banco de Dados Relacional e SQL' : 'Programação Web e Algoritmos')}
-Situação Diagnóstica: ${statusDiagnostico === 'em_investigacao_hipotese' ? 'Sem Laudo / Hipótese em Investigação (Portaria MEC nº 421/2026)' : 'Diagnóstico Confirmado no NAPNE'}
-Neurodivergências Selecionadas (Comorbidade / Múltiplas): ${neuroList} (ATENÇÃO: Se houver mais de uma neurodivergência, adapte as estratégias DUA 3.0, recursos de TA e metas SMART para contemplar simultaneamente todas as condições informadas)
-Condição e Barreiras: ${barriers || 'Dificuldades no laboratório de informática'}
-Potencialidades: ${potentialities || 'Raciocínio lógico e dedutivo para tecnologia'}
-Recursos de TA prévios: ${assistiveTech || 'Softwares de acessibilidade e tempo ampliado (+50%)'}`;
-
-    // Attempt Gemini call with quick timeout
+    // Attempt Gemini call with quick timeout and structured JSON Schema
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 8000);
 
     try {
       const response = await ai.models.generateContent({
-        model: 'gemini-3.8-flash',
+        model: 'gemini-2.5-flash',
         contents: userPrompt,
         config: {
           systemInstruction: systemPrompt,
+          responseMimeType: 'application/json',
+          responseSchema: IODA_GEMINI_RESPONSE_SCHEMA,
         },
       });
       clearTimeout(timeoutId);
@@ -571,7 +582,6 @@ Recursos de TA prévios: ${assistiveTech || 'Softwares de acessibilidade e tempo
       const outputText = response.text || '';
       const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
 
-      // Extract JSON if wrapped in markdown blocks
       let jsonStr = outputText.trim();
       if (jsonStr.includes('```json')) {
         jsonStr = jsonStr.split('```json')[1].split('```')[0].trim();
@@ -581,11 +591,36 @@ Recursos de TA prévios: ${assistiveTech || 'Softwares de acessibilidade e tempo
 
       if (jsonStr.startsWith('{')) {
         const parsed = JSON.parse(jsonStr);
+        const fallbackBase = synthesizeIodaPei(req.body);
+
+        // Merge structured Gemini output with full pedagogical structure
+        const mergedData = {
+          ...fallbackBase,
+          ...parsed,
+          estudo_de_caso_sintese: {
+            ...fallbackBase.estudo_de_caso_sintese,
+            ...(parsed.estudo_de_caso_sintese || {}),
+          },
+          planejamento_pedagogico_pei: {
+            ...fallbackBase.planejamento_pedagogico_pei,
+            ...(parsed.planejamento_pedagogico_pei || {}),
+            estrategias_preventivas_e_dua_3_0: {
+              ...fallbackBase.planejamento_pedagogico_pei.estrategias_preventivas_e_dua_3_0,
+              ...(parsed.planejamento_pedagogico_pei?.estrategias_preventivas_e_dua_3_0 || {}),
+            },
+          },
+          painel_de_acompanhamento: {
+            ...fallbackBase.painel_de_acompanhamento,
+            ...(parsed.painel_de_acompanhamento || {}),
+          },
+        };
+
         return res.json({
           success: true,
-          data: parsed,
+          data: mergedData,
           groundingChunks,
           isAiGenerated: true,
+          lgpdSanitized: true,
         });
       } else {
         throw new Error('Retorno sem JSON');
@@ -600,8 +635,8 @@ Recursos de TA prévios: ${assistiveTech || 'Softwares de acessibilidade e tempo
         `${genError?.message}`.includes('RESOURCE_EXHAUSTED');
 
       if (isQuotaError) {
-        triggerQuotaCooldown(300000); // 5 min cooldown on quota exhaustion
-        console.log('[Ioda Pedagogical Engine] Cota de API de IA atingida. Ativando Motor Pedagógico Ioda DUA 3.0 com benchmark de TI.');
+        triggerQuotaCooldown(300000);
+        console.log('[Ioda Pedagogical Engine] Cota de API de IA atingida. Ativando Motor Pedagógico Ioda DUA 3.0.');
       } else {
         console.log('[Ioda Pedagogical Engine] Ativando Motor Pedagógico Ioda para sintetizar o PEI com excelência curricular.');
       }
@@ -611,6 +646,7 @@ Recursos de TA prévios: ${assistiveTech || 'Softwares de acessibilidade e tempo
         success: true,
         data: synthesized,
         isIodaEngine: true,
+        lgpdSanitized: true,
         notice: `PEI estruturado pelo Motor Pedagógico Ioda (DUA 3.0 · ${isSuperior ? 'Superior em TI' : 'Médio Técnico em TI'})`,
       });
     }
@@ -621,6 +657,7 @@ Recursos de TA prévios: ${assistiveTech || 'Softwares de acessibilidade e tempo
       success: true,
       data: fallbackData,
       isIodaEngine: true,
+      lgpdSanitized: true,
       notice: 'Recuperação automática do PEI efetuada com sucesso.',
     });
   }

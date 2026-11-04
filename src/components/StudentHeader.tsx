@@ -1,5 +1,6 @@
 import React from 'react';
 import { PEICompleto } from '../types/pei';
+import { CuradoriaDocenteBanner } from './CuradoriaDocenteBanner';
 import {
   UserCheck,
   BookOpen,
@@ -35,7 +36,10 @@ export const StudentHeader: React.FC<StudentHeaderProps> = ({
 
   return (
     <div className="bg-white border-b border-slate-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-3">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-3.5">
+        {/* Aviso Institucional de Curadoria Docente (Human-in-the-Loop) no Cabeçalho da Visualização Final */}
+        <CuradoriaDocenteBanner variant="compact" />
+
         {/* Compact Student Switcher Row */}
         <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
           <div className="flex flex-wrap items-center gap-1.5">

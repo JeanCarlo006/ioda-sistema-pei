@@ -1416,6 +1416,42 @@ export const bancoDeSolucoesPedagogicas: SolucaoCondicao[] = [
         'Acolha o estudante sem exigir justificativas clínicas; tranquilize-o de que a escola adaptará o método de ensino para apoiar seu sucesso na disciplina.',
     },
   },
+  {
+    id: 'sol-ahsd',
+    titulo: 'Altas Habilidades / Superdotação (AH/SD)',
+    condicao: 'Capacidade elevada de abstração lógica, hiperfoco criativo e necessidade de enriquecimento curricular',
+    nivelSugerido: 'Ambos',
+    descricaoProblema:
+      'Desmotivação ou tédio em tarefas repetitivas de codificação básica e sobrecarga quando associada a outras condições (Dupla Excepcionalidade, como AH/SD + TDAH ou AH/SD + Ansiedade).',
+    remediosSugeridos: {
+      engajamento:
+        'Enriquecimento curricular vertical e horizontal: desafios de arquitetura de software, projetos de pesquisa aplicada e mentoria técnica sem sobrecarga burocrática.',
+      representacao:
+        'Documentação técnica avançada (RFCs, diagramas Mermaid, repositórios open-source) e trilhas de aprofundamento autônomo.',
+      acaoExpressao:
+        'Entregas por protótipos funcionais, liderança técnica em projetos colaborativos e avaliação baseada em resolução de problemas complexos.',
+      recursosTA: [
+        'Ambientes de prototipagem avançada e repositórios Git com CI/CD',
+        'Quadro Kanban para gestão de escopo e prevenção de perfeccionismo paralisante',
+        'Documentação viva em Markdown e Mermaid.js',
+      ],
+      avaliacaoAcessivel:
+        'Avaliação por projetos desafiadores e entregas modulares com critérios claros de escopo (Definition of Done).',
+    },
+    guiaPratico: {
+      passo_a_passo_explicacao:
+        'Apresente o problema arquitetural completo logo no início e permita que o estudante explore soluções mais avançadas após cumprir o requisito essencial da aula.',
+      divisao_tarefa_chunking: [
+        'Etapa 1: Definir com clareza o requisito mínimo obrigatório (MVP) da aula para evitar dispersão em escopo infinito.',
+        'Etapa 2: Liberar desafio extra opcional (refatoração, otimização ou teste automatizado) caso conclua antes.',
+        'Etapa 3: Validar a entrega valorizando a criatividade técnica sem cobrar relatórios burocráticos repetitivos.',
+      ],
+      avaliacao_pratica:
+        'Permita demonstrar domínio técnico por meio de projetos práticos avançados ou resolução de casos reais, combinando rubricas objetivas para reduzir ansiedade de desempenho.',
+      manejo_e_acolhimento:
+        'Evite sobrecarregar o estudante com tarefas mecânicas extras; ofereça desafios qualitativos e acolha oscilações executivas ou emocionais (dupla excepcionalidade).',
+    },
+  },
 ];
 
 // Gerador Rápido de Novo PEI Completo para Aluno Cadastrado (Suporta múltiplas neurodivergências combinadas)
@@ -1433,6 +1469,9 @@ export function gerarNovoPeiCompleto(dados: {
   solucaoBaseIds?: string[];
   statusDiagnostico?: 'confirmado' | 'em_investigacao_hipotese';
   categoriaNeurodivergencia?: string;
+  mapeamentoGatilhos?: string[];
+  historicoEtep?: string[];
+  interseccaoCondicoes?: string[];
 }): PEICompleto {
   const idsList =
     dados.solucaoBaseIds && dados.solucaoBaseIds.length > 0
@@ -1576,6 +1615,25 @@ export function gerarNovoPeiCompleto(dados: {
         },
       ],
       recursos_ta: recursosTaCombinados,
+      mapeamento_de_gatilhos_e_crises:
+        dados.mapeamentoGatilhos && dados.mapeamentoGatilhos.length > 0
+          ? dados.mapeamentoGatilhos
+          : [
+              'Ruídos altos e simultâneos no laboratório de informática sem apoio de abafador acústico.',
+              'Instruções verbais longas sem apoio visual ou roteiro passo a passo.',
+              'Mudanças bruscas de rotina ou cobrança sob pressão temporal restrita.',
+            ],
+      historico_boas_praticas_etep:
+        dados.historicoEtep && dados.historicoEtep.length > 0
+          ? dados.historicoEtep
+          : [
+              'Fracionamento de atividades práticas em entregas curtas (chunking) validado em ciclos anteriores.',
+              'Disponibilização antecipada de roteiros no Moodle e tempo adicional (+50%) em avaliações.',
+            ],
+      interseccao_condicoes:
+        dados.interseccaoCondicoes && dados.interseccaoCondicoes.length > 0
+          ? dados.interseccaoCondicoes
+          : solucoesSelecionadas.map((s) => s.titulo),
       sintese_observacao: {
         interacao_professores: 'Receptivo e proativo nas orientações pedagógicas.',
         interacao_colegas: 'Excelente entrosamento em equipes de desenvolvimento.',
