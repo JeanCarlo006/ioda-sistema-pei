@@ -1,6 +1,7 @@
 import React from 'react';
 import { PEICompleto } from '../types/pei';
 import { getIdentificadorConfidencial } from '../data/initialCases';
+import { CuradoriaDocenteBanner } from './CuradoriaDocenteBanner';
 import {
   Sparkles,
   FileText,
@@ -13,6 +14,7 @@ import {
   FolderOpen,
   Wrench,
   Trash2,
+  Compass,
 } from 'lucide-react';
 
 interface ILovePeiHubProps {
@@ -25,6 +27,7 @@ interface ILovePeiHubProps {
   onOpenCampusStats: () => void;
   onPrint: () => void;
   onRequestDeletePei?: (peiToDelete: PEICompleto) => void;
+  onOpenOnboardingTour?: () => void;
 }
 
 export const ILovePeiHub: React.FC<ILovePeiHubProps> = ({
@@ -36,6 +39,7 @@ export const ILovePeiHub: React.FC<ILovePeiHubProps> = ({
   onOpenSolutionBank,
   onPrint,
   onRequestDeletePei,
+  onOpenOnboardingTour,
 }) => {
   const toolCards = [
     {
@@ -89,7 +93,10 @@ export const ILovePeiHub: React.FC<ILovePeiHubProps> = ({
   ];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
+      {/* Banner de Curadoria Docente (Human-in-the-Loop) */}
+      <CuradoriaDocenteBanner />
+
       {/* Clean Institutional Header */}
       <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="space-y-1.5">
@@ -104,11 +111,22 @@ export const ILovePeiHub: React.FC<ILovePeiHubProps> = ({
           </p>
         </div>
 
-        <div className="shrink-0">
+        <div className="shrink-0 flex flex-wrap items-center gap-2.5">
+          {onOpenOnboardingTour && (
+            <button
+              type="button"
+              onClick={onOpenOnboardingTour}
+              className="w-full sm:w-auto px-4 py-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 font-bold text-xs sm:text-sm rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <Compass className="w-4 h-4 text-emerald-700" />
+              <span>Tour Rápido (4 Passos)</span>
+            </button>
+          )}
+
           <button
             type="button"
             onClick={onOpenAddStudent}
-            className="w-full md:w-auto px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm rounded-xl shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full sm:w-auto px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm rounded-xl shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
           >
             <UserPlus className="w-4 h-4" />
             <span>+ Elaborar Novo PEI</span>

@@ -48,6 +48,12 @@ export const CaseStudyView: React.FC<CaseStudyViewProps> = ({ pei }) => {
           .map((s) => s.trim())
           .filter(Boolean);
 
+  const especificidadesList =
+    estudo_de_caso.especificidades_transtorno_e_interseccoes &&
+    estudo_de_caso.especificidades_transtorno_e_interseccoes.length > 0
+      ? estudo_de_caso.especificidades_transtorno_e_interseccoes
+      : [historico_napne.descricao_condicao_especifica];
+
   return (
     <div className="space-y-8">
       {/* Clean Page Title + Intersection Badges */}
@@ -57,7 +63,7 @@ export const CaseStudyView: React.FC<CaseStudyViewProps> = ({ pei }) => {
             Estudo de Caso Sintetizado (Análise Funcional & Histórico ETEP)
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
-            Visão holística e biopsicossocial das barreiras contextuais, gatilhos, potencialidades e boas práticas anteriores
+            Visão holística e biopsicossocial das especificidades por neurodivergência, gatilhos, potencialidades e boas práticas anteriores
           </p>
         </div>
 
@@ -73,6 +79,33 @@ export const CaseStudyView: React.FC<CaseStudyViewProps> = ({ pei }) => {
             >
               {cond}
             </span>
+          ))}
+        </div>
+      </div>
+
+      {/* BLOCO DE ESPECIFICIDADES POR TRANSTORNO / NEURODIVERGÊNCIA E INTERSECÇÕES */}
+      <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-3 shadow-2xs">
+        <div className="flex items-center gap-2.5 border-b border-slate-100 pb-3">
+          <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0">
+            <Layers className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="text-base font-bold text-slate-900">
+              Especificidades por Transtorno / Neurodivergência e Intersecções
+            </h3>
+            <p className="text-xs text-slate-500">
+              Características individuais observadas no estudante (evitando generalizações padronizadas)
+            </p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {especificidadesList.map((esp, idx) => (
+            <div
+              key={idx}
+              className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm text-slate-800 leading-relaxed"
+            >
+              {esp}
+            </div>
           ))}
         </div>
       </div>

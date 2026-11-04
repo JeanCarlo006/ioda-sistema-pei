@@ -387,21 +387,21 @@ export const PeiView: React.FC<PeiViewProps> = ({
             </div>
           </section>
 
-          {/* BLOCO 2: EMENTA E FLEXIBILIZAÇÃO CURRICULAR */}
+          {/* BLOCO 2: DETALHAMENTO DO COMPONENTE CURRICULAR (EMENTA, PPC/BNCC E DIFICULDADES ESPECÍFICAS) */}
           <section className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-7 space-y-5">
             <div className="border-b border-slate-100 pb-4">
               <h3 className="text-base font-bold text-slate-900">
-                2. Conteúdo da Disciplina e Adaptação
+                2. Detalhamento do Componente Curricular (PPC / BNCC) e Flexibilização
               </h3>
               <p className="text-xs text-slate-500 mt-0.5">
-                O que a turma está estudando e como o conteúdo é flexibilizado sem perda de qualidade
+                Ementa oficial, habilidades PPC/BNCC, dificuldades específicas na disciplina e adaptação sem empobrecimento curricular
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl">
                 <span className="text-xs font-bold text-slate-800 block mb-1.5">
-                  Conteúdo da Ementa
+                  Ementa Oficial & Conteúdos do Módulo/Semestre
                 </span>
                 <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
                   {planejamento_pei.conteudo_ementa_oficial}
@@ -410,16 +410,26 @@ export const PeiView: React.FC<PeiViewProps> = ({
 
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl">
                 <span className="text-xs font-bold text-slate-800 block mb-1.5">
-                  Habilidades Esperadas
+                  Habilidades e Competências Exigidas (PPC / BNCC)
                 </span>
                 <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
                   {planejamento_pei.competencias_habilidades_ementa}
                 </p>
               </div>
 
-              <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl">
+              <div className="p-4 bg-amber-50/50 border border-amber-200 rounded-xl">
+                <span className="text-xs font-bold text-amber-900 block mb-1.5">
+                  Dificuldades Específicas Observadas nesta Disciplina
+                </span>
+                <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
+                  {planejamento_pei.dificuldades_especificas_na_disciplina ||
+                    historico_napne.descricao_condicao_especifica}
+                </p>
+              </div>
+
+              <div className="p-4 bg-emerald-50/50 border border-emerald-200 rounded-xl">
                 <span className="text-xs font-bold text-emerald-800 block mb-1.5">
-                  Como Adaptar na Disciplina
+                  Adaptação e Flexibilização Curricular na Disciplina
                 </span>
                 <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
                   {planejamento_pei.adaptacao_flexibilizacao_curricular}

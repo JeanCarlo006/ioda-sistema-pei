@@ -9,6 +9,11 @@ export interface RawPeiRequestPayload {
   grade?: string;
   course?: string;
   subject?: string;
+  ementaOficial?: string;
+  conteudosEspecificosModulo?: string;
+  habilidadesCompetenciasPpcBncc?: string;
+  dificuldadesEspecificasDisciplina?: string;
+  especificidadesTranstorno?: string;
   barriers?: string;
   potentialities?: string;
   assistiveTech?: string;
@@ -32,6 +37,11 @@ export interface SanitizedPeiPayload {
   grade: string;
   course: string;
   subject: string;
+  ementaOficial: string;
+  conteudosEspecificosModulo: string;
+  habilidadesCompetenciasPpcBncc: string;
+  dificuldadesEspecificasDisciplina: string;
+  especificidadesTranstorno: string;
   barriers: string;
   potentialities: string;
   assistiveTech: string;
@@ -136,6 +146,10 @@ export function sanitizePeiPayloadForLgpd(
     ? payload.etepTags.map((tag) => sanitizeTextForLgpd(tag, namesToRedact, anonymousStudentCode)).filter(Boolean)
     : [];
 
+  const subjectSanitized =
+    sanitizeTextForLgpd(payload.subject, namesToRedact, anonymousStudentCode) ||
+    'Programação Web e Algoritmos';
+
   return {
     anonymousStudentCode,
     anonymousDocenteCode,
@@ -143,12 +157,28 @@ export function sanitizePeiPayloadForLgpd(
     course:
       sanitizeTextForLgpd(payload.course, namesToRedact, anonymousStudentCode) ||
       'Curso Técnico Integrado ao Ensino Médio em Informática',
-    subject:
-      sanitizeTextForLgpd(payload.subject, namesToRedact, anonymousStudentCode) ||
-      'Programação Web e Algoritmos',
+    subject: subjectSanitized,
+    ementaOficial:
+      sanitizeTextForLgpd(payload.ementaOficial, namesToRedact, anonymousStudentCode) ||
+      `Ementa oficial de ${subjectSanitized}: fundamentos teóricos, modelagem lógica e implementação prática em laboratório.`,
+    conteudosEspecificosModulo:
+      sanitizeTextForLgpd(payload.conteudosEspecificosModulo, namesToRedact, anonymousStudentCode) ||
+      `Conteúdos práticos do semestre em ${subjectSanitized}, resolução de problemas e desenvolvimento guiado.`,
+    habilidadesCompetenciasPpcBncc:
+      sanitizeTextForLgpd(payload.habilidadesCompetenciasPpcBncc, namesToRedact, anonymousStudentCode) ||
+      `Desenvolver pensamento computacional, raciocínio algorítmico e competências técnicas previstas no PPC/BNCC para ${subjectSanitized}.`,
+    dificuldadesEspecificasDisciplina:
+      sanitizeTextForLgpd(payload.dificuldadesEspecificasDisciplina, namesToRedact, anonymousStudentCode) ||
+      sanitizeTextForLgpd(payload.barriers, namesToRedact, anonymousStudentCode) ||
+      `Dificuldade em acompanhar aulas práticas extensas ou enunciados complexos em ${subjectSanitized} sem fracionamento (chunking) e apoio visual.`,
+    especificidadesTranstorno:
+      sanitizeTextForLgpd(payload.especificidadesTranstorno, namesToRedact, anonymousStudentCode) ||
+      (neuroList.length > 0
+        ? `Especificidades funcionais combinadas para ${neuroList.join(' + ')} no contexto do laboratório de TI.`
+        : 'Necessidade de previsibilidade de rotina, instruções estruturadas e diversificação multissensorial DUA 3.0.'),
     barriers:
       sanitizeTextForLgpd(payload.barriers, namesToRedact, anonymousStudentCode) ||
-      'Barreiras pedagógicas e sensoriais observadas no laboratório de informática.',
+      'Barreiras pedagógicas, metodológicas e sensoriais observadas no laboratório de informática.',
     potentialities:
       sanitizeTextForLgpd(payload.potentialities, namesToRedact, anonymousStudentCode) ||
       'Raciocínio lógico, pensamento computacional e resolução prática de problemas.',
@@ -177,7 +207,7 @@ export function sanitizePeiPayloadForLgpd(
 }
 
 /**
- * Schema JSON estrito para configuração de resposta estruturada na chamada da API do Google Gemini.
+ * Schema JSON estrito para configuração de resposta estruturada na chamada da API do Google Gemini (Requisito 4).
  */
 export const IODA_GEMINI_RESPONSE_SCHEMA: Schema = {
   type: Type.OBJECT,
@@ -185,6 +215,11 @@ export const IODA_GEMINI_RESPONSE_SCHEMA: Schema = {
     estudo_de_caso_sintese: {
       type: Type.OBJECT,
       properties: {
+        'especificidades_transtorno_e_intersecçoes': {
+          type: Type.ARRAY,
+          items: { type: Type.STRING },
+          description: 'Especificidades individuais por transtorno/neurodivergência (TEA, TDAH, AH/SD, Auditiva, Visual, etc.) e suas intersecções/comorbidades.',
+        },
         barreiras_contextuais: {
           type: Type.ARRAY,
           items: { type: Type.STRING },
@@ -207,6 +242,7 @@ export const IODA_GEMINI_RESPONSE_SCHEMA: Schema = {
         },
       },
       required: [
+        'especificidades_transtorno_e_intersecçoes',
         'barreiras_contextuais',
         'potencialidades_e_interesses',
         'mapeamento_de_gatilhos_e_crises',
@@ -216,9 +252,13 @@ export const IODA_GEMINI_RESPONSE_SCHEMA: Schema = {
     planejamento_pedagogico_pei: {
       type: Type.OBJECT,
       properties: {
-        conteudo_ementa_oficial: {
+        conteudo_ementa_e_habilidades_bncc: {
           type: Type.STRING,
-          description: 'Conteúdo programático e ementa oficial da disciplina sem empobrecimento curricular.',
+          description: 'Ementa oficial do componente, conteúdos específicos do módulo/semestre e habilidades/competências exigidas pelo PPC/BNCC.',
+        },
+        dificuldades_especificas_na_disciplina: {
+          type: Type.STRING,
+          description: 'Dificuldades específicas observadas no estudante referente àquela disciplina.',
         },
         metas_e_objetivos: {
           type: Type.ARRAY,
@@ -238,7 +278,7 @@ export const IODA_GEMINI_RESPONSE_SCHEMA: Schema = {
             engajamento_e_autorregulacao: {
               type: Type.ARRAY,
               items: { type: Type.STRING },
-              description: 'Estratégias para prevenção de gatilhos, regulação emocional/sensorial e motivação.',
+              description: 'Estratégias de motivação e prevenção de gatilhos.',
             },
             representacao: {
               type: Type.ARRAY,
@@ -248,7 +288,7 @@ export const IODA_GEMINI_RESPONSE_SCHEMA: Schema = {
             acao_e_expressao: {
               type: Type.ARRAY,
               items: { type: Type.STRING },
-              description: 'Múltiplas vias de demonstração do aprendizado e Recursos de TA/CAA.',
+              description: 'Múltiplas vias de demonstração e recursos de TA/CAA.',
             },
           },
           required: ['engajamento_e_autorregulacao', 'representacao', 'acao_e_expressao'],
@@ -263,7 +303,8 @@ export const IODA_GEMINI_RESPONSE_SCHEMA: Schema = {
         },
       },
       required: [
-        'conteudo_ementa_oficial',
+        'conteudo_ementa_e_habilidades_bncc',
+        'dificuldades_especificas_na_disciplina',
         'metas_e_objetivos',
         'estrategias_preventivas_e_dua_3_0',
         'estrategias_de_avaliacao',
@@ -302,40 +343,41 @@ export const IODA_GEMINI_RESPONSE_SCHEMA: Schema = {
 
 /**
  * Constrói a System Instruction atualizada do Agente Ioda conforme diretrizes normativas,
- * pedagógicas (DUA 3.0 / Análise Funcional / Histórico ETEP / Intersecção de Neurodivergências) e LGPD.
+ * especificidade curricular (PPC/BNCC), especificidades por neurodivergência, DUA 3.0 e LGPD.
  */
 export function buildIodaSystemInstruction(isSuperior: boolean): string {
   const modalityGuidelines = isSuperior
     ? `PERFIL SELECIONADO: ENSINO SUPERIOR EM TI (Bacharelado / Tecnologia em Sistemas de Informação - IFTO Campus Paraíso).
 Diretrizes Pedagógicas para Superior em TI:
-- Foco em autonomia acadêmica, raciocínio lógico avançado, engenharia de dados e arquitetura de software.
+- Foco em autonomia acadêmica, raciocínio lógico avançado, engenharia de dados e arquitetura de software conforme PPC do curso.
 - Instrumentos de avaliação: entregas contínuas em repositório Git, sustentação em formato acessível (vídeo curto ou banca reservada) e avaliações práticas baseadas em projetos com tempo estendido (+50%).`
     : `PERFIL SELECIONADO: ENSINO MÉDIO TÉCNICO INTEGRADO EM INFORMÁTICA (IFTO Campus Paraíso).
 Diretrizes Pedagógicas para Médio Técnico em TI:
-- Formação Profissional Técnica articulada ao Ensino Médio.
+- Formação Profissional Técnica articulada à BNCC e ao PPC do Curso Técnico em Informática.
 - Acomodações de laboratório de informática: programação em pares (Pair Programming), roteiros passo a passo em Markdown, fracionamento de tarefas (chunking), acompanhamento de monitoria e garantia de permanência e êxito.`;
 
-  return `Você é o Agente Ioda (Inclusion on Diversity Agent), especialista sênior em Educação Especial Inclusiva, Desenho Universal para a Aprendizagem (DUA 3.0 - CAST 2024), Tecnologia Assistiva (TA/CAA) e atuação junto ao NAPNE e Equipe Técnico-Pedagógica (ETEP).
+  return `Você é o Agente Ioda (Inclusion on Diversity Agent), copiloto de produtividade pedagógica e especialista sênior em Educação Especial Inclusiva, Desenho Universal para a Aprendizagem (DUA 3.0 - CAST 2024), Tecnologia Assistiva (TA/CAA) e atuação junto ao NAPNE e Equipe Técnico-Pedagógica (ETEP).
 
-DIRETRIZES NORMATIVAS E DE PRIVACIDADE (LGPD):
+DIRETRIZES NORMATIVAS, ESPECIFICIDADE E PRIVACIDADE (LGPD):
 1. Conformidade estrita com a LGPD (Lei nº 13.709/2018), Art. 12, § 5º do Decreto nº 12.686/2025 e Portaria MEC nº 421/2026.
-2. O PEI possui caráter estritamente pedagógico e NÃO depende de laudo médico pericial. Jamais utilize linguagem patologizante ou estigmatizante; utilize sempre códigos pseudonimizados (ex: ESTUDANTE_01) e abordagem biopsicossocial/funcional.
-3. Curadoria Docente (Human-in-the-Loop): Você atua como ferramenta de apoio para redução da sobrecarga burocrática do professor, cabendo ao docente regente e à equipe pedagógica (NAPNE/ETEP) revisar e validar todas as propostas.
-4. Princípio Inegociável: Garanta o acesso ao currículo pleno de Tecnologia da Informação (TI) sem empobrecimento ou rebaixamento cognitivo.
-5. Intersecção de Neurodivergências e Comorbidades: Articule de forma holística todas as condições informadas simultaneamente (ex: Autismo + TDAH, AH/SD + Ansiedade), prevenindo gatilhos sensoriais/ambientais (Análise Funcional) e aproveitando o Histórico ETEP de boas práticas anteriores.
+2. O PEI possui caráter estritamente pedagógico e NÃO depende de laudo médico pericial. Jamais utilize linguagem patologizante ou genérica; utilize sempre códigos pseudonimizados (ex: ESTUDANTE_01).
+3. PROIBIDO GERAR PLANOS GENÉRICOS: Conecte diretamente as especificidades individuais do transtorno/neurodivergência (TEA, TDAH, AH/SD, Deficiência Auditiva/Visual e comorbidades) com os conteúdos específicos do módulo/semestre, a ementa oficial, as habilidades PPC/BNCC e as dificuldades observadas naquela disciplina.
+4. Curadoria Docente (Human-in-the-Loop): Você é um copiloto de produtividade que reduz a sobrecarga burocrática do docente, cabendo ao professor regente e à equipe pedagógica a validação final.
 
 ${modalityGuidelines}
 
 Retorne estritamente um objeto JSON válido seguindo exatamente esta estrutura:
 {
   "estudo_de_caso_sintese": {
+    "especificidades_transtorno_e_intersecçoes": ["string"],
     "barreiras_contextuais": ["string"],
     "potencialidades_e_interesses": ["string"],
     "mapeamento_de_gatilhos_e_crises": ["string"],
     "historico_boas_praticas_etep": ["string"]
   },
   "planejamento_pedagogico_pei": {
-    "conteudo_ementa_oficial": "string",
+    "conteudo_ementa_e_habilidades_bncc": "string",
+    "dificuldades_especificas_na_disciplina": "string",
     "metas_e_objetivos": [
       {
         "id_meta": "M1",
@@ -344,9 +386,9 @@ Retorne estritamente um objeto JSON válido seguindo exatamente esta estrutura:
       }
     ],
     "estrategias_preventivas_e_dua_3_0": {
-      "engajamento_e_autorregulacao": ["Estratégias para prevenção de gatilhos e motivação"],
+      "engajamento_e_autorregulacao": ["Estratégias de motivação e prevenção de gatilhos"],
       "representacao": ["Estratégias multissensoriais e materiais acessíveis"],
-      "acao_e_expressao": ["Múltiplas vias de demonstração do aprendizado e Recursos de TA/CAA"]
+      "acao_e_expressao": ["Múltiplas vias de demonstração e recursos de TA/CAA"]
     },
     "estrategias_de_avaliacao": {
       "formato_acessivel": "string",
@@ -366,7 +408,7 @@ Retorne estritamente um objeto JSON válido seguindo exatamente esta estrutura:
 }
 
 /**
- * Constrói o prompt do usuário já anonimizado/pseudonimizado (LGPD) para envio ao Gemini.
+ * Constrói o prompt do usuário já anonimizado/pseudonimizado (LGPD) com especificidade curricular e clínica-funcional.
  */
 export function buildSanitizedUserPrompt(sanitized: SanitizedPeiPayload): string {
   const isSuperior = sanitized.perfilModalidade === 'superior_ti';
@@ -382,26 +424,37 @@ export function buildSanitizedUserPrompt(sanitized: SanitizedPeiPayload): string
     .filter(Boolean)
     .join(' | ');
 
-  return `Elabore o Plano de Ensino Individualizado (PEI) completo para o código anônimo ${sanitized.anonymousStudentCode} (${isSuperior ? 'ENSINO SUPERIOR EM TI' : 'ENSINO MÉDIO TÉCNICO EM INFORMÁTICA'}):
+  return `Elabore o Plano de Ensino Individualizado (PEI) altamente específico e contextualizado para o código pseudonimizado ${sanitized.anonymousStudentCode} (${isSuperior ? 'ENSINO SUPERIOR EM TI' : 'ENSINO MÉDIO TÉCNICO EM INFORMÁTICA'}):
 
-- Identificador Anônimo (LGPD Art. 12, § 5º Decreto nº 12.686/2025): ${sanitized.anonymousStudentCode}
-- Docente Regente (Pseudonimizado): ${sanitized.anonymousDocenteCode}
-- Faixa Etária: ${sanitized.age}
+1. IDENTIFICAÇÃO PSEUDONIMIZADA (LGPD & Art. 12, § 5º Decreto nº 12.686/2025):
+- Estudante: ${sanitized.anonymousStudentCode} (${sanitized.age})
+- Docente Regente: ${sanitized.anonymousDocenteCode}
 - Curso / Período: ${sanitized.course} (${sanitized.grade})
-- Componente Curricular (Disciplina): ${sanitized.subject}
 - Situação Diagnóstica: ${
     sanitized.statusDiagnostico === 'em_investigacao_hipotese'
       ? 'Em observação pedagógica / Sem laudo médico prévio (Portaria MEC nº 421/2026)'
       : 'Condição acompanhada pelo NAPNE'
   }
-- Intersecção de Neurodivergências e Condições Associadas (Visão Holística): ${neuroList}
-- Barreiras Contextuais Observadas: ${sanitized.barriers}
-- Potencialidades e Interesses do Estudante: ${sanitized.potentialities}
-- Mapeamento de Gatilhos e Comportamento (Análise Funcional / Prevenção de Crises): ${sanitized.triggersAndBehavior}
-- Histórico ETEP / Boas Práticas Anteriores que já funcionaram: ${etepCombined}
-- Recursos de Tecnologia Assistiva (TA/CAA) prévios: ${sanitized.assistiveTech}
 
-IMPORTANTE: Articule diretamente o Mapeamento de Gatilhos com as estratégias de "engajamento_e_autorregulacao" do DUA 3.0, recupere e evolua as boas práticas do Histórico ETEP em "historico_boas_praticas_etep", e contemple simultaneamente a intersecção de todas as condições informadas (${neuroList}).`;
+2. ESPECIFICIDADES POR TRANSTORNO / NEURODIVERGÊNCIA E INTERSECÇÕES:
+- Condições e Comorbidades Selecionadas: ${neuroList}
+- Especificidades Individuais do Estudante: ${sanitized.especificidadesTranstorno}
+
+3. DETALHAMENTO DO COMPONENTE CURRICULAR:
+- Componente Curricular (Disciplina): ${sanitized.subject}
+- Ementa Oficial do Componente: ${sanitized.ementaOficial}
+- Conteúdos Específicos do Módulo/Semestre: ${sanitized.conteudosEspecificosModulo}
+- Habilidades e Competências Exigidas (PPC / BNCC): ${sanitized.habilidadesCompetenciasPpcBncc}
+- Dificuldades Específicas Observadas na Disciplina: ${sanitized.dificuldadesEspecificasDisciplina}
+
+4. ANÁLISE FUNCIONAL, POTENCIALIDADES E HISTÓRICO ETEP:
+- Barreiras Contextuais: ${sanitized.barriers}
+- Potencialidades e Interesses: ${sanitized.potentialities}
+- Mapeamento de Gatilhos e Comportamento (Análise Funcional): ${sanitized.triggersAndBehavior}
+- Histórico ETEP / Boas Práticas Anteriores: ${etepCombined}
+- Recursos de TA/CAA Prévios: ${sanitized.assistiveTech}
+
+INSTRUÇÃO CRÍTICA: Gere metas SMART, estratégias DUA 3.0 e critérios de avaliação estritamente ancorados nos conteúdos específicos (${sanitized.conteudosEspecificosModulo}), nas dificuldades observadas (${sanitized.dificuldadesEspecificasDisciplina}) e nas especificidades de (${neuroList}).`;
 }
 
 /**
@@ -429,7 +482,6 @@ export async function requestPeiGenerationWithLgpd(
     },
     body: JSON.stringify({
       ...sanitizedPayload,
-      // Explicitly pass anonymous identifier instead of real student name
       studentName: sanitizedPayload.anonymousStudentCode,
       docenteRegente: sanitizedPayload.anonymousDocenteCode,
     }),

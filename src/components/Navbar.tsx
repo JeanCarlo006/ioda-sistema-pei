@@ -20,6 +20,7 @@ import {
   FileCode,
   Award,
   RotateCcw,
+  Compass,
 } from 'lucide-react';
 import { EscalaFonte, ModoContraste } from '../types/pei';
 
@@ -39,6 +40,7 @@ interface NavbarProps {
   onOpenPpcAnalyzer: () => void;
   onOpenSusResearch: () => void;
   onResetToDefault?: () => void;
+  onOpenOnboardingTour?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -57,6 +59,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenPpcAnalyzer,
   onOpenSusResearch,
   onResetToDefault,
+  onOpenOnboardingTour,
 }) => {
   const [showSupportMenu, setShowSupportMenu] = useState(false);
 
@@ -115,6 +118,19 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Right Actions */}
           <div className="flex items-center gap-2">
+            {/* Guided Tour Button */}
+            {onOpenOnboardingTour && (
+              <button
+                type="button"
+                onClick={onOpenOnboardingTour}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 transition-all cursor-pointer"
+                title="Abrir Tour Guiado de uso do Assistente Ioda"
+              >
+                <Compass className="w-4 h-4 text-emerald-700" />
+                <span className="hidden lg:inline">Tour Guiado</span>
+              </button>
+            )}
+
             {/* Presentation Mode (LGPD / Scientific Fair) Button */}
             <button
               type="button"

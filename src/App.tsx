@@ -15,11 +15,13 @@ import { CentralAjudaModal } from './components/CentralAjudaModal';
 import { PpcAnalyzerModal } from './components/PpcAnalyzerModal';
 import { SusResearchModal } from './components/SusResearchModal';
 import { ILovePeiHub } from './components/ILovePeiHub';
-import { CheckCircle2, HelpCircle, ShieldAlert, ShieldCheck } from 'lucide-react';
+import { OnboardingTourModal } from './components/OnboardingTourModal';
+import { CheckCircle2, HelpCircle, ShieldCheck } from 'lucide-react';
 import { exportOfficialPeiPdf } from './utils/exportOfficialPdf';
 
 const STORAGE_KEY_STUDENTS = 'ioda_students_list_v1';
 const STORAGE_KEY_ACTIVE_ID = 'ioda_active_student_id_v1';
+const STORAGE_KEY_ONBOARDING_DONE = 'ioda_onboarding_tour_done_v1';
 
 const getInitialStudents = (): PEICompleto[] => {
   try {
@@ -59,6 +61,13 @@ export default function App() {
   const [isCentralAjudaOpen, setIsCentralAjudaOpen] = useState<boolean>(false);
   const [isPpcAnalyzerOpen, setIsPpcAnalyzerOpen] = useState<boolean>(false);
   const [isSusResearchOpen, setIsSusResearchOpen] = useState<boolean>(false);
+  const [isOnboardingTourOpen, setIsOnboardingTourOpen] = useState<boolean>(() => {
+    try {
+      return !localStorage.getItem(STORAGE_KEY_ONBOARDING_DONE);
+    } catch {
+      return false;
+    }
+  });
   const [isPresentationMode, setIsPresentationMode] = useState<boolean>(false);
   const [peiToDelete, setPeiToDelete] = useState<PEICompleto | null>(null);
   const [deleteNotice, setDeleteNotice] = useState<string | null>(null);
@@ -401,6 +410,15 @@ export default function App() {
     exportOfficialPeiPdf(displayedActivePei);
   };
 
+  const handleCloseOnboardingTour = () => {
+    setIsOnboardingTourOpen(false);
+    try {
+      localStorage.setItem(STORAGE_KEY_ONBOARDING_DONE, 'true');
+    } catch {
+      // ignore
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
       {/* Top Bar Navigation */}
@@ -420,6 +438,7 @@ export default function App() {
         onOpenPpcAnalyzer={() => setIsPpcAnalyzerOpen(true)}
         onOpenSusResearch={() => setIsSusResearchOpen(true)}
         onResetToDefault={handleResetToDefault}
+        onOpenOnboardingTour={() => setIsOnboardingTourOpen(true)}
       />
 
       {/* Presentation Mode Alert Banner */}
@@ -486,6 +505,7 @@ export default function App() {
             onOpenCampusStats={() => setIsCampusStatsOpen(true)}
             onPrint={handlePrint}
             onRequestDeletePei={handleRequestDeletePei}
+            onOpenOnboardingTour={() => setIsOnboardingTourOpen(true)}
           />
         )}
 
@@ -587,6 +607,13 @@ export default function App() {
       <SusResearchModal
         isOpen={isSusResearchOpen}
         onClose={() => setIsSusResearchOpen(false)}
+      />
+
+      <OnboardingTourModal
+        isOpen={isOnboardingTourOpen}
+        onClose={handleCloseOnboardingTour}
+        onStartCreatePei={() => setIsAddStudentOpen(true)}
+        onNavigateTab={(tab) => setActiveTab(tab)}
       />
     </div>
   );

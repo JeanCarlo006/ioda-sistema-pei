@@ -32,6 +32,7 @@ import {
   Info,
   Plus,
   ShieldCheck,
+  BookOpen,
 } from 'lucide-react';
 
 interface AddStudentModalProps {
@@ -53,7 +54,8 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
   modoContrasteAtual = 'padrao',
   onMudarContraste,
 }) => {
-  const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1);
+  // Wizard de 5 etapas sequenciais para baixa carga cognitiva (poucos campos por tela)
+  const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4 | 5>(1);
 
   const [perfilModalidade, setPerfilModalidade] = useState<'medio_tecnico' | 'superior_ti'>('medio_tecnico');
   const [statusDiagnostico, setStatusDiagnostico] = useState<'confirmado' | 'em_investigacao_hipotese'>('confirmado');
@@ -61,28 +63,51 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
     'Transtorno do Déficit de Atenção com Hiperatividade (TDAH)'
   );
   const [mostrarOutrasCondicoes, setMostrarOutrasCondicoes] = useState(false);
-  const [verResumoTecnico, setVerResumoTecnico] = useState(false);
   const [showTriggerTooltip, setShowTriggerTooltip] = useState(false);
 
+  // Passo 1: Identificação Básica
   const [nome, setNome] = useState('');
   const [matricula, setMatricula] = useState('');
   const [idade, setIdade] = useState('17 anos');
   const [curso, setCurso] = useState('Curso Técnico Integrado ao Ensino Médio em Informática');
-  const [disciplina, setDisciplina] = useState('Programação Web e Algoritmos');
   const [modulo, setModulo] = useState('2º Ano / Diurno');
-  const [condicao, setCondicao] = useState('');
-  const [potencialidades, setPotentialidades] = useState('');
-  const [assistiveTech, setAssistiveTech] = useState('');
+  const [docenteRegente, setDocenteRegente] = useState('Prof. Docente da Disciplina');
+  const [docenteAee] = useState('Profª. Renata Cavalcanti (NAPNE · Campus Paraíso)');
+
+  // Passo 2: Detalhamento do Componente Curricular (PPC / BNCC)
+  const [disciplina, setDisciplina] = useState('Programação Web e Algoritmos');
+  const [ementaOficial, setEmentaOficial] = useState(
+    'Estruturas de dados em memória (vetores e objetos), manipulação do DOM, eventos, funções assíncronas (Promises/Async-Await) e consumo de APIs REST.'
+  );
+  const [conteudosEspecificosModulo, setConteudosEspecificosModulo] = useState(
+    'Desenvolvimento de páginas interativas em HTML5/CSS3/JS, manipulação de arrays (map, filter, reduce) e requisições HTTP assíncronas.'
+  );
+  const [habilidadesCompetenciasPpcBncc, setHabilidadesCompetenciasPpcBncc] = useState(
+    'Desenvolver algoritmos modulares para web; aplicar raciocínio lógico-computacional (BNCC Computação / PPC Técnico) e boas práticas de acessibilidade digital (WCAG).'
+  );
+  const [dificuldadesEspecificasDisciplina, setDificuldadesEspecificasDisciplina] = useState(
+    'Sobrecarga ao ler enunciados extensos de problemas algorítmicos e dificuldade em manter o foco durante a depuração de erros de sintaxe no terminal.'
+  );
+
+  // Passo 3: Especificidades por Transtorno / Neurodivergência & Intersecções
   const [selectedSolucoes, setSelectedSolucoes] = useState<string[]>(['sol-tdah']);
   const [customComorbidities, setCustomComorbidities] = useState<string[]>([]);
   const [novaComorbidadeInput, setNovaComorbidadeInput] = useState('');
+  const [especificidadesTranstorno, setEspecificidadesTranstorno] = useState(
+    'TDAH com oscilação de atenção sustentada em aulas expositivas longas, porém ótimo engajamento em ciclos curtos de codificação prática (micro-sprints Pomodoro).'
+  );
+  const [condicao, setCondicao] = useState('');
+  const [potencialidades, setPotentialidades] = useState(
+    'Raciocínio ágil, resolução criativa de bugs lógicos e foco em desafios práticos de codificação quando divididos em etapas curtas.'
+  );
+  const [assistiveTech, setAssistiveTech] = useState(
+    'Quadro Kanban integrado ao GitHub Projects, temporizador Pomodoro, fonte OpenDyslexic Mono e tempo adicional (+50%).'
+  );
 
-  // NOVO BLOCO 1: Mapeamento de Gatilhos e Comportamento (Análise Funcional)
+  // Passo 4: Mapeamento de Gatilhos (Análise Funcional) & Histórico ETEP
   const [mapeamentoGatilhos, setMapeamentoGatilhos] = useState(
     'Ruídos altos no laboratório, instruções verbais longas sem apoio visual e mudanças bruscas de rotina.'
   );
-
-  // NOVO BLOCO 2: Histórico ETEP / Boas Práticas Anteriores
   const [historicoEtepTexto, setHistoricoEtepTexto] = useState(
     'Roteiros passo a passo antecipados no Moodle e divisão de projetos práticos em micro-entregas (chunking).'
   );
@@ -92,9 +117,6 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
     'Cartão de Pausa Sensorial Discreta',
   ]);
   const [novaTagEtep, setNovaTagEtep] = useState('');
-
-  const [docenteRegente, setDocenteRegente] = useState('Prof. Docente da Disciplina');
-  const [docenteAee] = useState('Profª. Renata Cavalcanti (NAPNE · Campus Paraíso)');
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [stepMessage, setStepMessage] = useState('');
@@ -111,6 +133,14 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
       docente: 'Prof. Alexandre Santos',
       perfil: 'superior_ti' as const,
       idade: '21 anos',
+      ementa:
+        'Qualidade de Software, Verificação e Validação (V&V), Fundamentos de Testes (Caixa-Preta, Caixa-Branca), Automação de Testes Unitários (JUnit) e de Interface (Selenium), TDD e Gestão de Defeitos.',
+      conteudosModulo:
+        'Planejamento de testes (IEEE 829), partição de equivalência, análise de valor limite, ciclo TDD (Red-Green-Refactor) com JUnit 5 e rastreamento de bugs no Jira.',
+      habilidadesPpcBncc:
+        'Projetar, implementar e executar suítes de testes automatizados; avaliar métricas de cobertura de código e assegurar a qualidade de sistemas corporativos (PPC BSI / DCN Computação).',
+      dificuldadesPadrao:
+        'Fadiga executiva ao redigir documentação extensa de planos de teste sem template estruturado e ansiedade em defesas orais abertas.',
     },
     {
       id: 'preset-bd-sql',
@@ -121,6 +151,14 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
       docente: 'Prof. Docente de Banco de Dados',
       perfil: 'superior_ti' as const,
       idade: '20 anos',
+      ementa:
+        ' Projeto de Banco de Dados Relacional, Modelo Entidade-Relacionamento (MER), Normalização (1FN, 2FN, 3FN, BCNF), Álgebra Relacional e Linguagem SQL (DDL, DML, DQL, Joins, Subqueries e Transações ACID).',
+      conteudosModulo:
+        'Conversão MER para Modelo Lógico, criação de tabelas com integridade referencial (DDL) e consultas analíticas com INNER/LEFT JOIN, GROUP BY e HAVING no PostgreSQL.',
+      habilidadesPpcBncc:
+        'Modelar esquemas de dados íntegros e normalizados; elaborar consultas SQL eficientes e gerenciar transações em SGBDs relacionais (PPC BSI).',
+      dificuldadesPadrao:
+        'Barreira visual/abstrata na leitura de diagramas MER complexos sem descrição textual declarativa (DBML/DDL) e perda de foco em queries aninhadas longas.',
     },
     {
       id: 'preset-algoritmos-bsi',
@@ -131,6 +169,14 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
       docente: 'Prof. Docente de Lógica e Algoritmos',
       perfil: 'superior_ti' as const,
       idade: '19 anos',
+      ementa:
+        'Conceito de algoritmo, variáveis, tipos de dados, operadores, estruturas condicionais (if/switch), estruturas de repetição (for/while), vetores, matrizes e modularização por funções.',
+      conteudosModulo:
+        'Laços de repetição aninhados, manipulação de vetores unidimensionais e bidimensionais, passagem de parâmetros e depuração passo a passo (teste de mesa).',
+      habilidadesPpcBncc:
+        'Abstrair problemas computacionais e traduzi-los em algoritmos estruturados e testáveis utilizando boas práticas de codificação (PPC BSI).',
+      dificuldadesPadrao:
+        'Bloqueio cognitivo diante de enunciados matemáticos abstratos sem exemplos concretos de entrada/saída (Input/Output).',
     },
     {
       id: 'preset-tecnico-web',
@@ -141,6 +187,14 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
       docente: 'Prof. Docente de Desenvolvimento Web',
       perfil: 'medio_tecnico' as const,
       idade: '16 anos',
+      ementa:
+        'Estruturas de dados em memória (vetores e objetos), manipulação do DOM, eventos, funções assíncronas (Promises/Async-Await) e consumo de APIs REST com HTML5, CSS3 e JavaScript.',
+      conteudosModulo:
+        'Desenvolvimento de interfaces responsivas, manipulação de listas dinâmicas no DOM e validação de formulários acessíveis.',
+      habilidadesPpcBncc:
+        'Desenvolver aplicações web front-end acessíveis; aplicar pensamento computacional e decomposição algorítmica (BNCC Computação & PPC Técnico em Informática).',
+      dificuldadesPadrao:
+        'Sobrecarga ao ler enunciados extensos e dificuldade em manter a atenção durante a depuração de erros sintáticos no navegador/terminal.',
     },
     {
       id: 'preset-tecnico-redes',
@@ -151,6 +205,14 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
       docente: 'Prof. Gilberto Mendes',
       perfil: 'medio_tecnico' as const,
       idade: '15 anos',
+      ementa:
+        'Arquitetura de computadores, Modelo OSI e TCP/IP, endereçamento IPv4/IPv6, cálculo de sub-redes (VLSM), cabeamento estruturado (ANSI/TIA-568) e configuração de ativos de rede.',
+      conteudosModulo:
+        'Cálculo de máscaras de sub-rede, simulação de topologias no Cisco Packet Tracer e prática de crimpagem/teste de cabos UTP em laboratório.',
+      habilidadesPpcBncc:
+        'Projetar e configurar redes locais (LAN); diagnosticar falhas físicas e lógicas de conectividade com segurança (PPC Técnico Integrado / BNCC).',
+      dificuldadesPadrao:
+        'Hipersensibilidade auditiva aos ruídos intensos do laboratório de hardware/redes e insegurança diante de instruções orais ambíguas.',
     },
   ];
 
@@ -161,26 +223,50 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
     setDocenteRegente(preset.docente);
     setIdade(preset.idade);
     setPerfilModalidade(preset.perfil);
+    setEmentaOficial(preset.ementa);
+    setConteudosEspecificosModulo(preset.conteudosModulo);
+    setHabilidadesCompetenciasPpcBncc(preset.habilidadesPpcBncc);
+    setDificuldadesEspecificasDisciplina(preset.dificuldadesPadrao);
   };
 
   const handleSelectProfile = (perfil: 'medio_tecnico' | 'superior_ti') => {
     setPerfilModalidade(perfil);
-
     if (perfil === 'superior_ti') {
-      setCurso('Bacharelado em Sistemas de Informação (Campus Paraíso do Tocantins)');
-      setModulo('4º Período / Noturno');
-      setDisciplina('BAC.0406 - Engenharia de Software II');
-      setDocenteRegente('Prof. Alexandre Santos');
-      setIdade('21 anos');
-      syncSelectedConditions(['sol-tdah'], 'BAC.0406 - Engenharia de Software II');
+      handleApplyCoursePreset(presetsPpcEPlano[0]);
+      syncSelectedConditions(['sol-tdah'], presetsPpcEPlano[0].titulo);
     } else {
-      setCurso('Curso Técnico Integrado ao Ensino Médio em Informática');
-      setModulo('2º Ano / Diurno');
-      setDisciplina('Programação Web e Algoritmos');
-      setDocenteRegente('Prof. Docente da Disciplina');
-      setIdade('17 anos');
-      syncSelectedConditions(['sol-tea'], 'Programação Web e Algoritmos');
+      handleApplyCoursePreset(presetsPpcEPlano[3]);
+      syncSelectedConditions(['sol-tea'], presetsPpcEPlano[3].titulo);
     }
+  };
+
+  const mapEspecificidadesPorCondicao: Record<string, string> = {
+    'sol-tea':
+      'TEA: Comunicação literal e direta (evitar metáforas ou comandos vagos), necessidade de previsibilidade de rotina e sensibilidade sensorial a ruídos intensos no laboratório.',
+    'sol-tdah':
+      'TDAH: Desafios na função executiva e atenção sustentada em tarefas longas; ótimo rendimento quando atividades são fracionadas em micro-sprints (Pomodoro/Kanban) com feedback imediato.',
+    'sol-ahsd':
+      'AH/SD (Altas Habilidades / Superdotação): Rapidez de abstração lógica e hiperfoco criativo; necessita de enriquecimento curricular e desafios arquiteturais para evitar desmotivação com exercícios repetitivos.',
+    'sol-ansiedade':
+      'Ansiedade: Sobrecarga emocional sob pressão temporal estrita ou exposições orais imprevistas em público; beneficia-se de rubricas prévias e apresentação em vídeo curto ou individual.',
+    'sol-aprendizagem':
+      'Dislexia / Disgrafia / Discalculia: Fadiga visual na leitura de blocos densos de código ou textos sem espaçamento; excelente compreensão lógica quando apoiado por fontes acessíveis (OpenDyslexic) e diagramas.',
+    'sol-baixa-visao':
+      'Deficiência Visual / Baixa Visão: Necessidade de ampliação de tela, alto contraste, leitor de telas (NVDA) e substituição de diagramas puramente gráficos por descrições textuais estruturadas (DBML/Markdown).',
+    'sol-auditiva':
+      'Surdez / Deficiência Auditiva: Necessidade de apoio visual constante, legendagem, glossário técnico em Libras e posicionamento docente de frente para a turma em sincronia com o intérprete.',
+    'sol-motora':
+      'Deficiência Física / Motora: Fadiga motora fina em digitação extensa sob tempo restrito; pleno domínio intelectual quando apoiado por autocompletar inteligente, Pair Programming e tempo estendido (+50%).',
+    'sol-def-intelectual':
+      'Deficiência Intelectual: Necessidade de mediação estruturada, conceitos abstratos ancorados em exemplos concretos e instruções divididas em 2 a 3 passos objetivos.',
+    'sol-toc':
+      'TOC: Tendência a perfeccionismo ou refatoração repetitiva; beneficia-se de critérios explícitos de conclusão (Definition of Done) para avançar com segurança.',
+    'sol-misto-ansioso-depressivo':
+      'Misto Ansioso e Depressivo: Oscilação de energia mental; demanda metas graduais, acolhimento sem exposição e validação contínua dos avanços.',
+    'sol-depressao':
+      'Humor / Depressão: Necessidade de recomposição gradual da autoeficácia acadêmica por meio de entregas curtas e trabalho colaborativo em dupla acolhedora.',
+    'sol-epilepsia':
+      'Epilepsia: Prevenção de estresse luminoso (monitores 60Hz+ antirreflexo, tema escuro suave sem animações piscantes) e pausas regulares de descanso.',
   };
 
   const syncSelectedConditions = (
@@ -217,6 +303,18 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
       }
       setCondicao(customCondicao);
 
+      const especificidadesCombinadas = finalIds
+        .map((id) => mapEspecificidadesPorCondicao[id])
+        .filter(Boolean);
+      if (extraComorbidities.length > 0) {
+        especificidadesCombinadas.push(
+          `Intersecção adicional informada: ${extraComorbidities.join(', ')}.`
+        );
+      }
+      if (especificidadesCombinadas.length > 0) {
+        setEspecificidadesTranstorno(especificidadesCombinadas.join('\n'));
+      }
+
       const taUnificada = Array.from(
         new Set(solucoesObjs.flatMap((s) => s!.remediosSugeridos.recursosTA))
       );
@@ -233,16 +331,12 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
           'Comprometimento com entregas de qualidade e ótimo desempenho em projetos práticos desenvolvidos no próprio ritmo',
         'sol-aprendizagem':
           'Pensamento computacional visual, visão prática de sistemas e bom raciocínio algorítmico',
-        'sol-def-intelectual':
-          'Dedicação ao aprendizado prático de computação, colaboração em duplas e boa retenção com instruções objetivas',
-        'sol-toc':
-          'Elevada precisão técnica, cuidado na cobertura de testes e organização de código',
-        'sol-misto-ansioso-depressivo':
-          'Comprometimento com projetos significativos quando apoiado por metas graduais',
-        'sol-depressao':
-          'Capacidade analítica e engajamento construtivo em projetos práticos em ambiente acolhedor',
-        'sol-epilepsia':
-          'Raciocínio lógico estruturado e consistência técnica em laboratório visualmente seguro',
+        'sol-baixa-visao':
+          'Excelente memória auditiva/estrutural, domínio de atalhos de teclado e linha de comando (CLI)',
+        'sol-auditiva':
+          'Forte percepção visual-espacial para arquitetura de interfaces, fluxogramas e diagramas de sistemas',
+        'sol-motora':
+          'Capacidade analítica e arquitetural destacada para liderar a lógica em programação em pares',
       };
 
       const potList = finalIds.map(
@@ -333,10 +427,15 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
     setNovaTagEtep('');
   };
 
-  const isStep2Valid = nome.trim().length > 0 && disciplina.trim().length > 0;
+  const isStep1Valid = nome.trim().length > 0;
+  const isStep2Valid = disciplina.trim().length > 0;
 
   const handleFinalSubmit = async () => {
-    if (!nome.trim() || !disciplina.trim()) {
+    if (!nome.trim()) {
+      setCurrentStep(1);
+      return;
+    }
+    if (!disciplina.trim()) {
       setCurrentStep(2);
       return;
     }
@@ -344,7 +443,7 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
     setIsGenerating(true);
     const modalidadeDesc = perfilModalidade === 'superior_ti' ? 'Superior em TI' : 'Médio Técnico em TI';
     setStepMessage(
-      `Sanitizando dados (LGPD · ESTUDANTE_01) e gerando PEI para ${modalidadeDesc}...`
+      `Anonimizando dados (LGPD · ESTUDANTE_01) e gerando PEI contextualizado para ${disciplina} (${modalidadeDesc})...`
     );
 
     const gatilhosArray = mapeamentoGatilhos
@@ -359,6 +458,11 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
         .filter(Boolean),
       ...etepTags,
     ];
+
+    const especificidadesArray = especificidadesTranstorno
+      .split(/[;\n]+/)
+      .map((s) => s.trim())
+      .filter(Boolean);
 
     const neuroTitles = [
       ...selectedSolucoes
@@ -376,7 +480,9 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
         curso: curso.trim(),
         disciplina: disciplina.trim(),
         modulo: modulo.trim(),
-        condicao: condicao.trim() || 'Barreiras observadas no laboratório de informática.',
+        condicao:
+          `${especificidadesTranstorno.trim()}\n\nDificuldades específicas em ${disciplina.trim()}: ${dificuldadesEspecificasDisciplina.trim()}`.trim() ||
+          condicao.trim(),
         docenteRegente: docenteRegente.trim(),
         docenteAee: docenteAee.trim(),
         solucaoBaseId: selectedSolucoes[0] || 'sol-tdah',
@@ -388,13 +494,25 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
         interseccaoCondicoes: neuroTitles,
       });
 
+      // Enriquecer o template local com os dados específicos do componente curricular e neurodivergência
+      localTemplate.estudo_de_caso.especificidades_transtorno_e_interseccoes = especificidadesArray;
+      localTemplate.planejamento_pei.conteudo_ementa_oficial = `${ementaOficial.trim()} | Conteúdos do Semestre: ${conteudosEspecificosModulo.trim()}`;
+      localTemplate.planejamento_pei.conteudos_especificos_modulo = conteudosEspecificosModulo.trim();
+      localTemplate.planejamento_pei.competencias_habilidades_ementa = habilidadesCompetenciasPpcBncc.trim();
+      localTemplate.planejamento_pei.dificuldades_especificas_na_disciplina = dificuldadesEspecificasDisciplina.trim();
+
       try {
         const { success, data: gen } = await requestPeiGenerationWithLgpd({
           studentName: nome.trim(),
           grade: modulo.trim(),
           course: curso.trim(),
           subject: disciplina.trim(),
-          barriers: condicao.trim(),
+          ementaOficial: ementaOficial.trim(),
+          conteudosEspecificosModulo: conteudosEspecificosModulo.trim(),
+          habilidadesCompetenciasPpcBncc: habilidadesCompetenciasPpcBncc.trim(),
+          dificuldadesEspecificasDisciplina: dificuldadesEspecificasDisciplina.trim(),
+          especificidadesTranstorno: especificidadesTranstorno.trim(),
+          barriers: condicao.trim() || dificuldadesEspecificasDisciplina.trim(),
           potentialities: potencialidades.trim(),
           assistiveTech: assistiveTech.trim(),
           triggersAndBehavior: mapeamentoGatilhos.trim(),
@@ -424,12 +542,16 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
             gen.planejamento_pedagogico_pei?.estrategias_preventivas_e_dua_3_0 ||
             (gen.planejamento_pedagogico_pei as any)?.flexibilizacao_metodologica_dua;
 
+          const espTranstornoGeradas =
+            gen.estudo_de_caso_sintese?.['especificidades_transtorno_e_intersecçoes'] ||
+            gen.estudo_de_caso_sintese?.especificidades_transtorno_e_interseccoes ||
+            especificidadesArray;
+
           finalPei = {
             ...localTemplate,
             id: `PEI-${Date.now().toString().slice(-4)}`,
             cabecalho: {
               ...localTemplate.cabecalho,
-              // Restauramos localmente o nome real apenas na interface do professor (jamais enviado em texto aberto à IA)
               estudante: nome.trim(),
               codigo_matricula:
                 matricula.trim() ||
@@ -443,9 +565,11 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
             historico_napne: {
               ...localTemplate.historico_napne,
               condicoes_associadas: neuroTitles,
+              especificidades_individuais: espTranstornoGeradas,
             },
             estudo_de_caso: {
               ...localTemplate.estudo_de_caso,
+              especificidades_transtorno_e_interseccoes: espTranstornoGeradas,
               mapeamento_de_gatilhos_e_crises:
                 Array.isArray(gen.estudo_de_caso_sintese?.mapeamento_de_gatilhos_e_crises) &&
                 gen.estudo_de_caso_sintese.mapeamento_de_gatilhos_e_crises.length > 0
@@ -461,11 +585,17 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
             planejamento_pei: {
               ...localTemplate.planejamento_pei,
               conteudo_ementa_oficial:
+                gen.planejamento_pedagogico_pei?.conteudo_ementa_e_habilidades_bncc ||
                 gen.planejamento_pedagogico_pei?.conteudo_ementa_oficial ||
                 localTemplate.planejamento_pei.conteudo_ementa_oficial,
+              conteudos_especificos_modulo: conteudosEspecificosModulo.trim(),
               competencias_habilidades_ementa:
+                habilidadesCompetenciasPpcBncc.trim() ||
                 gen.planejamento_pedagogico_pei?.competencias_habilidades_ementa ||
                 localTemplate.planejamento_pei.competencias_habilidades_ementa,
+              dificuldades_especificas_na_disciplina:
+                gen.planejamento_pedagogico_pei?.dificuldades_especificas_na_disciplina ||
+                dificuldadesEspecificasDisciplina.trim(),
               adaptacao_flexibilizacao_curricular:
                 gen.planejamento_pedagogico_pei?.adaptacao_flexibilizacao_curricular ||
                 localTemplate.planejamento_pei.adaptacao_flexibilizacao_curricular,
@@ -522,18 +652,16 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
     }
   };
 
-  // Clean Chip / Checkbox list for primary neurodivergences including AH/SD
+  // Chips de Neurodivergências e Condições
   const chipsNeurodivergencias = [
     { id: 'sol-tdah', label: 'TDAH (Déficit de Atenção e Hiperatividade)' },
     { id: 'sol-tea', label: 'TEA (Espectro Autista)' },
     { id: 'sol-ahsd', label: 'AH/SD (Altas Habilidades / Superdotação)' },
     { id: 'sol-ansiedade', label: 'Transtornos de Ansiedade' },
     { id: 'sol-aprendizagem', label: 'Dislexia / Disgrafia / Discalculia' },
-    { id: 'sol-def-intelectual', label: 'Deficiência Intelectual' },
-    { id: 'sol-toc', label: 'TOC (Obsessivo-Compulsivo)' },
-    { id: 'sol-misto-ansioso-depressivo', label: 'Misto Ansioso e Depressivo' },
-    { id: 'sol-depressao', label: 'Transtornos Depressivos' },
-    { id: 'sol-epilepsia', label: 'Epilepsia e Crises Convulsivas' },
+    { id: 'sol-baixa-visao', label: 'Deficiência Visual / Baixa Visão' },
+    { id: 'sol-auditiva', label: 'Surdez / Deficiência Auditiva' },
+    { id: 'sol-motora', label: 'Deficiência Física / Motora' },
   ];
 
   // Quick Intersection Presets (Comorbidades / Dupla Excepcionalidade)
@@ -546,9 +674,11 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
   ];
 
   const outrasCondicoesChips = [
-    { id: 'sol-baixa-visao', label: 'Baixa Visão / Cegueira' },
-    { id: 'sol-motora', label: 'Deficiência Física / Motora' },
-    { id: 'sol-auditiva', label: 'Surdez / Deficiência Auditiva' },
+    { id: 'sol-def-intelectual', label: 'Deficiência Intelectual' },
+    { id: 'sol-toc', label: 'TOC (Obsessivo-Compulsivo)' },
+    { id: 'sol-misto-ansioso-depressivo', label: 'Misto Ansioso e Depressivo' },
+    { id: 'sol-depressao', label: 'Transtornos Depressivos' },
+    { id: 'sol-epilepsia', label: 'Epilepsia e Crises Convulsivas' },
     { id: 'sol-hipotese-sem-laudo', label: 'Em Investigação (Sem Laudo)' },
   ];
 
@@ -569,16 +699,17 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
     'Fonte OpenDyslexic / Alto Contraste no VS Code',
   ];
 
-  const solucoesSelecionadasObjs = selectedSolucoes
-    .map((id) => bancoDeSolucoesPedagogicas.find((s) => s.id === id))
-    .filter(Boolean);
-
   const previewLgpd = sanitizePeiPayloadForLgpd(
     {
       studentName: nome || 'Estudante',
       docenteRegente,
       course: curso,
       subject: disciplina,
+      ementaOficial,
+      conteudosEspecificosModulo,
+      habilidadesCompetenciasPpcBncc,
+      dificuldadesEspecificasDisciplina,
+      especificidadesTranstorno,
       barriers: condicao,
       triggersAndBehavior: mapeamentoGatilhos,
       etepHistory: historicoEtepTexto,
@@ -598,10 +729,10 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
             </div>
             <div>
               <h3 className="text-base sm:text-lg font-bold text-slate-900">
-                Gerador de PEI Assistido · Agente Ioda
+                Gerador de PEI Contextualizado · Agente Ioda
               </h3>
               <p className="text-xs text-slate-500">
-                Passo {currentStep} de 4 — Coleta pedagógica modular (DUA 3.0, Análise Funcional & Histórico ETEP)
+                Etapa {currentStep} de 5 — Wizard progressivo de baixa carga cognitiva
               </p>
             </div>
           </div>
@@ -657,30 +788,34 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
           </div>
         </div>
 
-        {/* REQUISITO 2: AVISO DE CURADORIA DOCENTE NO TOPO DO GERADOR DE PEI */}
+        {/* AVISO DE CURADORIA DOCENTE NO TOPO DO GERADOR DE PEI */}
         <div className="pt-3 shrink-0">
           <CuradoriaDocenteBanner variant="compact" />
         </div>
 
-        {/* Clean Stepper Bar */}
+        {/* Progressive 5-Step Stepper Bar */}
         <div className="py-3 border-b border-slate-100 shrink-0">
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-5 gap-1.5">
             {[
-              { step: 1, label: '1. Modalidade' },
-              { step: 2, label: '2. Aluno & Aula' },
-              { step: 3, label: '3. Perfil, Gatilhos & ETEP' },
-              { step: 4, label: '4. Revisar & Gerar' },
+              { step: 1, label: '1. Aluno' },
+              { step: 2, label: '2. Disciplina' },
+              { step: 3, label: '3. Condições' },
+              { step: 4, label: '4. Gatilhos/ETEP' },
+              { step: 5, label: '5. Gerar PEI' },
             ].map((item) => {
               const isCurrent = currentStep === item.step;
               const isDone = currentStep > item.step;
-              const canClick = item.step <= 2 || isStep2Valid;
+              const canClick =
+                item.step === 1 ||
+                (item.step === 2 && isStep1Valid) ||
+                (item.step >= 3 && isStep1Valid && isStep2Valid);
               return (
                 <button
                   key={item.step}
                   type="button"
                   disabled={!canClick || isGenerating}
-                  onClick={() => canClick && setCurrentStep(item.step as 1 | 2 | 3 | 4)}
-                  className={`py-2 px-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                  onClick={() => canClick && setCurrentStep(item.step as 1 | 2 | 3 | 4 | 5)}
+                  className={`py-2 px-1.5 rounded-xl text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1 ${
                     isCurrent
                       ? 'bg-emerald-700 text-white shadow-xs'
                       : isDone
@@ -688,7 +823,7 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
                       : 'bg-slate-50 text-slate-500 border border-slate-200'
                   } ${!canClick ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                 >
-                  {isDone && <Check className="w-3.5 h-3.5 text-emerald-700 shrink-0" />}
+                  {isDone && <Check className="w-3 h-3 text-emerald-700 shrink-0" />}
                   <span className="truncate">{item.label}</span>
                 </button>
               );
@@ -697,113 +832,160 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
         </div>
 
         {/* Step Content Body */}
-        <div className="flex-1 overflow-y-auto py-5 px-1 space-y-6">
-          {/* PASSO 1: MODALIDADE */}
+        <div className="flex-1 overflow-y-auto py-5 px-1 space-y-5">
+          {/* ================================================================= */}
+          {/* PASSO 1: MODALIDADE E IDENTIFICAÇÃO BÁSICA                        */}
+          {/* ================================================================= */}
           {currentStep === 1 && (
-            <div className="space-y-4">
-              <p className="text-sm text-slate-600">
-                Escolha o nível de ensino do estudante para calibrar os exemplos práticos:
-              </p>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <button
-                  type="button"
-                  onClick={() => handleSelectProfile('medio_tecnico')}
-                  className={`p-5 rounded-2xl border-2 text-left transition-all cursor-pointer ${
-                    perfilModalidade === 'medio_tecnico'
-                      ? 'bg-emerald-50/70 border-emerald-600'
-                      : 'bg-white border-slate-200 hover:border-slate-300'
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <div
-                      className={`p-2.5 rounded-xl ${
-                        perfilModalidade === 'medio_tecnico'
-                          ? 'bg-emerald-600 text-white'
-                          : 'bg-slate-100 text-slate-600'
-                      }`}
-                    >
-                      <Laptop className="w-5 h-5" />
+            <div className="space-y-5">
+              <div>
+                <span className="text-xs font-bold text-slate-800 block mb-2">
+                  Modalidade de Ensino:
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <button
+                    type="button"
+                    onClick={() => handleSelectProfile('medio_tecnico')}
+                    className={`p-4 rounded-2xl border-2 text-left transition-all cursor-pointer ${
+                      perfilModalidade === 'medio_tecnico'
+                        ? 'bg-emerald-50/70 border-emerald-600'
+                        : 'bg-white border-slate-200 hover:border-slate-300'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div
+                        className={`p-2 rounded-xl ${
+                          perfilModalidade === 'medio_tecnico'
+                            ? 'bg-emerald-600 text-white'
+                            : 'bg-slate-100 text-slate-600'
+                        }`}
+                      >
+                        <Laptop className="w-4 h-4" />
+                      </div>
+                      {perfilModalidade === 'medio_tecnico' && (
+                        <CheckCircle className="w-4 h-4 text-emerald-600" />
+                      )}
                     </div>
-                    {perfilModalidade === 'medio_tecnico' && (
-                      <CheckCircle className="w-5 h-5 text-emerald-600" />
-                    )}
-                  </div>
-                  <h4 className="font-bold text-slate-900 text-base">Médio Técnico em TI</h4>
-                  <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                    Curso Técnico Integrado ao Ensino Médio. Foco em atividades guiadas, duplas no laboratório e roteiros passo a passo.
-                  </p>
-                </button>
+                    <h4 className="font-bold text-slate-900 text-sm">Médio Técnico em TI</h4>
+                    <p className="text-xs text-slate-600 mt-0.5 leading-relaxed">
+                      Curso Técnico Integrado ao Ensino Médio (BNCC + Formação Técnica).
+                    </p>
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={() => handleSelectProfile('superior_ti')}
-                  className={`p-5 rounded-2xl border-2 text-left transition-all cursor-pointer ${
-                    perfilModalidade === 'superior_ti'
-                      ? 'bg-emerald-50/70 border-emerald-600'
-                      : 'bg-white border-slate-200 hover:border-slate-300'
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <div
-                      className={`p-2.5 rounded-xl ${
-                        perfilModalidade === 'superior_ti'
-                          ? 'bg-emerald-600 text-white'
-                          : 'bg-slate-100 text-slate-600'
-                      }`}
-                    >
-                      <GraduationCap className="w-5 h-5" />
+                  <button
+                    type="button"
+                    onClick={() => handleSelectProfile('superior_ti')}
+                    className={`p-4 rounded-2xl border-2 text-left transition-all cursor-pointer ${
+                      perfilModalidade === 'superior_ti'
+                        ? 'bg-emerald-50/70 border-emerald-600'
+                        : 'bg-white border-slate-200 hover:border-slate-300'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div
+                        className={`p-2 rounded-xl ${
+                          perfilModalidade === 'superior_ti'
+                            ? 'bg-emerald-600 text-white'
+                            : 'bg-slate-100 text-slate-600'
+                        }`}
+                      >
+                        <GraduationCap className="w-4 h-4" />
+                      </div>
+                      {perfilModalidade === 'superior_ti' && (
+                        <CheckCircle className="w-4 h-4 text-emerald-600" />
+                      )}
                     </div>
-                    {perfilModalidade === 'superior_ti' && (
-                      <CheckCircle className="w-5 h-5 text-emerald-600" />
-                    )}
+                    <h4 className="font-bold text-slate-900 text-sm">Superior em TI</h4>
+                    <p className="text-xs text-slate-600 mt-0.5 leading-relaxed">
+                      Sistemas de Informação e Graduação (PPC Superior / DCN Computação).
+                    </p>
+                  </button>
+                </div>
+              </div>
+
+              {/* Card Bento: Dados do Estudante */}
+              <div className="bg-slate-50/70 border border-slate-200 rounded-2xl p-5 space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                      Nome do Estudante <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={nome}
+                      onChange={(e) => setNome(e.target.value)}
+                      placeholder="Digite o nome do estudante (será anonimizado para a IA)"
+                      className="w-full p-3 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-none text-sm"
+                      required
+                    />
+                    <span className="text-[11px] text-emerald-700 font-medium mt-1 block">
+                      Filtro LGPD Ativo: Substituído por código (ESTUDANTE_01) antes do envio ao Gemini.
+                    </span>
                   </div>
-                  <h4 className="font-bold text-slate-900 text-base">Superior em TI</h4>
-                  <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                    Sistemas de Informação e Graduação. Foco em autonomia acadêmica, projetos em etapas (sprints) e engenharia de software.
-                  </p>
-                </button>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                      Idade
+                    </label>
+                    <input
+                      type="text"
+                      value={idade}
+                      onChange={(e) => setIdade(e.target.value)}
+                      className="w-full p-3 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-none text-sm"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                      Curso
+                    </label>
+                    <input
+                      type="text"
+                      value={curso}
+                      onChange={(e) => setCurso(e.target.value)}
+                      className="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-xs"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                      Período / Turma
+                    </label>
+                    <input
+                      type="text"
+                      value={modulo}
+                      onChange={(e) => setModulo(e.target.value)}
+                      className="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-xs"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                      Professor(a) Regente
+                    </label>
+                    <input
+                      type="text"
+                      value={docenteRegente}
+                      onChange={(e) => setDocenteRegente(e.target.value)}
+                      className="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-xs"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           )}
 
-          {/* PASSO 2: IDENTIFICAÇÃO DO ALUNO E DISCIPLINA */}
+          {/* ================================================================= */}
+          {/* PASSO 2: DETALHAMENTO DO COMPONENTE CURRICULAR (PPC / BNCC)       */}
+          {/* ================================================================= */}
           {currentStep === 2 && (
             <div className="space-y-5">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="sm:col-span-2">
-                  <label className="block text-xs font-bold text-slate-800 mb-1.5">
-                    Nome do Estudante <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={nome}
-                    onChange={(e) => setNome(e.target.value)}
-                    placeholder="Digite o nome completo do aluno (protegido por pseudonimização LGPD)"
-                    className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-none text-sm"
-                    required
-                  />
-                  <span className="text-[11px] text-emerald-700 font-medium mt-1 block">
-                    Privacidade LGPD: O nome será substituído por código anônimo (ESTUDANTE_01) antes da chamada à IA.
-                  </span>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-800 mb-1.5">
-                    Idade
-                  </label>
-                  <input
-                    type="text"
-                    value={idade}
-                    onChange={(e) => setIdade(e.target.value)}
-                    className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-none text-sm"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <span className="block text-xs font-bold text-slate-700 mb-2">
-                  Atalhos Rápidos de Disciplinas (Opcional):
+              {/* Atalhos Rápidos de Disciplinas que preenchem automaticamente Ementa e PPC/BNCC */}
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-2.5">
+                <span className="block text-xs font-bold text-slate-800">
+                  Atalhos Rápidos do PPC / Planos de Ensino (Preenchimento Automático):
                 </span>
                 <div className="flex flex-wrap gap-2">
                   {presetsPpcEPlano.map((p) => {
@@ -816,7 +998,7 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
                         className={`px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
                           isCurrent
                             ? 'bg-emerald-700 text-white border-emerald-700'
-                            : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                            : 'bg-white text-slate-700 border-slate-200 hover:bg-emerald-50'
                         }`}
                       >
                         {p.titulo}
@@ -826,68 +1008,101 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Bento Grid: Campos de Detalhamento Curricular */}
+              <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4 shadow-2xs">
+                <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+                  <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center">
+                    <BookOpen className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-900">
+                      Detalhamento do Componente Curricular (Evita Planos Genéricos)
+                    </h4>
+                    <p className="text-xs text-slate-500">
+                      Informe os conteúdos reais da disciplina e as dificuldades observadas no estudante
+                    </p>
+                  </div>
+                </div>
+
                 <div>
-                  <label className="block text-xs font-bold text-slate-800 mb-1.5">
-                    Disciplina <span className="text-red-500">*</span>
+                  <label className="block text-xs font-bold text-slate-800 mb-1">
+                    Nome do Componente Curricular (Disciplina) <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     value={disciplina}
                     onChange={(e) => setDisciplina(e.target.value)}
-                    className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-none text-sm"
+                    className="w-full p-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-none text-sm font-semibold"
                     required
                   />
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-slate-800 mb-1.5">
-                    Professor(a) Responsável
-                  </label>
-                  <input
-                    type="text"
-                    value={docenteRegente}
-                    onChange={(e) => setDocenteRegente(e.target.value)}
-                    className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-none text-sm"
-                  />
-                </div>
-              </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-800 mb-1">
+                      1. Ementa Oficial do Componente
+                    </label>
+                    <textarea
+                      value={ementaOficial}
+                      onChange={(e) => setEmentaOficial(e.target.value)}
+                      rows={3}
+                      placeholder="Ementa oficial constante no PPC do curso..."
+                      className="w-full p-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-none text-xs leading-relaxed"
+                    />
+                  </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-800 mb-1.5">
-                    Curso
-                  </label>
-                  <input
-                    type="text"
-                    value={curso}
-                    onChange={(e) => setCurso(e.target.value)}
-                    className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-none text-sm"
-                  />
-                </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-800 mb-1">
+                      2. Conteúdos Específicos do Módulo / Semestre
+                    </label>
+                    <textarea
+                      value={conteudosEspecificosModulo}
+                      onChange={(e) => setConteudosEspecificosModulo(e.target.value)}
+                      rows={3}
+                      placeholder="Tópicos práticos e teóricos trabalhados neste ciclo/bimestre..."
+                      className="w-full p-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-none text-xs leading-relaxed"
+                    />
+                  </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-slate-800 mb-1.5">
-                    Período / Turma
-                  </label>
-                  <input
-                    type="text"
-                    value={modulo}
-                    onChange={(e) => setModulo(e.target.value)}
-                    className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-none text-sm"
-                  />
+                  <div>
+                    <label className="block text-xs font-bold text-slate-800 mb-1">
+                      3. Habilidades e Competências Exigidas (PPC / BNCC)
+                    </label>
+                    <textarea
+                      value={habilidadesCompetenciasPpcBncc}
+                      onChange={(e) => setHabilidadesCompetenciasPpcBncc(e.target.value)}
+                      rows={3}
+                      placeholder="Habilidades técnicas e cognitivas esperadas pelo PPC/BNCC..."
+                      className="w-full p-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-none text-xs leading-relaxed"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-amber-900 mb-1">
+                      4. Dificuldades Específicas do Estudante nesta Disciplina
+                    </label>
+                    <textarea
+                      value={dificuldadesEspecificasDisciplina}
+                      onChange={(e) => setDificuldadesEspecificasDisciplina(e.target.value)}
+                      rows={3}
+                      placeholder="Ex: Dificuldade em abstrair joins em SQL, fadiga na escrita de testes unitários, sobrecarga com enunciados longos..."
+                      className="w-full p-2.5 border border-amber-300 bg-amber-50/30 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none text-xs leading-relaxed"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
           )}
 
-          {/* PASSO 3: TRÊS NOVOS BLOCOS PEDAGÓGICOS EM LAYOUT MODULAR (BENTO GRID) */}
+          {/* ================================================================= */}
+          {/* PASSO 3: ESPECIFICIDADES POR TRANSTORNO E INTERSECÇÕES            */}
+          {/* ================================================================= */}
           {currentStep === 3 && (
-            <div className="space-y-6">
+            <div className="space-y-5">
               {/* Situação do Laudo */}
               <div className="bg-slate-50/80 border border-slate-200 rounded-2xl p-4">
                 <label className="text-xs font-bold text-slate-800 block mb-2">
-                  Situação do Acompanhamento (Portaria MEC nº 421/2026 — Não exige laudo médico):
+                  Situação do Acompanhamento (Portaria MEC nº 421/2026 — Independe de laudo médico):
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   <button
@@ -918,9 +1133,7 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
                 </div>
               </div>
 
-              {/* ================================================================= */}
-              {/* BLOCO DE ENTRADA 1: INTERSECÇÃO DE NEURODIVERGÊNCIAS E CONDIÇÕES   */}
-              {/* ================================================================= */}
+              {/* Card Bento: Seleção de Condições e Intersecções */}
               <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4 shadow-2xs">
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
                   <div className="flex items-center gap-2">
@@ -929,48 +1142,43 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
                     </div>
                     <div>
                       <h4 className="text-sm font-bold text-slate-900">
-                        1. Intersecção de Neurodivergências e Condições Associadas
+                        Intersecção de Neurodivergências e Condições Associadas
                       </h4>
                       <p className="text-xs text-slate-500">
-                        Selecione múltiplas condições ou comorbidades (ex: Autismo + TDAH, AH/SD + Ansiedade) para uma visão holística e não estigmatizante
+                        Selecione uma ou mais condições (TEA, TDAH, AH/SD, Auditiva, Visual, etc.)
                       </p>
                     </div>
                   </div>
                   <span className="text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-1 rounded-full">
-                    {selectedSolucoes.length + customComorbidities.length} condição(ões) ativa(s)
+                    {selectedSolucoes.length + customComorbidities.length} selecionada(s)
                   </span>
                 </div>
 
-                {/* Atalhos Rápidos de Intersecção / Comorbidades */}
-                <div>
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block mb-1.5">
-                    Combinações Frequentes (Intersecção / Dupla Excepcionalidade):
-                  </span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {combosInterseccao.map((combo) => {
-                      const isComboActive =
-                        combo.ids.every((id) => selectedSolucoes.includes(id)) &&
-                        selectedSolucoes.length === combo.ids.length;
-                      return (
-                        <button
-                          key={combo.label}
-                          type="button"
-                          onClick={() => handleApplyIntersectionPreset(combo.ids)}
-                          className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
-                            isComboActive
-                              ? 'bg-emerald-700 text-white border-emerald-700 shadow-2xs'
-                              : 'bg-slate-50 text-slate-700 border-slate-200 hover:border-emerald-400 hover:bg-emerald-50/40'
-                          }`}
-                        >
-                          {combo.label}
-                        </button>
-                      );
-                    })}
-                  </div>
+                {/* Combos Rápidos de Intersecção */}
+                <div className="flex flex-wrap gap-1.5">
+                  {combosInterseccao.map((combo) => {
+                    const isComboActive =
+                      combo.ids.every((id) => selectedSolucoes.includes(id)) &&
+                      selectedSolucoes.length === combo.ids.length;
+                    return (
+                      <button
+                        key={combo.label}
+                        type="button"
+                        onClick={() => handleApplyIntersectionPreset(combo.ids)}
+                        className={`px-3 py-1 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
+                          isComboActive
+                            ? 'bg-emerald-700 text-white border-emerald-700'
+                            : 'bg-slate-50 text-slate-700 border-slate-200 hover:border-emerald-400'
+                        }`}
+                      >
+                        {combo.label}
+                      </button>
+                    );
+                  })}
                 </div>
 
-                {/* Grade de Seleção Múltipla */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                {/* Grade de Chips */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {chipsNeurodivergencias.map((item) => {
                     const isSelected = selectedSolucoes.includes(item.id);
                     return (
@@ -978,20 +1186,20 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
                         key={item.id}
                         type="button"
                         onClick={() => handleTogglePredefinedSolution(item.id)}
-                        className={`px-3.5 py-2.5 rounded-xl border text-left text-xs font-semibold flex items-center gap-3 transition-all cursor-pointer ${
+                        className={`px-3 py-2.5 rounded-xl border text-left text-xs font-semibold flex items-center gap-2.5 transition-all cursor-pointer ${
                           isSelected
                             ? 'bg-emerald-50 border-emerald-600 text-emerald-950 ring-1 ring-emerald-600'
-                            : 'bg-white border-slate-200 text-slate-800 hover:border-slate-300 hover:bg-slate-50'
+                            : 'bg-white border-slate-200 text-slate-800 hover:bg-slate-50'
                         }`}
                       >
                         <div
-                          className={`w-5 h-5 rounded-md flex items-center justify-center border shrink-0 transition-colors ${
+                          className={`w-4 h-4 rounded flex items-center justify-center border shrink-0 ${
                             isSelected
                               ? 'bg-emerald-600 border-emerald-600 text-white'
                               : 'border-slate-300 bg-white'
                           }`}
                         >
-                          {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                          {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
                         </div>
                         <span className="leading-snug">{item.label}</span>
                       </button>
@@ -999,55 +1207,7 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
                   })}
                 </div>
 
-                {/* Registro de Outra Condição / Comorbidade Específica */}
-                <div className="pt-2 border-t border-slate-100 space-y-2">
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <input
-                      type="text"
-                      value={novaComorbidadeInput}
-                      onChange={(e) => setNovaComorbidadeInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          handleAddCustomComorbidity();
-                        }
-                      }}
-                      placeholder="Adicionar outra condição associada ou especificidade (ex: TPS, Burnout Acadêmico)..."
-                      className="flex-1 px-3 py-2 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-emerald-600 focus:outline-none"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleAddCustomComorbidity}
-                      className="inline-flex items-center justify-center gap-1 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-emerald-800 text-white text-xs font-bold cursor-pointer shrink-0"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      <span>Incluir na Intersecção</span>
-                    </button>
-                  </div>
-
-                  {customComorbidities.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 pt-1">
-                      {customComorbidities.map((c) => (
-                        <span
-                          key={c}
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-950 text-xs font-semibold"
-                        >
-                          <span>{c}</span>
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveCustomComorbidity(c)}
-                            className="text-emerald-700 hover:text-red-600 cursor-pointer"
-                            title="Remover condição"
-                          >
-                            <X className="w-3.5 h-3.5" />
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Botões discretos para outras condições e resumo */}
+                {/* Mais condições e adição livre */}
                 <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
                   <button
                     type="button"
@@ -1057,37 +1217,19 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
                     {mostrarOutrasCondicoes ? (
                       <>
                         <ChevronUp className="w-3.5 h-3.5" />
-                        <span>Ocultar condições sensoriais/motoras</span>
+                        <span>Ocultar outras condições</span>
                       </>
                     ) : (
                       <>
                         <ChevronDown className="w-3.5 h-3.5" />
-                        <span>Mais condições (Visual, Motora, Surdez)</span>
-                      </>
-                    )}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setVerResumoTecnico(!verResumoTecnico)}
-                    className="text-xs font-semibold text-emerald-700 hover:text-emerald-900 flex items-center gap-1 cursor-pointer"
-                  >
-                    {verResumoTecnico ? (
-                      <>
-                        <ChevronUp className="w-3.5 h-3.5" />
-                        <span>Ocultar síntese combinada</span>
-                      </>
-                    ) : (
-                      <>
-                        <ChevronDown className="w-3.5 h-3.5" />
-                        <span>Ver síntese da intersecção selecionada</span>
+                        <span>Mais condições (TOC, Depressão, Epilepsia, DI, Sem Laudo)</span>
                       </>
                     )}
                   </button>
                 </div>
 
                 {mostrarOutrasCondicoes && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
                     {outrasCondicoesChips.map((item) => {
                       const isSelected = selectedSolucoes.includes(item.id);
                       return (
@@ -1095,20 +1237,20 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
                           key={item.id}
                           type="button"
                           onClick={() => handleTogglePredefinedSolution(item.id)}
-                          className={`px-3.5 py-2.5 rounded-xl border text-left text-xs font-semibold flex items-center gap-3 transition-all cursor-pointer ${
+                          className={`px-3 py-2 rounded-xl border text-left text-xs font-semibold flex items-center gap-2.5 transition-all cursor-pointer ${
                             isSelected
                               ? 'bg-emerald-50 border-emerald-600 text-emerald-950 ring-1 ring-emerald-600'
-                              : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300'
+                              : 'bg-white border-slate-200 text-slate-700'
                           }`}
                         >
                           <div
-                            className={`w-5 h-5 rounded-md flex items-center justify-center border shrink-0 ${
+                            className={`w-4 h-4 rounded flex items-center justify-center border shrink-0 ${
                               isSelected
                                 ? 'bg-emerald-600 border-emerald-600 text-white'
                                 : 'border-slate-300 bg-white'
                             }`}
                           >
-                            {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                            {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
                           </div>
                           <span>{item.label}</span>
                         </button>
@@ -1117,216 +1259,248 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
                   </div>
                 )}
 
-                {verResumoTecnico && solucoesSelecionadasObjs.length > 0 && (
-                  <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2 text-xs text-slate-700">
-                    {solucoesSelecionadasObjs.map((s) => (
-                      <div key={s!.id}>
-                        <strong className="text-slate-900">{s!.titulo}:</strong>{' '}
-                        <span>{s!.remediosSugeridos.acaoExpressao}</span>
-                      </div>
+                <div className="flex flex-col sm:flex-row gap-2 pt-2 border-t border-slate-100">
+                  <input
+                    type="text"
+                    value={novaComorbidadeInput}
+                    onChange={(e) => setNovaComorbidadeInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddCustomComorbidity();
+                      }
+                    }}
+                    placeholder="Adicionar outra condição associada (ex: TPS, Dupla Excepcionalidade específica)..."
+                    className="flex-1 px-3 py-2 border border-slate-300 rounded-xl text-xs"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddCustomComorbidity}
+                    className="inline-flex items-center justify-center gap-1 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-emerald-800 text-white text-xs font-bold cursor-pointer shrink-0"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Incluir</span>
+                  </button>
+                </div>
+
+                {customComorbidities.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {customComorbidities.map((c) => (
+                      <span
+                        key={c}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-950 text-xs font-semibold"
+                      >
+                        <span>{c}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveCustomComorbidity(c)}
+                          className="text-emerald-700 hover:text-red-600 cursor-pointer"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </span>
                     ))}
                   </div>
                 )}
-              </div>
 
-              {/* ================================================================= */}
-              {/* BLOCO DE ENTRADA 2 & 3 EM BENTO GRID (GATILHOS + HISTÓRICO ETEP)   */}
-              {/* ================================================================= */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                {/* BLOCO 2: MAPEAMENTO DE GATILHOS E COMPORTAMENTO (ANÁLISE FUNCIONAL) */}
-                <div className="bg-white border border-amber-200/90 rounded-2xl p-5 space-y-3.5 shadow-2xs flex flex-col justify-between">
-                  <div className="space-y-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
-                          <AlertTriangle className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <h4 className="text-sm font-bold text-slate-900">
-                            2. Mapeamento de Gatilhos e Comportamento (Análise Funcional)
-                          </h4>
-                          <p className="text-[11px] text-slate-500">
-                            Gatilhos sensoriais, ambientais ou rotineiros que podem gerar sobrecarga ou ansiedade
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Tooltip / Dica de Interface Oficial */}
-                      <div className="relative">
-                        <button
-                          type="button"
-                          onClick={() => setShowTriggerTooltip(!showTriggerTooltip)}
-                          onMouseEnter={() => setShowTriggerTooltip(true)}
-                          onMouseLeave={() => setShowTriggerTooltip(false)}
-                          title="Ex: ruídos altos, luzes piscantes, instruções verbais longas sem apoio visual, mudanças bruscas de rotina."
-                          aria-label="Dica sobre mapeamento de gatilhos"
-                          className="p-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 cursor-pointer"
-                        >
-                          <Info className="w-4 h-4" />
-                        </button>
-                        {showTriggerTooltip && (
-                          <div className="absolute right-0 top-9 z-20 w-72 p-3 rounded-xl bg-slate-900 text-white text-xs shadow-xl leading-relaxed">
-                            <strong>Dica de preenchimento:</strong> Ex: ruídos altos, luzes piscantes, instruções verbais longas sem apoio visual, mudanças bruscas de rotina.
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Dica visível e acessível */}
-                    <div className="p-2.5 rounded-xl bg-amber-50/70 border border-amber-200/80 text-[11px] text-amber-950 leading-relaxed">
-                      <strong>Dica:</strong>{' '}
-                      <em>
-                        &ldquo;Ex: ruídos altos, luzes piscantes, instruções verbais longas sem apoio visual, mudanças bruscas de rotina.&rdquo;
-                      </em>
-                    </div>
-
+                {/* Campo de Especificidades Individuais por Transtorno / Neurodivergência */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3 border-t border-slate-100">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-900 mb-1">
+                      Especificidades Individuais do Estudante (TEA, TDAH, AH/SD, Sensorial)
+                    </label>
                     <textarea
-                      value={mapeamentoGatilhos}
-                      onChange={(e) => setMapeamentoGatilhos(e.target.value)}
+                      value={especificidadesTranstorno}
+                      onChange={(e) => setEspecificidadesTranstorno(e.target.value)}
                       rows={3}
-                      placeholder="Ex: ruídos altos, luzes piscantes, instruções verbais longas sem apoio visual, mudanças bruscas de rotina."
-                      className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none text-xs leading-relaxed"
+                      placeholder="Detalhe como a condição se manifesta individualmente neste estudante..."
+                      className="w-full p-2.5 border border-slate-300 rounded-xl text-xs leading-relaxed focus:ring-2 focus:ring-emerald-600 focus:outline-none"
                     />
                   </div>
 
-                  {/* Atalhos rápidos de gatilhos */}
-                  <div className="pt-1">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">
-                      Adicionar gatilho observado (+):
-                    </span>
-                    <div className="flex flex-wrap gap-1.5">
-                      {sugestoesGatilhosRapidos.map((g) => (
-                        <button
-                          key={g}
-                          type="button"
-                          onClick={() => {
-                            if (!mapeamentoGatilhos.toLowerCase().includes(g.toLowerCase())) {
-                              setMapeamentoGatilhos((prev) =>
-                                prev.trim() ? `${prev.replace(/\.$/, '')}; ${g}.` : `${g}.`
-                              );
-                            }
-                          }}
-                          className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-amber-100 text-slate-700 hover:text-amber-950 text-[11px] font-medium transition-colors cursor-pointer"
-                        >
-                          + {g}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* BLOCO 3: HISTÓRICO ETEP / BOAS PRÁTICAS ANTERIORES */}
-                <div className="bg-white border border-emerald-200/90 rounded-2xl p-5 space-y-3.5 shadow-2xs flex flex-col justify-between">
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0">
-                        <History className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-bold text-slate-900">
-                          3. Histórico ETEP / Boas Práticas Anteriores
-                        </h4>
-                        <p className="text-[11px] text-slate-500">
-                          Recupere estratégias que já funcionaram em ciclos anteriores sem &ldquo;reinventar a roda&rdquo;
-                        </p>
-                      </div>
-                    </div>
-
+                  <div>
+                    <label className="block text-xs font-bold text-slate-900 mb-1">
+                      Potencialidades, Habilidades e Interesses Centrais
+                    </label>
                     <textarea
-                      value={historicoEtepTexto}
-                      onChange={(e) => setHistoricoEtepTexto(e.target.value)}
+                      value={potencialidades}
+                      onChange={(e) => setPotentialidades(e.target.value)}
                       rows={3}
-                      placeholder="Registre adaptações da ETEP/NAPNE e docentes anteriores que tiveram êxito com o estudante..."
-                      className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-none text-xs leading-relaxed"
+                      placeholder="Pontos fortes, hiperfocos construtivos e afinidades técnicas..."
+                      className="w-full p-2.5 border border-slate-300 rounded-xl text-xs leading-relaxed focus:ring-2 focus:ring-emerald-600 focus:outline-none"
                     />
-
-                    {/* Sistema de Tags de Boas Práticas Anteriores */}
-                    <div>
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1.5">
-                        Tags de Estratégias Validadas (Clique para ativar/desativar):
-                      </span>
-                      <div className="flex flex-wrap gap-1.5">
-                        {sugestoesTagsEtep.map((tag) => {
-                          const active = etepTags.includes(tag);
-                          return (
-                            <button
-                              key={tag}
-                              type="button"
-                              onClick={() => handleToggleEtepTag(tag)}
-                              className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-all cursor-pointer flex items-center gap-1 ${
-                                active
-                                  ? 'bg-emerald-700 text-white border-emerald-700'
-                                  : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
-                              }`}
-                            >
-                              {active && <Check className="w-3 h-3" />}
-                              <span>{tag}</span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
                   </div>
-
-                  {/* Adicionar nova tag ETEP */}
-                  <div className="flex gap-1.5 pt-2 border-t border-slate-100">
-                    <input
-                      type="text"
-                      value={novaTagEtep}
-                      onChange={(e) => setNovaTagEtep(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          handleAddCustomEtepTag();
-                        }
-                      }}
-                      placeholder="Nova tag de boa prática ETEP..."
-                      className="flex-1 px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-emerald-600 focus:outline-none"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleAddCustomEtepTag}
-                      className="px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold cursor-pointer"
-                    >
-                      + Tag
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Observações e Potencialidades Complementares */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-100">
-                <div>
-                  <label className="block text-xs font-bold text-slate-800 mb-1.5">
-                    Barreiras Contextuais na Disciplina
-                  </label>
-                  <textarea
-                    value={condicao}
-                    onChange={(e) => setCondicao(e.target.value)}
-                    rows={2}
-                    placeholder="Descreva as barreiras metodológicas ou tecnológicas observadas em aula..."
-                    className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-none text-xs"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-800 mb-1.5">
-                    Potencialidades e Interesses do Estudante
-                  </label>
-                  <textarea
-                    value={potencialidades}
-                    onChange={(e) => setPotentialidades(e.target.value)}
-                    rows={2}
-                    placeholder="Ex: Raciocínio lógico, interesse em jogos, aprende melhor com exemplos visuais e práticos..."
-                    className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-none text-xs"
-                  />
                 </div>
               </div>
             </div>
           )}
 
-          {/* PASSO 4: REVISÃO MODULAR E AUDITORIA DE PRIVACIDADE LGPD */}
+          {/* ================================================================= */}
+          {/* PASSO 4: GATILHOS (ANÁLISE FUNCIONAL) E HISTÓRICO ETEP            */}
+          {/* ================================================================= */}
           {currentStep === 4 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {/* BLOCO: MAPEAMENTO DE GATILHOS E COMPORTAMENTO (ANÁLISE FUNCIONAL) */}
+              <div className="bg-white border border-amber-200/90 rounded-2xl p-5 space-y-3.5 shadow-2xs flex flex-col justify-between">
+                <div className="space-y-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
+                        <AlertTriangle className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-slate-900">
+                          Mapeamento de Gatilhos e Comportamento (Análise Funcional)
+                        </h4>
+                        <p className="text-[11px] text-slate-500">
+                          Gatilhos sensoriais, ambientais ou rotineiros para prevenção de sobrecarga
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setShowTriggerTooltip(!showTriggerTooltip)}
+                        onMouseEnter={() => setShowTriggerTooltip(true)}
+                        onMouseLeave={() => setShowTriggerTooltip(false)}
+                        title="Ex: ruídos altos, luzes piscantes, instruções verbais longas sem apoio visual, mudanças bruscas de rotina."
+                        aria-label="Dica sobre mapeamento de gatilhos"
+                        className="p-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 cursor-pointer"
+                      >
+                        <Info className="w-4 h-4" />
+                      </button>
+                      {showTriggerTooltip && (
+                        <div className="absolute right-0 top-9 z-20 w-72 p-3 rounded-xl bg-slate-900 text-white text-xs shadow-xl leading-relaxed">
+                          <strong>Dica:</strong> Ex: ruídos altos, luzes piscantes, instruções verbais longas sem apoio visual, mudanças bruscas de rotina.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-amber-50/70 border border-amber-200/80 text-[11px] text-amber-950 leading-relaxed">
+                    <strong>Dica:</strong>{' '}
+                    <em>
+                      &ldquo;Ex: ruídos altos, luzes piscantes, instruções verbais longas sem apoio visual, mudanças bruscas de rotina.&rdquo;
+                    </em>
+                  </div>
+
+                  <textarea
+                    value={mapeamentoGatilhos}
+                    onChange={(e) => setMapeamentoGatilhos(e.target.value)}
+                    rows={4}
+                    placeholder="Ex: ruídos altos, luzes piscantes, instruções verbais longas sem apoio visual, mudanças bruscas de rotina."
+                    className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none text-xs leading-relaxed"
+                  />
+                </div>
+
+                <div className="pt-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">
+                    Adicionar gatilho observado (+):
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {sugestoesGatilhosRapidos.map((g) => (
+                      <button
+                        key={g}
+                        type="button"
+                        onClick={() => {
+                          if (!mapeamentoGatilhos.toLowerCase().includes(g.toLowerCase())) {
+                            setMapeamentoGatilhos((prev) =>
+                              prev.trim() ? `${prev.replace(/\.$/, '')}; ${g}.` : `${g}.`
+                            );
+                          }
+                        }}
+                        className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-amber-100 text-slate-700 hover:text-amber-950 text-[11px] font-medium transition-colors cursor-pointer"
+                      >
+                        + {g}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* BLOCO: HISTÓRICO ETEP / BOAS PRÁTICAS ANTERIORES */}
+              <div className="bg-white border border-emerald-200/90 rounded-2xl p-5 space-y-3.5 shadow-2xs flex flex-col justify-between">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0">
+                      <History className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-slate-900">
+                        Histórico ETEP / Boas Práticas Anteriores
+                      </h4>
+                      <p className="text-[11px] text-slate-500">
+                        Recupere adaptações eficazes em ciclos anteriores sem &ldquo;reinventar a roda&rdquo;
+                      </p>
+                    </div>
+                  </div>
+
+                  <textarea
+                    value={historicoEtepTexto}
+                    onChange={(e) => setHistoricoEtepTexto(e.target.value)}
+                    rows={3}
+                    placeholder="Registre adaptações da ETEP/NAPNE e docentes anteriores que tiveram êxito com o estudante..."
+                    className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-none text-xs leading-relaxed"
+                  />
+
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1.5">
+                      Tags de Estratégias Validadas (Clique para ativar/desativar):
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {sugestoesTagsEtep.map((tag) => {
+                        const active = etepTags.includes(tag);
+                        return (
+                          <button
+                            key={tag}
+                            type="button"
+                            onClick={() => handleToggleEtepTag(tag)}
+                            className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-all cursor-pointer flex items-center gap-1 ${
+                              active
+                                ? 'bg-emerald-700 text-white border-emerald-700'
+                                : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                            }`}
+                          >
+                            {active && <Check className="w-3 h-3" />}
+                            <span>{tag}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-1.5 pt-2 border-t border-slate-100">
+                  <input
+                    type="text"
+                    value={novaTagEtep}
+                    onChange={(e) => setNovaTagEtep(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddCustomEtepTag();
+                      }
+                    }}
+                    placeholder="Nova tag de boa prática ETEP..."
+                    className="flex-1 px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddCustomEtepTag}
+                    className="px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold cursor-pointer"
+                  >
+                    + Tag
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ================================================================= */}
+          {/* PASSO 5: REVISÃO MODULAR E AUDITORIA DE PRIVACIDADE LGPD          */}
+          {/* ================================================================= */}
+          {currentStep === 5 && (
             <div className="space-y-4">
               <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-4">
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-3">
@@ -1342,31 +1516,37 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                  <div className="p-3 bg-white rounded-xl border border-slate-200">
-                    <span className="text-slate-500 font-semibold block mb-0.5">Disciplina & Docente:</span>
+                  <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-1">
+                    <span className="text-slate-500 font-semibold block">
+                      Componente Curricular & Conteúdos:
+                    </span>
                     <span className="text-slate-900 font-bold block">{disciplina}</span>
-                    <span className="text-slate-600">{docenteRegente}</span>
+                    <p className="text-slate-600 line-clamp-2">{conteudosEspecificosModulo}</p>
                   </div>
 
-                  <div className="p-3 bg-white rounded-xl border border-slate-200">
-                    <span className="text-slate-500 font-semibold block mb-0.5">
-                      Intersecção de Condições:
+                  <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-1">
+                    <span className="text-slate-500 font-semibold block">
+                      Especificidades & Intersecção:
                     </span>
                     <span className="text-emerald-800 font-bold block">{categoriaNeurodivergencia}</span>
+                    <p className="text-slate-600 line-clamp-2">{especificidadesTranstorno}</p>
                   </div>
 
-                  <div className="p-3 bg-white rounded-xl border border-amber-200">
-                    <span className="text-amber-900 font-bold block mb-0.5">
-                      Mapeamento de Gatilhos (Análise Funcional):
+                  <div className="p-3 bg-white rounded-xl border border-amber-200 space-y-1">
+                    <span className="text-amber-900 font-bold block">
+                      Dificuldades na Disciplina & Gatilhos:
                     </span>
-                    <span className="text-slate-700 leading-relaxed">{mapeamentoGatilhos}</span>
+                    <p className="text-slate-700 line-clamp-2">{dificuldadesEspecificasDisciplina}</p>
+                    <p className="text-amber-900/90 text-[11px] line-clamp-1">
+                      Gatilhos: {mapeamentoGatilhos}
+                    </p>
                   </div>
 
-                  <div className="p-3 bg-white rounded-xl border border-emerald-200">
-                    <span className="text-emerald-900 font-bold block mb-0.5">
-                      Histórico ETEP / Boas Práticas ({etepTags.length} tags):
+                  <div className="p-3 bg-white rounded-xl border border-emerald-200 space-y-1">
+                    <span className="text-emerald-900 font-bold block">
+                      Histórico ETEP ({etepTags.length} tags):
                     </span>
-                    <span className="text-slate-700 leading-relaxed block">{historicoEtepTexto}</span>
+                    <p className="text-slate-700 line-clamp-2">{historicoEtepTexto}</p>
                   </div>
                 </div>
 
@@ -1375,18 +1555,18 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
                   <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
                   <div className="space-y-1">
                     <span className="font-bold text-white block">
-                      Camada de Privacidade Ativa — LGPD (Lei nº 13.709/2018) & Art. 12, § 5º do Decreto nº 12.686/2025
+                      Filtro de Anonimização LGPD Ativo (Lei nº 13.709/2018 & Art. 12, § 5º do Decreto nº 12.686/2025)
                     </span>
                     <p className="text-emerald-200/90 leading-relaxed">
-                      Antes de enviar a requisição à API do Gemini, o nome real é pseudonimizado para{' '}
+                      Antes de enviar a requisição à API do Gemini, o nome real é substituído por{' '}
                       <code className="px-1.5 py-0.5 rounded bg-emerald-900 text-emerald-300 font-mono">
                         {previewLgpd.anonymousStudentCode}
                       </code>{' '}
-                      e o docente para{' '}
+                      e o docente por{' '}
                       <code className="px-1.5 py-0.5 rounded bg-emerald-900 text-emerald-300 font-mono">
                         {previewLgpd.anonymousDocenteCode}
                       </code>
-                      , removendo CPFs, fotos ou dados clínicos sensíveis do payload externo.
+                      , removendo CPFs, fotos e documentos clínicos sensíveis.
                     </p>
                   </div>
                 </div>
@@ -1413,7 +1593,7 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
                 className="inline-flex items-center gap-1.5 px-4 py-2.5 border border-slate-300 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 text-xs cursor-pointer"
               >
                 <ArrowLeft className="w-4 h-4" />
-                <span>Voltar</span>
+                <span>Etapa Anterior</span>
               </button>
             ) : (
               <button
@@ -1428,17 +1608,21 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
           </div>
 
           <div>
-            {currentStep < 4 ? (
+            {currentStep < 5 ? (
               <button
                 type="button"
                 onClick={() => {
+                  if (currentStep === 1 && !isStep1Valid) return;
                   if (currentStep === 2 && !isStep2Valid) return;
-                  setCurrentStep((prev) => (prev < 4 ? ((prev + 1) as any) : prev));
+                  setCurrentStep((prev) => (prev < 5 ? ((prev + 1) as any) : prev));
                 }}
-                disabled={currentStep === 2 && !isStep2Valid}
+                disabled={
+                  (currentStep === 1 && !isStep1Valid) ||
+                  (currentStep === 2 && !isStep2Valid)
+                }
                 className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl text-xs cursor-pointer disabled:opacity-50"
               >
-                <span>Continuar</span>
+                <span>Próxima Etapa</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             ) : (

@@ -20,6 +20,7 @@ export interface HistoricoNAPNE {
   categoria_neurodivergencia?: string;
   cid_ou_hipotese?: string;
   condicoes_associadas?: string[];
+  especificidades_individuais?: string[];
 }
 
 export interface EstatisticasCampusParaiso {
@@ -51,6 +52,7 @@ export interface EstudoDeCaso {
   barreiras: BarreiraItem[];
   potencialidades: PotencialidadeItem[];
   recursos_ta: string[];
+  especificidades_transtorno_e_interseccoes?: string[];
   mapeamento_de_gatilhos_e_crises?: string[];
   historico_boas_praticas_etep?: string[];
   interseccao_condicoes?: string[];
@@ -103,7 +105,9 @@ export interface GuiaPraticoSalaAula {
 
 export interface PlanejamentoPEI {
   conteudo_ementa_oficial: string;
+  conteudos_especificos_modulo?: string;
   competencias_habilidades_ementa: string;
+  dificuldades_especificas_na_disciplina?: string;
   adaptacao_flexibilizacao_curricular: string;
   objetivos_e_metas: MetaPEI[];
   flexibilizacao_metodologica_dua: DUAConfig;
@@ -143,13 +147,19 @@ export interface PEICompleto {
 
 export interface IodaGeminiPeiSchema {
   estudo_de_caso_sintese: {
+    'especificidades_transtorno_e_intersecçoes': string[];
+    especificidades_transtorno_e_interseccoes?: string[];
     barreiras_contextuais: string[];
     potencialidades_e_interesses: string[];
     mapeamento_de_gatilhos_e_crises: string[];
     historico_boas_praticas_etep: string[];
   };
   planejamento_pedagogico_pei: {
-    conteudo_ementa_oficial: string;
+    conteudo_ementa_e_habilidades_bncc: string;
+    dificuldades_especificas_na_disciplina: string;
+    conteudo_ementa_oficial?: string;
+    competencias_habilidades_ementa?: string;
+    adaptacao_flexibilizacao_curricular?: string;
     metas_e_objetivos: {
       id_meta: string;
       descricao_meta: string;
@@ -165,8 +175,6 @@ export interface IodaGeminiPeiSchema {
       formato_acessivel: string;
       criterio_de_sucesso: string;
     };
-    competencias_habilidades_ementa?: string;
-    adaptacao_flexibilizacao_curricular?: string;
     guia_pratico_sala_de_aula?: GuiaPraticoSalaAula;
   };
   painel_de_acompanhamento: {

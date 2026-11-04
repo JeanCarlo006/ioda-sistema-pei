@@ -41,6 +41,11 @@ function synthesizeIodaPei(params: any) {
     grade,
     course,
     subject,
+    ementaOficial,
+    conteudosEspecificosModulo,
+    habilidadesCompetenciasPpcBncc,
+    dificuldadesEspecificasDisciplina,
+    especificidadesTranstorno,
     barriers,
     potentialities,
     triggersAndBehavior,
@@ -71,7 +76,7 @@ function synthesizeIodaPei(params: any) {
   const finalSubject =
     subject || (isSuperior ? 'Banco de Dados Relacional e SQL' : 'Programação Web e Algoritmos');
 
-  const combinedContext = `${barriers} ${triggersAndBehavior} ${selectedIds.join(' ')} ${selectedNeurodivergences.join(' ')}`.toLowerCase();
+  const combinedContext = `${barriers} ${especificidadesTranstorno} ${dificuldadesEspecificasDisciplina} ${triggersAndBehavior} ${selectedIds.join(' ')} ${selectedNeurodivergences.join(' ')}`.toLowerCase();
 
   const isEngSoft =
     finalSubject.toLowerCase().includes('engenharia de software') ||
@@ -84,6 +89,12 @@ function synthesizeIodaPei(params: any) {
     combinedContext.includes('cego') ||
     combinedContext.includes('cegueira') ||
     combinedContext.includes('sol-baixa-visao');
+
+  const isAuditiva =
+    combinedContext.includes('auditiv') ||
+    combinedContext.includes('surd') ||
+    combinedContext.includes('libras') ||
+    combinedContext.includes('sol-auditiva');
 
   const isMotor =
     combinedContext.includes('motor') ||
@@ -165,8 +176,8 @@ function synthesizeIodaPei(params: any) {
   } else {
     engajamentoAutorregulacao.push(
       isSuperior
-        ? 'Contextualização em problemas corporativos reais de engenharia de software, modelagem de dados e arquitetura de sistemas do PPC do BSI.'
-        : 'Projetos práticos de desenvolvimento integrados à formação técnica e comunitária no IFTO Campus Paraíso.'
+        ? `Contextualização dos conteúdos (${conteudosEspecificosModulo}) em problemas corporativos reais de engenharia de software e arquitetura de sistemas do PPC.`
+        : `Projetos práticos sobre (${conteudosEspecificosModulo}) integrados à formação técnica e BNCC no IFTO Campus Paraíso.`
     );
   }
 
@@ -220,6 +231,11 @@ function synthesizeIodaPei(params: any) {
       'Motora: Metodologia de Pair Programming com rodízio orientado (estudante atua como arquiteto da lógica e dos casos de teste).'
     );
   }
+  if (isAuditiva) {
+    engajamentoAutorregulacao.push(
+      'Surdez / Deficiência Auditiva: Articulação com Tradutor Intérprete de Libras, glossário visual de termos técnicos de TI e comunicação visual no laboratório.'
+    );
+  }
 
   const representacao: string[] = [];
   if (isEngSoft) {
@@ -228,7 +244,7 @@ function synthesizeIodaPei(params: any) {
     );
   } else {
     representacao.push(
-      'Disponibilização antecipada de roteiros de laboratório em formato Markdown acessível e snippets de código comentados.'
+      `Disponibilização antecipada de roteiros de laboratório sobre (${conteudosEspecificosModulo}) em formato Markdown acessível e snippets de código comentados.`
     );
   }
   if (isLearning) {
@@ -249,6 +265,11 @@ function synthesizeIodaPei(params: any) {
   if (isVisual) {
     representacao.push(
       'Visual: Substituição obrigatória de diagramas rasterizados por representações textuais estruturadas acessíveis ao leitor NVDA (scripts DDL, DBML, YAML e Mermaid).'
+    );
+  }
+  if (isAuditiva) {
+    representacao.push(
+      'Auditiva: Materiais com diagramação visual estruturada, legendagem em vídeos técnicos e vocabulário bilíngue (Libras / Português-Inglês técnico).'
     );
   }
   if (isIntellectual) {
@@ -283,6 +304,11 @@ function synthesizeIodaPei(params: any) {
       'Interação com banco de dados e servidores via terminal de linha de comando (CLI/SSH) acessível ao NVDA.'
     );
   }
+  if (isAuditiva) {
+    acaoExpressao.push(
+      'Demonstração prática de código documentado ou defesa sinalizada em Libras com apoio de intérprete.'
+    );
+  }
   if (isMotor) {
     acaoExpressao.push(
       'Uso de teclado mecânico ergonômico de ativação leve, atalhos de IDE e ferramentas de autocompletar inteligente.'
@@ -294,7 +320,7 @@ function synthesizeIodaPei(params: any) {
     );
   } else {
     acaoExpressao.push(
-      'Demonstração de competência por meio de repositório Git com commits semânticos e defesa técnica guiada.'
+      `Demonstração de competência em (${conteudosEspecificosModulo}) por meio de repositório Git com commits semânticos e defesa técnica guiada.`
     );
   }
   acaoExpressao.push(
@@ -330,6 +356,9 @@ function synthesizeIodaPei(params: any) {
   if (isVisual) {
     taList.push('Leitor de telas NVDA configurado com sintetizador em português e terminal CLI acessível');
   }
+  if (isAuditiva) {
+    taList.push('Softwares de transcrição em tempo real, legendagem e glossário técnico em Libras');
+  }
   if (isMotor) {
     taList.push('Teclado mecânico com apoio de punho regulável e mouse vertical ergonômico');
   }
@@ -341,11 +370,11 @@ function synthesizeIodaPei(params: any) {
       id_meta: 'M1',
       descricao_meta: isEngSoft
         ? `Aplicar técnicas de teste de software (caixa-preta, partição de equivalência e ciclo TDD red-green-refactor) na implementação de suítes de testes automatizados com apoio de TA.`
-        : `Compreender e implementar as estruturas práticas de ${finalSubject} utilizando ferramentas de acessibilidade configuradas e controle de versão no Git.`,
+        : `Dominar os conteúdos práticos do semestre (${conteudosEspecificosModulo}) em ${finalSubject}, superando as dificuldades observadas com apoio de roteiros estruturados e TA.`,
       prazo: 'Mensal (4 semanas)',
       indicador_sucesso: isEngSoft
         ? 'Suíte de testes automatizados funcional com cobertura de código documentada no GitHub/Jira.'
-        : 'Repositório contendo código funcional, scripts documentados e validação técnica em laboratório.',
+        : `Repositório contendo implementação funcional de (${conteudosEspecificosModulo}) validada em laboratório.`,
       progresso_percentual: 50,
       status: 'em_andamento',
     },
@@ -353,11 +382,11 @@ function synthesizeIodaPei(params: any) {
       id_meta: 'M2',
       descricao_meta: isEngSoft
         ? `Elaborar plano de testes e gerenciar o ciclo de defeitos em ferramenta de bug tracking (Jira/Bugzilla) em equipe ágil com vias de apresentação acessíveis.`
-        : `Desenvolver projeto prático colaborativo aplicando as diretrizes do DUA 3.0 com entregas graduais e sustentação técnica acessível.`,
+        : `Consolidar as competências e habilidades do PPC/BNCC (${habilidadesCompetenciasPpcBncc}) por meio de entregas graduais (chunking) e sustentação técnica acessível.`,
       prazo: 'Bimestral (8 semanas)',
       indicador_sucesso: isEngSoft
         ? 'Entrega de plano de testes completo com casos documentados e rastreabilidade entre requisitos e defeitos.'
-        : 'Entrega dos módulos de software testados e validados com documentação clara.',
+        : 'Entrega dos módulos práticos testados e validados com documentação clara e feedback formativo.',
       progresso_percentual: 35,
       status: 'em_andamento',
     },
@@ -374,6 +403,18 @@ function synthesizeIodaPei(params: any) {
       status: 'em_andamento',
     });
   }
+
+  const especificidadesList = [
+    ...(selectedNeurodivergences.length > 0
+      ? [`Intersecção / Condições acompanhadas: ${selectedNeurodivergences.join(' + ')}.`]
+      : []),
+    ...(especificidadesTranstorno
+      ? especificidadesTranstorno
+          .split(/[;\n]+/)
+          .map((s: string) => s.trim())
+          .filter(Boolean)
+      : []),
+  ];
 
   const gatilhosMapeados = triggersAndBehavior
     ? triggersAndBehavior
@@ -404,7 +445,7 @@ function synthesizeIodaPei(params: any) {
   }
 
   const barreirasContextuais = [
-    `Barreiras Metodológicas: Aulas práticas de ${finalSubject} com formato único sem diversificação de vias DUA 3.0.`,
+    `Barreira na Disciplina (${finalSubject}): ${dificuldadesEspecificasDisciplina}`,
     `Barreiras Ambientais e Sensoriais: Estímulos concorrentes no laboratório capazes de acionar gatilhos de sobrecarga (${gatilhosMapeados[0] || 'estímulos intensos'}).`,
     `Barreiras Tecnológicas: Computadores de laboratório sem perfil prévio de acessibilidade para ${selectedNeurodivergences.join(' + ') || 'a condição acompanhada'}.`,
   ];
@@ -414,6 +455,8 @@ function synthesizeIodaPei(params: any) {
     `Capacidade de raciocínio dedutivo e pensamento computacional quando garantidos os apoios necessários para ${isSuperior ? 'projetos complexos de TI' : 'o aprendizado prático de TI'}.`,
     'Excelente cooperação em metodologias ativas com papéis técnicos claros e previsíveis.',
   ];
+
+  const conteudoEmentaBnccCombinado = `Ementa Oficial: ${ementaOficial} | Conteúdos Específicos do Módulo/Semestre: ${conteudosEspecificosModulo} | Habilidades e Competências (PPC/BNCC): ${habilidadesCompetenciasPpcBncc}`;
 
   const parecerTexto = `PEI estruturado pelo Agente Ioda em estrita conformidade com a LGPD (Lei nº 13.709/2018), Art. 12, § 5º do Decreto nº 12.686/2025 e Portaria MEC nº 421/2026 para assegurar permanência e êxito em ${finalCourse}. Sugestões sujeitas à revisão e validação pelo docente regente e equipe pedagógica (NAPNE/ETEP).`;
 
@@ -439,12 +482,14 @@ function synthesizeIodaPei(params: any) {
           ? ' Atendimento garantido sem dependência de laudo médico pericial prévio (investigação pedagógica pelo NAPNE).'
           : ''
       }`,
-      descricao_condicao_especifica: barriers,
+      descricao_condicao_especifica: `${especificidadesTranstorno}\n\nDificuldades na disciplina: ${dificuldadesEspecificasDisciplina}`,
       informacoes_dos_pais:
         'Dados familiares e clínicos sob guarda sigilosa do NAPNE/ETEP em conformidade com a LGPD (Lei nº 13.709/2018).',
     },
     // Estrutura expandida exigida pelo Schema JSON oficial (Requisito 4) + compatibilidade retroativa
     estudo_de_caso_sintese: {
+      'especificidades_transtorno_e_intersecçoes': especificidadesList,
+      especificidades_transtorno_e_interseccoes: especificidadesList,
       barreiras_contextuais: barreirasContextuais,
       potencialidades_e_interesses: potencialidadesInteresses,
       mapeamento_de_gatilhos_e_crises: gatilhosMapeados,
@@ -455,9 +500,11 @@ function synthesizeIodaPei(params: any) {
       recursos_tecnologia_assistiva: taList,
     },
     planejamento_pedagogico_pei: {
-      conteudo_ementa_oficial: `Ementa Oficial do Componente Curricular: ${finalSubject}. Conteúdos teóricos e desenvolvimento de aplicações práticas no ${finalCourse}.`,
-      competencias_habilidades_ementa: `Desenvolver competências de análise, modelagem e codificação em ${finalSubject}, aplicando boas práticas de desenvolvimento de software e pensamento computacional.`,
-      adaptacao_flexibilizacao_curricular: `Garantia do currículo de TI pleno (${isSuperior ? 'Superior' : 'Médio Técnico'}) sem rebaixamento de conteúdos. Acessibilização assegurada pela diversificação das vias de representação, engajamento/autorregulação e de ação técnica, integrando o histórico ETEP.`,
+      conteudo_ementa_e_habilidades_bncc: conteudoEmentaBnccCombinado,
+      dificuldades_especificas_na_disciplina: dificuldadesEspecificasDisciplina,
+      conteudo_ementa_oficial: `${ementaOficial} (Conteúdos do Módulo: ${conteudosEspecificosModulo})`,
+      competencias_habilidades_ementa: habilidadesCompetenciasPpcBncc,
+      adaptacao_flexibilizacao_curricular: `Garantia do currículo de TI pleno (${isSuperior ? 'Superior' : 'Médio Técnico'}) sem rebaixamento de conteúdos. Acessibilização focada em superar (${dificuldadesEspecificasDisciplina}) pela diversificação das vias DUA 3.0 e boas práticas do histórico ETEP.`,
       metas_e_objetivos: metas.map((m) => ({
         id_meta: m.id_meta,
         descricao_meta: m.descricao_meta,
@@ -484,14 +531,14 @@ function synthesizeIodaPei(params: any) {
         formato_acessivel:
           'Avaliação formativa processual com entregas graduais no Git, testes práticos em laboratório, múltiplas vias de expressão e tempo estendido (+50%).',
         criterio_de_sucesso:
-          'Compreensão substantiva da lógica e capacidade de aplicação prática na disciplina, sem penalização por barreiras sensoriais ou motoras.',
+          'Compreensão substantiva da lógica e capacidade de aplicação prática dos conteúdos do semestre, sem penalização por barreiras sensoriais ou motoras.',
       },
       guia_pratico_sala_de_aula: {
         passo_a_passo_explicacao: isEngSoft
           ? '1. Demonstre o caso de teste funcionando na tela antes da teoria; 2. Entregue um esqueleto de código JUnit/Selenium comentado; 3. Valide a execução junto com o estudante na bancada.'
-          : '1. Inicie a aula mostrando o resultado prático funcionando; 2. Entregue um roteiro visual objetivo com exemplo de entrada e saída; 3. Permita testar cada bloco antes de avançar.',
+          : `1. Inicie a aula mostrando um exemplo concreto de (${conteudosEspecificosModulo}) funcionando; 2. Entregue um roteiro visual objetivo com entrada e saída esperada; 3. Permita testar cada bloco antes de avançar.`,
         divisao_tarefa_chunking: [
-          `Etapa 1 (Preparação - 15 min): Ler o objetivo curto da prática de ${finalSubject} e abrir o template base na IDE.`,
+          `Etapa 1 (Preparação - 15 min): Ler o objetivo curto da prática sobre (${conteudosEspecificosModulo}) e abrir o template base na IDE.`,
           'Etapa 2 (Execução - 20 min): Implementar a função ou requisito principal com validação visual imediata.',
           'Etapa 3 (Entrega - 10 min): Executar os casos de teste e registrar o envio no repositório ou Moodle.',
         ],
@@ -509,7 +556,6 @@ function synthesizeIodaPei(params: any) {
         engajamento_nas_atividades_1_a_5: 5,
       },
       parecer_sintetico: parecerTexto,
-      // Aliases retrocompatíveis
       status_periodo: 'EM_ANDAMENTO',
       metricas_grafico: {
         percentual_metas_alcancadas: 45,
