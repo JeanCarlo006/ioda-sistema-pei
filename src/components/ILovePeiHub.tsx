@@ -15,6 +15,8 @@ import {
   Wrench,
   Trash2,
   Compass,
+  ExternalLink,
+  ClipboardCheck,
 } from 'lucide-react';
 
 interface ILovePeiHubProps {
@@ -111,7 +113,7 @@ export const ILovePeiHub: React.FC<ILovePeiHubProps> = ({
           </p>
         </div>
 
-        <div className="shrink-0 flex flex-wrap items-center gap-2.5">
+        <div className="shrink-0 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
           {onOpenOnboardingTour && (
             <button
               type="button"
@@ -122,6 +124,16 @@ export const ILovePeiHub: React.FC<ILovePeiHubProps> = ({
               <span>Tour Rápido (4 Passos)</span>
             </button>
           )}
+          <a
+            href="https://forms.gle/MRK4HQoyP1t3zd289"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full sm:w-auto px-4 py-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 font-bold text-xs sm:text-sm rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <ClipboardCheck className="w-4 h-4 text-emerald-700" />
+            <span>Avaliar Sistema (Forms)</span>
+            <ExternalLink className="w-3.5 h-3.5 text-emerald-600" />
+          </a>
 
           <button
             type="button"

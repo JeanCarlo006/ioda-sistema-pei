@@ -18,25 +18,35 @@ interface SusResearchModalProps {
   onClose: () => void;
 }
 
-const STORAGE_KEY_FORMS_URL = 'ioda_google_forms_url_v1';
+const DEFAULT_FORMS_URL = 'https://forms.gle/MRK4HQoyP1t3zd289';
+const STORAGE_KEY_FORMS_URL = 'ioda_google_forms_url_v2';
 
 export const SusResearchModal: React.FC<SusResearchModalProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   const [formsUrl, setFormsUrl] = useState<string>(() => {
-    return (
-      localStorage.getItem(STORAGE_KEY_FORMS_URL) ||
-      'https://docs.google.com/forms'
-    );
+    const saved = localStorage.getItem(STORAGE_KEY_FORMS_URL);
+    if (!saved || saved === 'https://docs.google.com/forms') {
+      return DEFAULT_FORMS_URL;
+    }
+    return saved;
   });
   const [isEditingUrl, setIsEditingUrl] = useState(false);
+  const [copiadoLink, setCopiadoLink] = useState(false);
   const [copiadoPerguntas, setCopiadoPerguntas] = useState(false);
   const [copiadoMetodologia, setCopiadoMetodologia] = useState(false);
 
   const handleSaveFormsUrl = (newUrl: string) => {
-    setFormsUrl(newUrl);
-    localStorage.setItem(STORAGE_KEY_FORMS_URL, newUrl);
+    const trimmed = newUrl.trim() || DEFAULT_FORMS_URL;
+    setFormsUrl(trimmed);
+    localStorage.setItem(STORAGE_KEY_FORMS_URL, trimmed);
     setIsEditingUrl(false);
+  };
+
+  const handleCopiarLink = () => {
+    navigator.clipboard.writeText(formsUrl);
+    setCopiadoLink(true);
+    setTimeout(() => setCopiadoLink(false), 3000);
   };
 
   const roteiroPerguntasForms = `QUESTIONÁRIO DE AVALIAÇÃO DE USABILIDADE DO IODA (JICE 2026 / IFTO)
@@ -123,18 +133,32 @@ As respostas foram consolidadas em planilha automatizada, permitindo a análise 
         <div className="p-6 overflow-y-auto space-y-6 flex-1 text-xs">
           {/* Configurar Link do Google Forms */}
           <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2">
               <span className="font-bold text-slate-800 flex items-center gap-1.5">
                 <Link className="w-4 h-4 text-emerald-700" />
-                <span>Link do seu Google Forms da Pesquisa:</span>
+                <span>Link Oficial do Google Forms da Pesquisa:</span>
               </span>
-              <button
-                type="button"
-                onClick={() => setIsEditingUrl(!isEditingUrl)}
-                className="text-emerald-700 font-bold hover:underline cursor-pointer"
-              >
-                {isEditingUrl ? 'Cancelar' : 'Alterar Link'}
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={handleCopiarLink}
+                  className="inline-flex items-center gap-1 text-emerald-800 font-bold hover:underline cursor-pointer"
+                >
+                  {copiadoLink ? (
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                  ) : (
+                    <Copy className="w-3.5 h-3.5 text-emerald-700" />
+                  )}
+                  <span>{copiadoLink ? 'Link Copiado!' : 'Copiar Link'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsEditingUrl(!isEditingUrl)}
+                  className="text-slate-500 font-semibold hover:text-slate-800 hover:underline cursor-pointer"
+                >
+                  {isEditingUrl ? 'Cancelar' : 'Alterar'}
+                </button>
+              </div>
             </div>
 
             {isEditingUrl ? (
@@ -142,7 +166,7 @@ As respostas foram consolidadas em planilha automatizada, permitindo a análise 
                 <input
                   type="url"
                   defaultValue={formsUrl}
-                  placeholder="https://docs.google.com/forms/d/e/.../viewform"
+                  placeholder="https://forms.gle/MRK4HQoyP1t3zd289"
                   id="input-forms-url"
                   className="w-full p-2.5 rounded-xl border border-slate-300 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600"
                 />
@@ -158,9 +182,15 @@ As respostas foram consolidadas em planilha automatizada, permitindo a análise 
                 </button>
               </div>
             ) : (
-              <p className="text-slate-600 font-mono text-[11px] truncate bg-white p-2 rounded-lg border border-slate-200">
-                {formsUrl}
-              </p>
+              <a
+                href={formsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between gap-2 text-emerald-800 hover:text-emerald-950 font-mono text-[11px] truncate bg-white p-2.5 rounded-lg border border-slate-200 hover:border-emerald-400 transition-colors"
+              >
+                <span className="truncate">{formsUrl}</span>
+                <ExternalLink className="w-3.5 h-3.5 shrink-0 text-emerald-600" />
+              </a>
             )}
           </div>
 
