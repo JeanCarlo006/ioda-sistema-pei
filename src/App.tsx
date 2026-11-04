@@ -15,7 +15,7 @@ import { CentralAjudaModal } from './components/CentralAjudaModal';
 import { PpcAnalyzerModal } from './components/PpcAnalyzerModal';
 import { SusResearchModal } from './components/SusResearchModal';
 import { ILovePeiHub } from './components/ILovePeiHub';
-import { CheckCircle2, HelpCircle, ShieldAlert, ShieldCheck } from 'lucide-react';
+import { CheckCircle2, ExternalLink, HelpCircle, ShieldAlert, ShieldCheck } from 'lucide-react';
 import { exportOfficialPeiPdf } from './utils/exportOfficialPdf';
 
 const STORAGE_KEY_STUDENTS = 'ioda_students_list_v1';
@@ -531,14 +531,26 @@ export default function App() {
             <span className="text-emerald-700 font-semibold">JICE 2026</span>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setIsCentralAjudaOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900 hover:bg-emerald-800 text-white font-semibold text-xs shadow-sm transition-colors cursor-pointer"
-          >
-            <HelpCircle className="w-4 h-4 text-emerald-400" />
-            <span>Ajuda & Legislação</span>
-          </button>
+          <div className="flex flex-wrap items-center gap-2.5">
+            <a
+              href="https://forms.gle/MRK4HQoyP1t3zd289"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 font-semibold text-xs transition-colors cursor-pointer"
+            >
+              <span>Avaliar o App (Google Forms)</span>
+              <ExternalLink className="w-3.5 h-3.5 text-emerald-700" />
+            </a>
+
+            <button
+              type="button"
+              onClick={() => setIsCentralAjudaOpen(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900 hover:bg-emerald-800 text-white font-semibold text-xs shadow-sm transition-colors cursor-pointer"
+            >
+              <HelpCircle className="w-4 h-4 text-emerald-400" />
+              <span>Ajuda & Legislação</span>
+            </button>
+          </div>
         </div>
       </footer>
 
