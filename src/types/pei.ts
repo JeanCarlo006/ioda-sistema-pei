@@ -227,7 +227,7 @@ export interface DisciplinaPpcPreset {
   codigo: string;
   nome: string;
   periodo: string;
-  curso: 'BSI' | 'Técnico' | 'Geral';
+  curso: string;
   ementa: string;
   competencias: string;
   barreirasComunsTi: string[];

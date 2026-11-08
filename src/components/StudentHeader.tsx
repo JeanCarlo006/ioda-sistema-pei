@@ -17,6 +17,8 @@ interface StudentHeaderProps {
   onOpenAddStudent: () => void;
   onOpenCampusStats?: () => void;
   onRequestDeletePei?: (peiToDelete: PEICompleto) => void;
+  filtroDocente?: string;
+  onMudarFiltroDocente?: (docente: string) => void;
 }
 
 export const StudentHeader: React.FC<StudentHeaderProps> = ({
@@ -25,6 +27,8 @@ export const StudentHeader: React.FC<StudentHeaderProps> = ({
   onSelectCase,
   onOpenAddStudent,
   onRequestDeletePei,
+  filtroDocente = 'todos',
+  onMudarFiltroDocente,
 }) => {
   const { cabecalho, metricas, historico_napne } = pei;
 
@@ -36,15 +40,45 @@ export const StudentHeader: React.FC<StudentHeaderProps> = ({
 
   return (
     <div className="bg-white border-b border-slate-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-3.5">
-        {/* Aviso Institucional de Curadoria Docente (Human-in-the-Loop) no Cabeçalho da Visualização Final */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 space-y-3">
+        {/* Barra de Sessão SUAP / Controle de Acesso Docente (RBAC) */}
+        <div className="flex flex-wrap items-center justify-between gap-2.5 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 font-bold text-slate-800">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              Sessão SUAP Ativa:
+            </span>
+            <select
+              value={filtroDocente}
+              onChange={(e) => onMudarFiltroDocente && onMudarFiltroDocente(e.target.value)}
+              aria-label="Perfil docente autenticado no SUAP"
+              className="bg-white border border-slate-300 rounded-lg px-2.5 py-1 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-600 cursor-pointer shadow-2xs"
+            >
+              <option value="todos">Todos os Cursos / Alunos (Coordenação NAPNE / ETEP)</option>
+              <option value="Prof. Marcos Aurélio de Souza">Prof. Marcos Aurélio · Agropecuária</option>
+              <option value="Profª. Dra. Cláudia Rezende">Profª. Dra. Cláudia · Edificações</option>
+              <option value="Profª. Mariana Duarte">Profª. Mariana · Química e Alimentos</option>
+              <option value="Prof. Roberto Silveira">Prof. Roberto · Administração</option>
+              <option value="Profª. Dra. Helena Bittencourt">Profª. Dra. Helena · BSI / Informática</option>
+            </select>
+          </div>
+          <div className="flex items-center gap-2 text-slate-500 text-[11px]">
+            <span className="font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
+              Autenticação SUAP (SIAPE)
+            </span>
+            <span className="hidden sm:inline">·</span>
+            <span className="hidden sm:inline">Acesso restrito aos diários do docente</span>
+          </div>
+        </div>
+
+        {/* Aviso Institucional de Curadoria Docente (Human-in-the-Loop) */}
         <CuradoriaDocenteBanner variant="compact" />
 
         {/* Compact Student Switcher Row */}
-        <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
+        <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-100">
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="text-xs font-bold text-slate-500 mr-1">
-              Alternar Aluno:
+              Estudantes no Diário:
             </span>
             {allStudents.map((c) => {
               const isCurrent = c.id === pei.id;

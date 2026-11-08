@@ -25,7 +25,7 @@ export const CaseStudyView: React.FC<CaseStudyViewProps> = ({ pei }) => {
     estudo_de_caso.mapeamento_de_gatilhos_e_crises.length > 0
       ? estudo_de_caso.mapeamento_de_gatilhos_e_crises
       : [
-          'Ruídos altos e estímulos sonoros concorrentes no laboratório de informática sem apoio de abafador.',
+          'Ruídos altos e estímulos sensoriais concorrentes no ambiente de aula/laboratório sem apoio de abafador.',
           'Instruções verbais longas sem apoio visual ou roteiro passo a passo.',
           'Mudanças bruscas de rotina ou cobrança sob pressão temporal restrita.',
         ];
@@ -36,8 +36,8 @@ export const CaseStudyView: React.FC<CaseStudyViewProps> = ({ pei }) => {
       ? estudo_de_caso.historico_boas_praticas_etep
       : [
           'Fracionamento de atividades práticas em entregas curtas (chunking) validado nos semestres anteriores.',
-          'Disponibilização antecipada de roteiros no Moodle e tempo adicional (+50%) em avaliações práticas.',
-          'Programação em pares (Pair Programming) com papéis técnicos bem definidos.',
+          'Disponibilização antecipada de roteiros no AVA/Moodle e tempo adicional (+50%) em avaliações.',
+          'Trabalho colaborativo em duplas com papéis pedagógicos bem definidos.',
         ];
 
   const condicoesInterseccao =

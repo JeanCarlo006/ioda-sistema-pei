@@ -18,23 +18,13 @@ import { ILovePeiHub } from './components/ILovePeiHub';
 import { OnboardingTourModal } from './components/OnboardingTourModal';
 import { CheckCircle2, ExternalLink, HelpCircle, ShieldAlert, ShieldCheck } from 'lucide-react';
 import { exportOfficialPeiPdf } from './utils/exportOfficialPdf';
+import { apiService } from './services/apiService';
 
 const STORAGE_KEY_STUDENTS = 'ioda_students_list_v1';
 const STORAGE_KEY_ACTIVE_ID = 'ioda_active_student_id_v1';
 const STORAGE_KEY_ONBOARDING_DONE = 'ioda_onboarding_tour_done_v1';
 
 const getInitialStudents = (): PEICompleto[] => {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY_STUDENTS);
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed;
-      }
-    }
-  } catch {
-    // fallback
-  }
   return todosOsCasos;
 };
 
@@ -71,20 +61,34 @@ export default function App() {
   const [isPresentationMode, setIsPresentationMode] = useState<boolean>(false);
   const [peiToDelete, setPeiToDelete] = useState<PEICompleto | null>(null);
   const [deleteNotice, setDeleteNotice] = useState<string | null>(null);
+  const [filtroDocente, setFiltroDocente] = useState<string>('todos');
 
   const [escalaFonte, setEscalaFonte] = useState<EscalaFonte>('normal');
   const [modoContraste, setModoContraste] = useState<ModoContraste>('padrao');
 
-  // Persist students to localStorage
+  // Carrega lista de PEIs diretamente do banco de dados SQLite persistente
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY_STUDENTS, JSON.stringify(studentsList));
-    } catch (err) {
-      console.error('Falha ao salvar no localStorage:', err);
+    let isMounted = true;
+    async function loadFromDb() {
+      try {
+        const peis = await apiService.getPeis();
+        if (isMounted && peis && peis.length > 0) {
+          setStudentsList(peis);
+          const savedId = localStorage.getItem(STORAGE_KEY_ACTIVE_ID);
+          const current = peis.find((p) => p.id === savedId) || peis[0];
+          setActivePei(current);
+        }
+      } catch (err) {
+        console.error('Falha ao conectar ao banco de dados SQLite:', err);
+      }
     }
-  }, [studentsList]);
+    loadFromDb();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
-  // Persist active ID to localStorage
+  // Persiste ID do estudante ativo na sessão
   useEffect(() => {
     try {
       if (activePei) {
@@ -105,7 +109,7 @@ export default function App() {
     body.classList.add(`theme-${modoContraste}`);
   }, [escalaFonte, modoContraste]);
 
-  // Anonymization logic for Presentation Mode (LGPD / CEP compliance for JICE)
+  // Modo Apresentação (apenas para bancas/apresentações públicas em congressos/JICE)
   const anonymizePei = (pei: PEICompleto, index: number): PEICompleto => {
     const letter = String.fromCharCode(65 + (index % 26));
     const neuro = pei.historico_napne.categoria_neurodivergencia || 'Neurodivergência';
@@ -131,12 +135,39 @@ export default function App() {
     ? anonymizePei(activePei, activeIndex >= 0 ? activeIndex : 0)
     : activePei;
 
-  const displayedStudents = isPresentationMode
+  const baseStudents = isPresentationMode
     ? studentsList.map((s, idx) => anonymizePei(s, idx))
     : studentsList;
 
-  const handleAddNewStudent = (newStudent: PEICompleto) => {
-    setStudentsList((prev) => [newStudent, ...prev]);
+  const displayedStudents = filtroDocente === 'todos'
+    ? baseStudents
+    : baseStudents.filter((s) => {
+        const docName = s.cabecalho.docente_regente.toLowerCase();
+        const parts = filtroDocente.split(' ').filter((p) => p.length > 2);
+        return parts.some((p) => docName.includes(p.toLowerCase()));
+      });
+
+  const handleMudarFiltroDocente = (docente: string) => {
+    setFiltroDocente(docente);
+    if (docente !== 'todos') {
+      const parts = docente.split(' ').filter((p) => p.length > 2);
+      const matching = studentsList.find((s) => {
+        const docName = s.cabecalho.docente_regente.toLowerCase();
+        return parts.some((p) => docName.includes(p.toLowerCase()));
+      });
+      if (matching) {
+        setActivePei(matching);
+      }
+    }
+  };
+
+  const handleAddNewStudent = async (newStudent: PEICompleto) => {
+    try {
+      await apiService.savePei(newStudent);
+    } catch (err) {
+      console.error('Erro ao salvar no banco SQLite:', err);
+    }
+    setStudentsList((prev) => [newStudent, ...prev.filter((s) => s.id !== newStudent.id)]);
     setActivePei(newStudent);
     setActiveTab('pei');
   };
@@ -151,31 +182,43 @@ export default function App() {
     setPeiToDelete(realStudent);
   };
 
-  const handleResetToDefault = () => {
-    if (window.confirm('Deseja restaurar os casos de exemplo iniciais do NAPNE?')) {
+  const handleResetToDefault = async () => {
+    if (window.confirm('Deseja restaurar os casos de exemplo iniciais do NAPNE no banco de dados?')) {
+      for (const c of todosOsCasos) {
+        try {
+          await apiService.savePei(c);
+        } catch (e) {
+          console.error(e);
+        }
+      }
       setStudentsList(todosOsCasos);
       setActivePei(todosOsCasos[0]);
-      localStorage.setItem(STORAGE_KEY_STUDENTS, JSON.stringify(todosOsCasos));
-      localStorage.setItem(STORAGE_KEY_ACTIVE_ID, todosOsCasos[0].id);
     }
   };
 
-  const handleConfirmDeletePei = () => {
+  const handleConfirmDeletePei = async () => {
     if (!peiToDelete) return;
 
+    const peiId = peiToDelete.id;
     const codigo = peiToDelete.cabecalho.codigo_matricula || peiToDelete.id;
     const nomeEstudante = peiToDelete.cabecalho.estudante;
 
+    try {
+      await apiService.deletePei(peiId);
+    } catch (err) {
+      console.error('Erro ao excluir do banco SQLite:', err);
+    }
+
     setStudentsList((prev) => {
-      const remaining = prev.filter((s) => s.id !== peiToDelete.id);
-      if (activePei.id === peiToDelete.id && remaining.length > 0) {
+      const remaining = prev.filter((s) => s.id !== peiId);
+      if (activePei.id === peiId && remaining.length > 0) {
         setActivePei(remaining[0]);
       }
       return remaining;
     });
 
     setPeiToDelete(null);
-    setDeleteNotice(`O PEI Nº ${codigo} do estudante ${nomeEstudante} foi excluído com sucesso.`);
+    setDeleteNotice(`O PEI Nº ${codigo} do estudante ${nomeEstudante} foi excluído do banco com sucesso.`);
     setTimeout(() => {
       setDeleteNotice(null);
     }, 5000);
@@ -370,14 +413,19 @@ export default function App() {
     });
   };
 
-  const handleUpdatePei = (updated: PEICompleto) => {
+  const handleUpdatePei = async (updated: PEICompleto) => {
     setActivePei(updated);
     setStudentsList((list) =>
       list.map((s) => (s.id === updated.id ? updated : s))
     );
+    try {
+      await apiService.savePei(updated);
+    } catch (err) {
+      console.error('Erro ao atualizar PEI no banco SQLite:', err);
+    }
   };
 
-  const handleAddPostIt = (postIt: PostItPainel) => {
+  const handleAddPostIt = async (postIt: PostItPainel) => {
     setActivePei((prev) => {
       const updated = {
         ...prev,
@@ -388,9 +436,14 @@ export default function App() {
       );
       return updated;
     });
+    try {
+      await apiService.addNote(activePei.id, postIt);
+    } catch (err) {
+      console.error('Erro ao salvar nota no banco SQLite:', err);
+    }
   };
 
-  const handleDeletePostIt = (id: string) => {
+  const handleDeletePostIt = async (id: string) => {
     setActivePei((prev) => {
       const updated = {
         ...prev,
@@ -401,6 +454,11 @@ export default function App() {
       );
       return updated;
     });
+    try {
+      await apiService.deleteNote(activePei.id, id);
+    } catch (err) {
+      console.error('Erro ao excluir nota do banco SQLite:', err);
+    }
   };
 
   const handlePrint = () => {
@@ -470,6 +528,8 @@ export default function App() {
             onOpenAddStudent={() => setIsAddStudentOpen(true)}
             onOpenCampusStats={() => setIsCampusStatsOpen(true)}
             onRequestDeletePei={handleRequestDeletePei}
+            filtroDocente={filtroDocente}
+            onMudarFiltroDocente={handleMudarFiltroDocente}
           />
         </div>
       )}

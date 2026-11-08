@@ -100,7 +100,7 @@ export const PpcAnalyzerModal: React.FC<PpcAnalyzerModalProps> = ({
         disciplina: nomeDisciplina,
         ementa,
         competencias,
-        adaptacaoCurricular,
+        adaptacaoCurricular: adaptCurricular,
         engajamento,
         representacao,
         acaoExpressao,

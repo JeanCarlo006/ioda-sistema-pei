@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { PEICompleto } from '../types/pei';
-import { Printer, Download, Edit3, Save, CheckCircle2 } from 'lucide-react';
+import { Printer, Download, Edit3, Save, CheckCircle2, FileText } from 'lucide-react';
 import { exportOfficialPeiPdf } from '../utils/exportOfficialPdf';
+import { exportOfficialPeiDocx } from '../utils/exportOfficialDocx';
 import { CuradoriaDocenteBanner } from './CuradoriaDocenteBanner';
 
 interface OfficialTemplateViewProps {
@@ -17,6 +18,7 @@ export const OfficialTemplateView: React.FC<OfficialTemplateViewProps> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [editedPei, setEditedPei] = useState<PEICompleto>(pei);
   const [pdfFeedback, setPdfFeedback] = useState<string | null>(null);
+  const [isExportingDocx, setIsExportingDocx] = useState(false);
 
   React.useEffect(() => {
     if (!isEditing) {
@@ -39,6 +41,25 @@ export const OfficialTemplateView: React.FC<OfficialTemplateViewProps> = ({
     exportOfficialPeiPdf(editedPei);
     setPdfFeedback('PDF oficial gerado e baixado com sucesso!');
     setTimeout(() => setPdfFeedback(null), 4000);
+  };
+
+  const handleDownloadDocx = async () => {
+    try {
+      setIsExportingDocx(true);
+      if (isEditing && onUpdatePei) {
+        onUpdatePei(editedPei);
+        setIsEditing(false);
+      }
+      await exportOfficialPeiDocx(editedPei);
+      setPdfFeedback('Documento Word (.docx) oficial gerado com sucesso!');
+      setTimeout(() => setPdfFeedback(null), 4000);
+    } catch (err) {
+      console.error('Erro ao gerar DOCX:', err);
+      setPdfFeedback('Erro ao gerar DOCX. Tente novamente.');
+      setTimeout(() => setPdfFeedback(null), 4000);
+    } finally {
+      setIsExportingDocx(false);
+    }
   };
 
   const handleBrowserPrint = () => {
@@ -114,6 +135,16 @@ export const OfficialTemplateView: React.FC<OfficialTemplateViewProps> = ({
               <span>Editar Campos</span>
             </button>
           )}
+
+          <button
+            onClick={handleDownloadDocx}
+            disabled={isExportingDocx}
+            className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-slate-800 bg-sky-50 hover:bg-sky-100 border border-sky-300 rounded-xl transition-colors cursor-pointer shadow-xs whitespace-nowrap"
+            title="Exportar documento no formato Word (.docx) padronizado pelo IFTO/NAPNE para processo SEI"
+          >
+            <FileText className="w-4 h-4 text-sky-700" />
+            <span>{isExportingDocx ? 'Gerando Word...' : 'Baixar DOCX Oficial (.docx)'}</span>
+          </button>
 
           <button
             onClick={handleDownloadPdf}

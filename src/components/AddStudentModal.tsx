@@ -9,6 +9,7 @@ import {
   sanitizePeiPayloadForLgpd,
 } from '../services/geminiService';
 import { CuradoriaDocenteBanner } from './CuradoriaDocenteBanner';
+import { DIARIOS_SUAP_INSTITUCIONAIS, DiarioSuap } from '../services/suapService';
 import {
   UserPlus,
   X,
@@ -16,6 +17,7 @@ import {
   GraduationCap,
   Loader2,
   CheckCircle,
+  CheckCircle2,
   FileCheck2,
   HelpCircle,
   Laptop,
@@ -65,29 +67,55 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
   const [mostrarOutrasCondicoes, setMostrarOutrasCondicoes] = useState(false);
   const [showTriggerTooltip, setShowTriggerTooltip] = useState(false);
 
-  // Passo 1: Identificação Básica
-  const [nome, setNome] = useState('');
-  const [matricula, setMatricula] = useState('');
-  const [idade, setIdade] = useState('17 anos');
-  const [curso, setCurso] = useState('Curso Técnico Integrado ao Ensino Médio em Informática');
-  const [modulo, setModulo] = useState('2º Ano / Diurno');
-  const [docenteRegente, setDocenteRegente] = useState('Prof. Docente da Disciplina');
-  const [docenteAee] = useState('Profª. Renata Cavalcanti (NAPNE · Campus Paraíso)');
+  const [selectedDiarioId, setSelectedDiarioId] = useState<string>(DIARIOS_SUAP_INSTITUCIONAIS[0].id);
 
-  // Passo 2: Detalhamento do Componente Curricular (PPC / BNCC)
-  const [disciplina, setDisciplina] = useState('Programação Web e Algoritmos');
-  const [ementaOficial, setEmentaOficial] = useState(
-    'Estruturas de dados em memória (vetores e objetos), manipulação do DOM, eventos, funções assíncronas (Promises/Async-Await) e consumo de APIs REST.'
-  );
+  // Passo 1: Identificação Básica integrada ao SUAP
+  const [nome, setNome] = useState(DIARIOS_SUAP_INSTITUCIONAIS[0].estudantes[0]?.nome || '');
+  const [matricula, setMatricula] = useState(DIARIOS_SUAP_INSTITUCIONAIS[0].estudantes[0]?.matricula || '');
+  const [idade, setIdade] = useState(DIARIOS_SUAP_INSTITUCIONAIS[0].estudantes[0]?.idade || '16 anos');
+  const [curso, setCurso] = useState(DIARIOS_SUAP_INSTITUCIONAIS[0].curso);
+  const [modulo, setModulo] = useState(DIARIOS_SUAP_INSTITUCIONAIS[0].semestrePeriodo);
+  const [docenteRegente, setDocenteRegente] = useState(DIARIOS_SUAP_INSTITUCIONAIS[0].docenteNome);
+  const [docenteAee] = useState('Equipe NAPNE / AEE');
+
+  // Passo 2: Detalhamento do Componente Curricular (PPC / Plano de Ensino do SUAP)
+  const [disciplina, setDisciplina] = useState(DIARIOS_SUAP_INSTITUCIONAIS[0].nomeDisciplina);
+  const [ementaOficial, setEmentaOficial] = useState(DIARIOS_SUAP_INSTITUCIONAIS[0].planoEnsino.ementa);
   const [conteudosEspecificosModulo, setConteudosEspecificosModulo] = useState(
-    'Desenvolvimento de páginas interativas em HTML5/CSS3/JS, manipulação de arrays (map, filter, reduce) e requisições HTTP assíncronas.'
+    DIARIOS_SUAP_INSTITUCIONAIS[0].planoEnsino.conteudosProgramaticos
+      .map((c) => `${c.bimestreOuEtapa}: ${c.topicos}`)
+      .join('\n\n')
   );
   const [habilidadesCompetenciasPpcBncc, setHabilidadesCompetenciasPpcBncc] = useState(
-    'Desenvolver algoritmos modulares para web; aplicar raciocínio lógico-computacional (BNCC Computação / PPC Técnico) e boas práticas de acessibilidade digital (WCAG).'
+    DIARIOS_SUAP_INSTITUCIONAIS[0].planoEnsino.habilidadesCompetenciasPpc
   );
   const [dificuldadesEspecificasDisciplina, setDificuldadesEspecificasDisciplina] = useState(
-    'Sobrecarga ao ler enunciados extensos de problemas algorítmicos e dificuldade em manter o foco durante a depuração de erros de sintaxe no terminal.'
+    'Dificuldade com ritmo uniforme de aula e tempo restrito de avaliações práticas.'
   );
+
+  const handleSelectDiarioSuap = (diario: DiarioSuap) => {
+    setSelectedDiarioId(diario.id);
+    setCurso(diario.curso);
+    setDisciplina(diario.nomeDisciplina);
+    setModulo(diario.semestrePeriodo);
+    setDocenteRegente(diario.docenteNome);
+    setEmentaOficial(diario.planoEnsino.ementa);
+    const conteudosText = diario.planoEnsino.conteudosProgramaticos
+      .map((c) => `${c.bimestreOuEtapa}: ${c.topicos}`)
+      .join('\n\n');
+    setConteudosEspecificosModulo(conteudosText);
+    setHabilidadesCompetenciasPpcBncc(diario.planoEnsino.habilidadesCompetenciasPpc);
+
+    if (diario.estudantes.length > 0) {
+      const primeiro = diario.estudantes[0];
+      setNome(primeiro.nome);
+      setMatricula(primeiro.matricula);
+      if (primeiro.idade) setIdade(primeiro.idade);
+      if (primeiro.observacoesNapne) {
+        setEspecificidadesTranstorno(primeiro.observacoesNapne);
+      }
+    }
+  };
 
   // Passo 3: Especificidades por Transtorno / Neurodivergência & Intersecções
   const [selectedSolucoes, setSelectedSolucoes] = useState<string[]>(['sol-tdah']);
@@ -124,6 +152,101 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
   if (!isOpen) return null;
 
   const presetsPpcEPlano = [
+    // Agropecuária
+    {
+      id: 'preset-agro-zootecnia',
+      tag: 'Agropecuária',
+      titulo: 'AGR.0201 - Zootecnia Geral e Manejo Animal',
+      curso: 'Técnico Integrado ao Ensino Médio em Agropecuária',
+      modulo: '2º Ano / Integral',
+      docente: 'Prof. Marcos Aurélio de Souza',
+      perfil: 'medio_tecnico' as const,
+      idade: '16 anos',
+      ementa:
+        'Fisiologia e bem-estar animal, instalações zootécnicas, nutrição básica de ruminantes e monogástricos, vacinação, biossegurança e registro de índices produtivos no campo.',
+      conteudosModulo:
+        'Práticas de contenção e manejo de rebanhos, cálculo de ração balanceada e preenchimento de fichas de controle sanitário na fazenda-escola.',
+      habilidadesPpcBncc:
+        'Planejar e executar operações de manejo animal com segurança; aplicar noções de bem-estar animal e sustentabilidade agropecuária (PPC Agropecuária).',
+      dificuldadesPadrao:
+        'Hipersensibilidade auditiva ou tátil a ruídos de maquinário e odores de esterco; dificuldade em fixar passos procedimentais sem roteiro visual ilustrado.',
+    },
+    {
+      id: 'preset-agro-mecanizacao',
+      tag: 'Agropecuária',
+      titulo: 'AGR.0403 - Mecanização Agrícola e Irrigação',
+      curso: 'Técnico Integrado ao Ensino Médio em Agropecuária',
+      modulo: '3º Ano / Integral',
+      docente: 'Prof. Marcos Aurélio de Souza',
+      perfil: 'medio_tecnico' as const,
+      idade: '17 anos',
+      ementa:
+        'Operação e manutenção preventiva de tratores e implementos; sistemas de irrigação (gotejamento/aspersão); regulagem de pulverizadores e segurança do trabalho rural (NR-31).',
+      conteudosModulo:
+        'Regulagem de distribuição de sementes e adubos, cálculo de vazão de água e condução segura de maquinários na lavoura experimental.',
+      habilidadesPpcBncc:
+        'Operar sistemas de mecanização e irrigação agrícola de forma sustentável e preventiva (PPC Agropecuária / BNCC).',
+      dificuldadesPadrao:
+        'Ansiedade ao operar maquinários pesados com vibração; dificuldade em cálculos de vazão em tempo real sob sol intenso sem apoio de tabela simplificada.',
+    },
+    // Edificações
+    {
+      id: 'preset-edif-desenho',
+      tag: 'Edificações',
+      titulo: 'EDF.0301 - Desenho Técnico Arquitetônico e CAD',
+      curso: 'Técnico em Edificações Subsequente/Integrado',
+      modulo: '2º Módulo / Vespertino',
+      docente: 'Profª. Dra. Cláudia Rezende',
+      perfil: 'medio_tecnico' as const,
+      idade: '18 anos',
+      ementa:
+        'Normas da ABNT para desenho de construção civil (NBR 6492); plantas baixas, cortes, fachadas, coberturas, detalhamento construtivo e desenho auxiliado por computador (CAD/BIM).',
+      conteudosModulo:
+        'Elaboração de pranchas de projeto arquitetônico residencial unifamiliar com escalas, cotas normalizadas e espessura de penas em software CAD.',
+      habilidadesPpcBncc:
+        'Interpretar e elaborar projetos técnicos de edificações com exatidão normativa e domínio de ferramentas gráficas (PPC Edificações).',
+      dificuldadesPadrao:
+        'Fadiga na leitura espacial de cortes e fachadas; sobrecarga cognitiva com densidade de linhas e espessuras na prancha técnica sem modelo tátil ou tridimensional.',
+    },
+    // Química e Alimentos
+    {
+      id: 'preset-quim-laboratorio',
+      tag: 'Química e Alimentos',
+      titulo: 'QUI.0102 - Química Geral Experimental e Laboratório',
+      curso: 'Técnico Integrado em Química / Alimentos',
+      modulo: '1º Ano / Diurno',
+      docente: 'Profª. Mariana Duarte',
+      perfil: 'medio_tecnico' as const,
+      idade: '15 anos',
+      ementa:
+        'Biossegurança e boas práticas em laboratório químico; técnicas de pesagem e medição volumétrica; preparo e padronização de soluções; titulações ácido-base e relatórios.',
+      conteudosModulo:
+        'Calibração de vidrarias, manuseio seguro de ácidos e bases na capela de exaustão e confecção de relatórios de aulas práticas.',
+      habilidadesPpcBncc:
+        'Realizar ensaios físico-químicos com rigor metodológico e observância das normas de biossegurança e sustentabilidade (PPC Química).',
+      dificuldadesPadrao:
+        'Receio ou ansiedade de manuseio com frascos de vidro e reagentes; dispersão durante instruções orais complexas sem checklist impresso de segurança.',
+    },
+    // Administração
+    {
+      id: 'preset-adm-gestao',
+      tag: 'Administração',
+      titulo: 'ADM.0402 - Gestão de Pessoas e Comportamento Organizacional',
+      curso: 'Técnico em Administração Integrado / Subsequente',
+      modulo: '3º Módulo / Noturno',
+      docente: 'Prof. Roberto Silveira',
+      perfil: 'medio_tecnico' as const,
+      idade: '19 anos',
+      ementa:
+        'Modelos de liderança, motivação, comunicação organizacional, dinâmicas de equipe, gestão de conflitos, recrutamento, seleção e inclusão no trabalho.',
+      conteudosModulo:
+        'Análise de clima organizacional, mapeamento de competências e elaboração de planos de treinamento e desenvolvimento.',
+      habilidadesPpcBncc:
+        'Compreender o comportamento humano nas organizações e desenvolver processos participativos de gestão com foco na empatia e acessibilidade (PPC Administração).',
+      dificuldadesPadrao:
+        'Insegurança em dinâmicas de grupo e dramatizações simuladas; dificuldade com textos teóricos longos sem esquemas gráficos conceituais.',
+    },
+    // Informática & BSI
     {
       id: 'preset-eng-soft-2',
       tag: 'Superior TI',
@@ -161,26 +284,8 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
         'Barreira visual/abstrata na leitura de diagramas MER complexos sem descrição textual declarativa (DBML/DDL) e perda de foco em queries aninhadas longas.',
     },
     {
-      id: 'preset-algoritmos-bsi',
-      tag: 'Superior TI',
-      titulo: 'Algoritmos e Lógica de Programação',
-      curso: 'Bacharelado em Sistemas de Informação (Campus Paraíso do Tocantins)',
-      modulo: '1º Período / Noturno',
-      docente: 'Prof. Docente de Lógica e Algoritmos',
-      perfil: 'superior_ti' as const,
-      idade: '19 anos',
-      ementa:
-        'Conceito de algoritmo, variáveis, tipos de dados, operadores, estruturas condicionais (if/switch), estruturas de repetição (for/while), vetores, matrizes e modularização por funções.',
-      conteudosModulo:
-        'Laços de repetição aninhados, manipulação de vetores unidimensionais e bidimensionais, passagem de parâmetros e depuração passo a passo (teste de mesa).',
-      habilidadesPpcBncc:
-        'Abstrair problemas computacionais e traduzi-los em algoritmos estruturados e testáveis utilizando boas práticas de codificação (PPC BSI).',
-      dificuldadesPadrao:
-        'Bloqueio cognitivo diante de enunciados matemáticos abstratos sem exemplos concretos de entrada/saída (Input/Output).',
-    },
-    {
       id: 'preset-tecnico-web',
-      tag: 'Médio Técnico',
+      tag: 'Médio Técnico TI',
       titulo: 'Programação Web e Algoritmos',
       curso: 'Curso Técnico Integrado ao Ensino Médio em Informática',
       modulo: '2º Ano / Diurno',
@@ -195,24 +300,6 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
         'Desenvolver aplicações web front-end acessíveis; aplicar pensamento computacional e decomposição algorítmica (BNCC Computação & PPC Técnico em Informática).',
       dificuldadesPadrao:
         'Sobrecarga ao ler enunciados extensos e dificuldade em manter a atenção durante a depuração de erros sintáticos no navegador/terminal.',
-    },
-    {
-      id: 'preset-tecnico-redes',
-      tag: 'Médio Técnico',
-      titulo: 'Fundamentos de Redes de Computadores e Hardware',
-      curso: 'Curso Técnico Integrado ao Ensino Médio em Informática',
-      modulo: '1º Ano / Diurno',
-      docente: 'Prof. Gilberto Mendes',
-      perfil: 'medio_tecnico' as const,
-      idade: '15 anos',
-      ementa:
-        'Arquitetura de computadores, Modelo OSI e TCP/IP, endereçamento IPv4/IPv6, cálculo de sub-redes (VLSM), cabeamento estruturado (ANSI/TIA-568) e configuração de ativos de rede.',
-      conteudosModulo:
-        'Cálculo de máscaras de sub-rede, simulação de topologias no Cisco Packet Tracer e prática de crimpagem/teste de cabos UTP em laboratório.',
-      habilidadesPpcBncc:
-        'Projetar e configurar redes locais (LAN); diagnosticar falhas físicas e lógicas de conectividade com segurança (PPC Técnico Integrado / BNCC).',
-      dificuldadesPadrao:
-        'Hipersensibilidade auditiva aos ruídos intensos do laboratório de hardware/redes e insegurança diante de instruções orais ambíguas.',
     },
   ];
 
@@ -288,20 +375,11 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
       ].join(' + ');
       setCategoriaNeurodivergencia(titulosCombinados);
 
-      const currentDisc = discOverride ?? disciplina;
-      const isEngSoft =
-        currentDisc.toLowerCase().includes('engenharia de software') ||
-        currentDisc.includes('BAC.0406');
-
       const descricoesCombinadas = solucoesObjs
         .map((s) => `• ${s!.titulo}: ${s!.descricaoProblema}`)
         .join('\n');
 
-      let customCondicao = descricoesCombinadas;
-      if (isEngSoft) {
-        customCondicao += `\n\n[Contextualização na disciplina BAC.0406 - Engenharia de Software II: acomodações integradas para testes unitários TDD em JUnit/Selenium e relatórios no Jira].`;
-      }
-      setCondicao(customCondicao);
+      setCondicao(descricoesCombinadas);
 
       const especificidadesCombinadas = finalIds
         .map((id) => mapEspecificidadesPorCondicao[id])
@@ -613,7 +691,7 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
               flexibilizacao_metodologica_dua: {
                 engajamento:
                   duaGerado?.engajamento_e_autorregulacao ||
-                  duaGerado?.engajamento ||
+                  (duaGerado as any)?.engajamento ||
                   localTemplate.planejamento_pei.flexibilizacao_metodologica_dua.engajamento,
                 representacao:
                   duaGerado?.representacao ||
@@ -839,69 +917,87 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
           {currentStep === 1 && (
             <div className="space-y-5">
               <div>
-                <span className="text-xs font-bold text-slate-800 block mb-2">
-                  Modalidade de Ensino:
-                </span>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                  <button
-                    type="button"
-                    onClick={() => handleSelectProfile('medio_tecnico')}
-                    className={`p-4 rounded-2xl border-2 text-left transition-all cursor-pointer ${
-                      perfilModalidade === 'medio_tecnico'
-                        ? 'bg-emerald-50/70 border-emerald-600'
-                        : 'bg-white border-slate-200 hover:border-slate-300'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <div
-                        className={`p-2 rounded-xl ${
-                          perfilModalidade === 'medio_tecnico'
-                            ? 'bg-emerald-600 text-white'
-                            : 'bg-slate-100 text-slate-600'
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-bold text-slate-800">
+                    Turmas / Diários Importados do SUAP (Selecione sua disciplina):
+                  </span>
+                  <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+                    Sincronizado com o SUAP
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {DIARIOS_SUAP_INSTITUCIONAIS.map((d) => {
+                    const isSelected = selectedDiarioId === d.id;
+                    return (
+                      <button
+                        key={d.id}
+                        type="button"
+                        onClick={() => handleSelectDiarioSuap(d)}
+                        className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer ${
+                          isSelected
+                            ? 'bg-emerald-50/80 border-emerald-600 ring-1 ring-emerald-600'
+                            : 'bg-white border-slate-200 hover:border-slate-300'
                         }`}
                       >
-                        <Laptop className="w-4 h-4" />
-                      </div>
-                      {perfilModalidade === 'medio_tecnico' && (
-                        <CheckCircle className="w-4 h-4 text-emerald-600" />
-                      )}
-                    </div>
-                    <h4 className="font-bold text-slate-900 text-sm">Médio Técnico em TI</h4>
-                    <p className="text-xs text-slate-600 mt-0.5 leading-relaxed">
-                      Curso Técnico Integrado ao Ensino Médio (BNCC + Formação Técnica).
-                    </p>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleSelectProfile('superior_ti')}
-                    className={`p-4 rounded-2xl border-2 text-left transition-all cursor-pointer ${
-                      perfilModalidade === 'superior_ti'
-                        ? 'bg-emerald-50/70 border-emerald-600'
-                        : 'bg-white border-slate-200 hover:border-slate-300'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <div
-                        className={`p-2 rounded-xl ${
-                          perfilModalidade === 'superior_ti'
-                            ? 'bg-emerald-600 text-white'
-                            : 'bg-slate-100 text-slate-600'
-                        }`}
-                      >
-                        <GraduationCap className="w-4 h-4" />
-                      </div>
-                      {perfilModalidade === 'superior_ti' && (
-                        <CheckCircle className="w-4 h-4 text-emerald-600" />
-                      )}
-                    </div>
-                    <h4 className="font-bold text-slate-900 text-sm">Superior em TI</h4>
-                    <p className="text-xs text-slate-600 mt-0.5 leading-relaxed">
-                      Sistemas de Informação e Graduação (PPC Superior / DCN Computação).
-                    </p>
-                  </button>
+                        <div className="flex items-center justify-between gap-1 mb-1">
+                          <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-slate-100 text-slate-700">
+                            {d.modalidade} · {d.campus}
+                          </span>
+                          {isSelected && <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />}
+                        </div>
+                        <h4 className="font-bold text-slate-900 text-xs sm:text-sm line-clamp-1">
+                          {d.nomeDisciplina}
+                        </h4>
+                        <p className="text-[11px] text-slate-600 line-clamp-1 mt-0.5">
+                          {d.curso} ({d.semestrePeriodo})
+                        </p>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
+
+              {/* Estudantes matriculados neste diário no SUAP */}
+              {(() => {
+                const diarioAtual = DIARIOS_SUAP_INSTITUCIONAIS.find((d) => d.id === selectedDiarioId);
+                if (!diarioAtual || diarioAtual.estudantes.length === 0) return null;
+                return (
+                  <div className="bg-emerald-50/50 border border-emerald-200/80 rounded-2xl p-4 space-y-2">
+                    <span className="text-xs font-bold text-emerald-950 block">
+                      Estudantes Matriculados neste Diário (Selecione com 1 clique):
+                    </span>
+                    <div className="flex flex-wrap gap-2">
+                      {diarioAtual.estudantes.map((est) => {
+                        const isCurrentEst = nome === est.nome;
+                        return (
+                          <button
+                            key={est.id}
+                            type="button"
+                            onClick={() => {
+                              setNome(est.nome);
+                              setMatricula(est.matricula);
+                              if (est.idade) setIdade(est.idade);
+                              if (est.observacoesNapne) setEspecificidadesTranstorno(est.observacoesNapne);
+                            }}
+                            className={`px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                              isCurrentEst
+                                ? 'bg-emerald-700 text-white border-emerald-700 shadow-2xs'
+                                : 'bg-white text-slate-800 border-emerald-200 hover:bg-emerald-100'
+                            }`}
+                          >
+                            <span>{est.nome}</span>
+                            {est.acompanhadoNapne && (
+                              <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${isCurrentEst ? 'bg-emerald-800 text-white' : 'bg-emerald-100 text-emerald-900'}`}>
+                                NAPNE
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Card Bento: Dados do Estudante */}
               <div className="bg-slate-50/70 border border-slate-200 rounded-2xl p-5 space-y-4">
@@ -982,11 +1078,36 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
           {/* ================================================================= */}
           {currentStep === 2 && (
             <div className="space-y-5">
-              {/* Atalhos Rápidos de Disciplinas que preenchem automaticamente Ementa e PPC/BNCC */}
+              {/* Banner de Sincronização SUAP */}
+              {disciplina && (
+                <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
+                  <div className="flex items-center gap-2.5 text-emerald-950 text-xs">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" />
+                    <span>
+                      Plano de Ensino sincronizado do SUAP: <strong className="font-bold text-emerald-900">{disciplina}</strong>
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] bg-emerald-100/90 text-emerald-800 font-bold px-2 py-0.5 rounded-md uppercase tracking-wider">
+                      {curso.split('(')[0].trim() || 'Curso'}
+                    </span>
+                    <span className="text-[10px] bg-white border border-emerald-300 text-emerald-800 font-semibold px-2 py-0.5 rounded-md">
+                      {docenteRegente || 'Docente'}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Atalhos Rápidos de Disciplinas por Área do IFTO */}
               <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-2.5">
-                <span className="block text-xs font-bold text-slate-800">
-                  Atalhos Rápidos do PPC / Planos de Ensino (Preenchimento Automático):
-                </span>
+                <div className="flex items-center justify-between">
+                  <span className="block text-xs font-bold text-slate-800">
+                    Atalhos Rápidos de Disciplinas (Agropecuária, Edificações, Química, Gestão e TI):
+                  </span>
+                  <span className="text-[11px] text-slate-500 font-medium">
+                    Preenche ementa e competências oficiais
+                  </span>
+                </div>
                 <div className="flex flex-wrap gap-2">
                   {presetsPpcEPlano.map((p) => {
                     const isCurrent = disciplina === p.titulo;
@@ -995,13 +1116,18 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
                         key={p.id}
                         type="button"
                         onClick={() => handleApplyCoursePreset(p)}
-                        className={`px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
                           isCurrent
-                            ? 'bg-emerald-700 text-white border-emerald-700'
-                            : 'bg-white text-slate-700 border-slate-200 hover:bg-emerald-50'
+                            ? 'bg-emerald-700 text-white border-emerald-700 shadow-xs'
+                            : 'bg-white text-slate-700 border-slate-200 hover:bg-emerald-50 hover:border-emerald-300'
                         }`}
                       >
-                        {p.titulo}
+                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                          isCurrent ? 'bg-emerald-800 text-emerald-100' : 'bg-slate-100 text-slate-600'
+                        }`}>
+                          {p.tag}
+                        </span>
+                        <span>{p.titulo}</span>
                       </button>
                     );
                   })}
@@ -1085,7 +1211,7 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
                       value={dificuldadesEspecificasDisciplina}
                       onChange={(e) => setDificuldadesEspecificasDisciplina(e.target.value)}
                       rows={3}
-                      placeholder="Ex: Dificuldade em abstrair joins em SQL, fadiga na escrita de testes unitários, sobrecarga com enunciados longos..."
+                      placeholder="Ex: Dificuldade em absorver instruções teóricas extensas sem checklist visual, sobrecarga sensorial em aulas práticas de campo ou laboratório, ansiedade em avaliações com tempo rígido..."
                       className="w-full p-2.5 border border-amber-300 bg-amber-50/30 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none text-xs leading-relaxed"
                     />
                   </div>
@@ -1303,17 +1429,45 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
                   </div>
                 )}
 
+                {/* Botões Rápidos: Manifestações Funcionais Observadas (Perfil Vivo) */}
+                <div className="space-y-1.5 pt-2">
+                  <span className="text-[11px] font-bold text-slate-700 block">
+                    Manifestação Funcional Observada na Prática (Clique para adicionar ao perfil do estudante):
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {[
+                      { label: 'Desatenção & dispersão com tarefas longas', text: 'Predominância de desatenção sustentada e dispersão em instruções extensas; rende muito mais com checklists e fracionamento.' },
+                      { label: 'Hiperatividade motora & pausas ativas', text: 'Inquietação motora e necessidade de alternar posturas a cada 20-25 minutos; canaliza energia em práticas procedimentais.' },
+                      { label: 'Sobrecarga sensorial com ruídos/estímulos', text: 'Hipersensibilidade a ruídos intensos e sobrecarga de estímulos no ambiente; necessita de local calmo ou fones abafadores.' },
+                      { label: 'Rigidez e ansiedade com quebra de rotina', text: 'Demanda alta previsibilidade da rotina da aula, antecipação de etapas e comunicação literal (evitar comandos ambíguos).' },
+                      { label: 'Fadiga muscular de escrita / lentidão motora', text: 'Fadiga motora fina em cópias ou redação manuscrita rápida sob pressão temporal; necessita de suporte digital e tempo estendido.' },
+                      { label: 'Alta abstração porém lentidão executiva', text: 'Excelente capacidade de raciocínio e abstração lógica, com ritmo de execução pausado e necessidade de tempo ampliado (+50%).' },
+                    ].map((chip) => (
+                      <button
+                        key={chip.label}
+                        type="button"
+                        onClick={() => {
+                          setEspecificidadesTranstorno((prev) => (prev ? `${prev}\n- ${chip.text}` : chip.text));
+                        }}
+                        className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200 text-[11px] font-medium transition-colors cursor-pointer"
+                      >
+                        + {chip.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 {/* Campo de Especificidades Individuais por Transtorno / Neurodivergência */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3 border-t border-slate-100">
                   <div>
                     <label className="block text-xs font-bold text-slate-900 mb-1">
-                      Especificidades Individuais do Estudante (TEA, TDAH, AH/SD, Sensorial)
+                      Manifestação Funcional Individual (O Ser Humano Real na Sala de Aula)
                     </label>
                     <textarea
                       value={especificidadesTranstorno}
                       onChange={(e) => setEspecificidadesTranstorno(e.target.value)}
                       rows={3}
-                      placeholder="Detalhe como a condição se manifesta individualmente neste estudante..."
+                      placeholder="Detalhe como o estudante se comporta na aula (ex: hiperatividade motora vs desatenção, reações a frustração)..."
                       className="w-full p-2.5 border border-slate-300 rounded-xl text-xs leading-relaxed focus:ring-2 focus:ring-emerald-600 focus:outline-none"
                     />
                   </div>
@@ -1326,7 +1480,7 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
                       value={potencialidades}
                       onChange={(e) => setPotentialidades(e.target.value)}
                       rows={3}
-                      placeholder="Pontos fortes, hiperfocos construtivos e afinidades técnicas..."
+                      placeholder="Pontos fortes, afinidades práticas e áreas de destaque do estudante..."
                       className="w-full p-2.5 border border-slate-300 rounded-xl text-xs leading-relaxed focus:ring-2 focus:ring-emerald-600 focus:outline-none"
                     />
                   </div>
