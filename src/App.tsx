@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { todosOsCasos } from './data/initialCases';
 import { PEICompleto, MetaPEI, PostItPainel, SolucaoCondicao, EscalaFonte, ModoContraste } from './types/pei';
 import { Navbar } from './components/Navbar';
 import { StudentHeader } from './components/StudentHeader';
@@ -15,9 +14,10 @@ import { CentralAjudaModal } from './components/CentralAjudaModal';
 import { PpcAnalyzerModal } from './components/PpcAnalyzerModal';
 import { SusResearchModal } from './components/SusResearchModal';
 import { ILovePeiHub } from './components/ILovePeiHub';
+import { OfficialKnowledgeBaseView } from './components/OfficialKnowledgeBaseView';
 import { OnboardingTourModal } from './components/OnboardingTourModal';
 import { AiConfigModal } from './components/AiConfigModal';
-import { CheckCircle2, ExternalLink, HelpCircle, ShieldAlert, ShieldCheck } from 'lucide-react';
+import { CheckCircle2, ExternalLink, HelpCircle, ShieldAlert, ShieldCheck, FileText, Search, BookOpen, LayoutDashboard } from 'lucide-react';
 import { exportOfficialPeiPdf } from './utils/exportOfficialPdf';
 import { apiService } from './services/apiService';
 
@@ -25,26 +25,9 @@ const STORAGE_KEY_STUDENTS = 'ioda_students_list_v1';
 const STORAGE_KEY_ACTIVE_ID = 'ioda_active_student_id_v1';
 const STORAGE_KEY_ONBOARDING_DONE = 'ioda_onboarding_tour_done_v1';
 
-const getInitialStudents = (): PEICompleto[] => {
-  return todosOsCasos;
-};
-
-const getInitialActivePei = (list: PEICompleto[]): PEICompleto => {
-  try {
-    const savedId = localStorage.getItem(STORAGE_KEY_ACTIVE_ID);
-    if (savedId) {
-      const found = list.find((s) => s.id === savedId);
-      if (found) return found;
-    }
-  } catch {
-    // fallback
-  }
-  return list[0] || todosOsCasos[0];
-};
-
 export default function App() {
-  const [studentsList, setStudentsList] = useState<PEICompleto[]>(getInitialStudents);
-  const [activePei, setActivePei] = useState<PEICompleto>(() => getInitialActivePei(getInitialStudents()));
+  const [studentsList, setStudentsList] = useState<PEICompleto[]>([]);
+  const [activePei, setActivePei] = useState<PEICompleto | null>(null);
   const [activeTab, setActiveTab] = useState<string>('hub');
   const [isAddStudentOpen, setIsAddStudentOpen] = useState<boolean>(false);
   const [isSolutionBankOpen, setIsSolutionBankOpen] = useState<boolean>(false);
@@ -132,10 +115,12 @@ export default function App() {
     };
   };
 
-  const activeIndex = studentsList.findIndex((s) => s.id === activePei.id);
-  const displayedActivePei = isPresentationMode
-    ? anonymizePei(activePei, activeIndex >= 0 ? activeIndex : 0)
-    : activePei;
+  const activeIndex = activePei ? studentsList.findIndex((s) => s.id === activePei.id) : -1;
+  const displayedActivePei = activePei
+    ? isPresentationMode
+      ? anonymizePei(activePei, activeIndex >= 0 ? activeIndex : 0)
+      : activePei
+    : null;
 
   const baseStudents = isPresentationMode
     ? studentsList.map((s, idx) => anonymizePei(s, idx))
@@ -185,16 +170,16 @@ export default function App() {
   };
 
   const handleResetToDefault = async () => {
-    if (window.confirm('Deseja restaurar os casos de exemplo iniciais do NAPNE no banco de dados?')) {
-      for (const c of todosOsCasos) {
+    if (window.confirm('Deseja limpar todos os PEIs cadastrados no banco de dados para reiniciar o semestre letivo?')) {
+      for (const s of studentsList) {
         try {
-          await apiService.savePei(c);
+          await apiService.deletePei(s.id);
         } catch (e) {
           console.error(e);
         }
       }
-      setStudentsList(todosOsCasos);
-      setActivePei(todosOsCasos[0]);
+      setStudentsList([]);
+      setActivePei(null);
     }
   };
 
@@ -213,8 +198,8 @@ export default function App() {
 
     setStudentsList((prev) => {
       const remaining = prev.filter((s) => s.id !== peiId);
-      if (activePei.id === peiId && remaining.length > 0) {
-        setActivePei(remaining[0]);
+      if (activePei && activePei.id === peiId) {
+        setActivePei(remaining.length > 0 ? remaining[0] : null);
       }
       return remaining;
     });
@@ -232,6 +217,7 @@ export default function App() {
     newProgress: number
   ) => {
     setActivePei((prev) => {
+      if (!prev) return null;
       const updatedMetas = prev.planejamento_pei.objetivos_e_metas.map((m) =>
         m.id_meta === metaId
           ? { ...m, status: newStatus, progresso_percentual: newProgress }
@@ -243,7 +229,7 @@ export default function App() {
         updatedMetas.reduce((acc, curr) => acc + curr.progresso_percentual, 0) / (totalMetas || 1)
       );
 
-      const updatedPei = {
+      const updatedPei: PEICompleto = {
         ...prev,
         planejamento_pei: {
           ...prev.planejamento_pei,
@@ -265,7 +251,8 @@ export default function App() {
 
   const handleAddMeta = (newMeta: MetaPEI) => {
     setActivePei((prev) => {
-      const updated = {
+      if (!prev) return null;
+      const updated: PEICompleto = {
         ...prev,
         planejamento_pei: {
           ...prev.planejamento_pei,
@@ -281,6 +268,7 @@ export default function App() {
 
   const handleUpdateObservacoes = (novaObs: string) => {
     setActivePei((prev) => {
+      if (!prev) return null;
       const updated: PEICompleto = {
         ...prev,
         planejamento_pei: {
@@ -297,6 +285,7 @@ export default function App() {
 
   const handleApplySolution = (solucao: SolucaoCondicao) => {
     setActivePei((prev) => {
+      if (!prev) return null;
       const updated: PEICompleto = {
         ...prev,
         estudo_de_caso: {
@@ -367,6 +356,7 @@ export default function App() {
     barreirasTi: string[];
   }) => {
     setActivePei((prev) => {
+      if (!prev) return null;
       const updated: PEICompleto = {
         ...prev,
         cabecalho: {
@@ -428,8 +418,10 @@ export default function App() {
   };
 
   const handleAddPostIt = async (postIt: PostItPainel) => {
+    if (!activePei) return;
     setActivePei((prev) => {
-      const updated = {
+      if (!prev) return null;
+      const updated: PEICompleto = {
         ...prev,
         painel_notas: [postIt, ...prev.painel_notas],
       };
@@ -446,8 +438,10 @@ export default function App() {
   };
 
   const handleDeletePostIt = async (id: string) => {
+    if (!activePei) return;
     setActivePei((prev) => {
-      const updated = {
+      if (!prev) return null;
+      const updated: PEICompleto = {
         ...prev,
         painel_notas: prev.painel_notas.filter((n) => n.id !== id),
       };
@@ -464,6 +458,7 @@ export default function App() {
   };
 
   const handlePrint = () => {
+    if (!displayedActivePei) return;
     if (activeTab !== 'documento_oficial') {
       setActiveTab('documento_oficial');
     }
@@ -522,7 +517,7 @@ export default function App() {
       )}
 
       {/* Single Clean Student Header when viewing a PEI tab */}
-      {activeTab !== 'hub' && (
+      {activeTab !== 'hub' && activeTab !== 'normas' && displayedActivePei && (
         <div className="no-print">
           <StudentHeader
             pei={displayedActivePei}
@@ -540,7 +535,7 @@ export default function App() {
       {/* Notification Banner on PEI Deletion */}
       {deleteNotice && (
         <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-4 no-print">
-          <div className="p-3.5 bg-emerald-900 text-white rounded-xl shadow-md flex items-center justify-between gap-3 text-xs">
+          <div className="p-3 bg-[#006633] text-white rounded shadow-sm flex items-center justify-between gap-3 text-xs">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-emerald-300 shrink-0" />
               <span className="font-semibold">{deleteNotice}</span>
@@ -556,7 +551,7 @@ export default function App() {
       )}
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-6">
         {activeTab === 'hub' && (
           <ILovePeiHub
             activePei={displayedActivePei}
@@ -574,66 +569,135 @@ export default function App() {
           />
         )}
 
+        {activeTab === 'normas' && <OfficialKnowledgeBaseView />}
+
         {activeTab === 'pei' && (
-          <PeiView
-            pei={displayedActivePei}
-            onUpdateMetaStatus={handleUpdateMetaStatus}
-            onAddMeta={handleAddMeta}
-            onOpenSolutionBank={() => setIsSolutionBankOpen(true)}
-            onUpdateObservacoes={handleUpdateObservacoes}
-          />
+          displayedActivePei ? (
+            <PeiView
+              pei={displayedActivePei}
+              onUpdateMetaStatus={handleUpdateMetaStatus}
+              onAddMeta={handleAddMeta}
+              onOpenSolutionBank={() => setIsSolutionBankOpen(true)}
+              onUpdateObservacoes={handleUpdateObservacoes}
+            />
+          ) : (
+            <div className="bg-white border border-slate-300 rounded p-8 text-center space-y-3">
+              <div className="w-12 h-12 rounded-full bg-slate-100 text-[#006633] flex items-center justify-center mx-auto">
+                <FileText className="w-6 h-6" />
+              </div>
+              <h3 className="text-sm font-bold text-slate-900">Nenhum PEI selecionado para visualização</h3>
+              <p className="text-xs text-slate-600 max-w-md mx-auto leading-relaxed">
+                O banco de dados SQLite está limpo e pronto para receber os dados reais da sua matéria. Acesse a aba <strong>Diários & Turmas</strong> ou clique no botão abaixo para elaborar seu primeiro PEI com auxílio do Agente Ioda.
+              </p>
+              <button
+                type="button"
+                onClick={() => setIsAddStudentOpen(true)}
+                className="px-4 py-2 bg-[#006633] hover:bg-[#005026] text-white font-bold text-xs rounded transition-colors cursor-pointer"
+              >
+                + Cadastrar Primeiro PEI do Diário
+              </button>
+            </div>
+          )
         )}
 
-        {activeTab === 'estudo_caso' && <CaseStudyView pei={displayedActivePei} />}
+        {activeTab === 'estudo_caso' && (
+          displayedActivePei ? (
+            <CaseStudyView pei={displayedActivePei} />
+          ) : (
+            <div className="bg-white border border-slate-300 rounded p-8 text-center space-y-3">
+              <div className="w-12 h-12 rounded-full bg-slate-100 text-[#006633] flex items-center justify-center mx-auto">
+                <Search className="w-6 h-6" />
+              </div>
+              <h3 className="text-sm font-bold text-slate-900">Estudo de Caso Indisponível</h3>
+              <p className="text-xs text-slate-600 max-w-md mx-auto leading-relaxed">
+                Cadastre um estudante no diário para visualizar seu estudo de caso, histórico ETEP e mapeamento situacional de gatilhos.
+              </p>
+              <button
+                type="button"
+                onClick={() => setIsAddStudentOpen(true)}
+                className="px-4 py-2 bg-[#006633] hover:bg-[#005026] text-white font-bold text-xs rounded transition-colors cursor-pointer"
+              >
+                + Cadastrar Novo PEI
+              </button>
+            </div>
+          )
+        )}
 
         {activeTab === 'documento_oficial' && (
-          <OfficialTemplateView
-            pei={displayedActivePei}
-            onPrint={handlePrint}
-            onUpdatePei={handleUpdatePei}
-          />
+          displayedActivePei ? (
+            <OfficialTemplateView
+              pei={displayedActivePei}
+              onPrint={handlePrint}
+              onUpdatePei={handleUpdatePei}
+            />
+          ) : (
+            <div className="bg-white border border-slate-300 rounded p-8 text-center space-y-3">
+              <div className="w-12 h-12 rounded-full bg-slate-100 text-[#006633] flex items-center justify-center mx-auto">
+                <BookOpen className="w-6 h-6" />
+              </div>
+              <h3 className="text-sm font-bold text-slate-900">Nenhum Documento para Impressão</h3>
+              <p className="text-xs text-slate-600 max-w-md mx-auto leading-relaxed">
+                Cadastre um estudante para gerar o documento formatado nos padrões institucionais de envio ao SEI.
+              </p>
+              <button
+                type="button"
+                onClick={() => setIsAddStudentOpen(true)}
+                className="px-4 py-2 bg-[#006633] hover:bg-[#005026] text-white font-bold text-xs rounded transition-colors cursor-pointer"
+              >
+                + Cadastrar Novo PEI
+              </button>
+            </div>
+          )
         )}
 
         {activeTab === 'painel' && (
-          <PeiPainelView
-            pei={displayedActivePei}
-            onAddPostIt={handleAddPostIt}
-            onDeletePostIt={handleDeletePostIt}
-          />
+          displayedActivePei ? (
+            <PeiPainelView
+              pei={displayedActivePei}
+              onAddPostIt={handleAddPostIt}
+              onDeletePostIt={handleDeletePostIt}
+            />
+          ) : (
+            <div className="bg-white border border-slate-300 rounded p-8 text-center space-y-3">
+              <div className="w-12 h-12 rounded-full bg-slate-100 text-[#006633] flex items-center justify-center mx-auto">
+                <LayoutDashboard className="w-6 h-6" />
+              </div>
+              <h3 className="text-sm font-bold text-slate-900">Painel de Metas DUA Indisponível</h3>
+              <p className="text-xs text-slate-600 max-w-md mx-auto leading-relaxed">
+                Cadastre um estudante para acompanhar o alcance de metas curriculares e registrar observações colaborativas.
+              </p>
+              <button
+                type="button"
+                onClick={() => setIsAddStudentOpen(true)}
+                className="px-4 py-2 bg-[#006633] hover:bg-[#005026] text-white font-bold text-xs rounded transition-colors cursor-pointer"
+              >
+                + Cadastrar Novo PEI
+              </button>
+            </div>
+          )
         )}
       </main>
 
-      {/* Institutional Legal Footer + Floating Help & Legislation Button */}
-      <footer className="bg-white border-t border-slate-200 py-5 text-xs text-slate-500 no-print mt-auto">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="font-bold text-slate-700">Ioda · NAPNE Campus Paraíso</span>
-            <span aria-hidden="true">·</span>
-            <span>Decreto nº 12.686/2025</span>
-            <span aria-hidden="true">·</span>
-            <span>Portaria MEC nº 421/2026</span>
-            <span aria-hidden="true">·</span>
-            <span className="text-emerald-700 font-semibold">JICE 2026</span>
+      {/* Institutional SUAP Footer */}
+      <footer className="bg-[#f0f2f5] border-t border-slate-300 py-4 text-xs text-slate-600 no-print mt-auto">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+          <div className="space-y-0.5">
+            <span className="font-bold text-slate-800">
+              SUAP · Sistema Unificado de Administração Pública
+            </span>
+            <div className="text-[11px] text-slate-500">
+              Instituto Federal do Tocantins · Campus Paraíso do Tocantins · Resolução CONSUP/IFTO nº 48/2021 & Portaria MEC nº 421/2026
+            </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2.5">
-            <a
-              href="https://forms.gle/MRK4HQoyP1t3zd289"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 font-semibold text-xs transition-colors cursor-pointer"
-            >
-              <span>Avaliar o App (Google Forms)</span>
-              <ExternalLink className="w-3.5 h-3.5 text-emerald-700" />
-            </a>
-
+          <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => setIsCentralAjudaOpen(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900 hover:bg-emerald-800 text-white font-semibold text-xs shadow-sm transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 font-semibold text-xs rounded cursor-pointer shadow-2xs"
             >
-              <HelpCircle className="w-4 h-4 text-emerald-400" />
-              <span>Ajuda & Legislação</span>
+              <HelpCircle className="w-3.5 h-3.5 text-[#006633]" />
+              <span>Manuais & Legislação</span>
             </button>
           </div>
         </div>
@@ -650,12 +714,14 @@ export default function App() {
         onMudarContraste={setModoContraste}
       />
 
-      <SolutionBankModal
-        isOpen={isSolutionBankOpen}
-        onClose={() => setIsSolutionBankOpen(false)}
-        activePei={displayedActivePei}
-        onApplySolution={handleApplySolution}
-      />
+      {displayedActivePei && (
+        <SolutionBankModal
+          isOpen={isSolutionBankOpen}
+          onClose={() => setIsSolutionBankOpen(false)}
+          activePei={displayedActivePei}
+          onApplySolution={handleApplySolution}
+        />
+      )}
 
       <CampusStatsModal
         isOpen={isCampusStatsOpen}
@@ -674,12 +740,14 @@ export default function App() {
         onClose={() => setIsCentralAjudaOpen(false)}
       />
 
-      <PpcAnalyzerModal
-        isOpen={isPpcAnalyzerOpen}
-        onClose={() => setIsPpcAnalyzerOpen(false)}
-        activePei={displayedActivePei}
-        onApplyPpcAdaptations={handleApplyPpcAdaptations}
-      />
+      {displayedActivePei && (
+        <PpcAnalyzerModal
+          isOpen={isPpcAnalyzerOpen}
+          onClose={() => setIsPpcAnalyzerOpen(false)}
+          activePei={displayedActivePei}
+          onApplyPpcAdaptations={handleApplyPpcAdaptations}
+        />
+      )}
 
       <SusResearchModal
         isOpen={isSusResearchOpen}

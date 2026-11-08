@@ -342,7 +342,8 @@ app.get('/api/ppc', (_req: Request, res: Response) => {
 app.get('/api/knowledge-base/search', (req: Request, res: Response) => {
   try {
     const query = String(req.query.q || '');
-    const results = knowledgeBaseRepo.search(query, 5);
+    const limit = Math.min(Number(req.query.limit) || 30, 100);
+    const results = knowledgeBaseRepo.search(query, limit);
     res.json({ success: true, data: results });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
