@@ -942,18 +942,58 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
               </div>
 
               {/* Estudantes matriculados neste diário no SUAP */}
-              {/* Informações do Diário Selecionado */}
               {(() => {
                 const diarioAtual = DIARIOS_SUAP_INSTITUCIONAIS.find((d) => d.id === selectedDiarioId);
                 return (
-                  <div className="bg-emerald-50/60 border border-emerald-200 rounded-xl p-3 text-xs text-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 shrink-0"></span>
-                      <span>Diário ativo: <strong>{diarioAtual?.nomeDisciplina || disciplina}</strong> ({diarioAtual?.codigoComponente})</span>
+                  <div className="space-y-2">
+                    <div className="bg-[#121518] border border-[#232830] rounded-xl p-3 text-xs text-slate-300 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full bg-[#00d284] shrink-0"></span>
+                        <span>Diário ativo: <strong>{diarioAtual?.nomeDisciplina || disciplina}</strong> ({diarioAtual?.codigoComponente})</span>
+                      </div>
+                      <span className="text-[10px] font-bold text-[#00d284] bg-[#00d284]/10 border border-[#00d284]/30 px-2 py-0.5 rounded self-start sm:self-auto">
+                        SUAP · Campus Paraíso
+                      </span>
                     </div>
-                    <span className="text-[11px] font-semibold text-emerald-800 bg-white border border-emerald-200 px-2 py-0.5 rounded self-start sm:self-auto">
-                      SUAP · Campus Paraíso
-                    </span>
+
+                    {diarioAtual && diarioAtual.estudantes.length > 0 && (
+                      <div className="bg-[#161a1f] border border-[#272d36] rounded-xl p-3 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-white">
+                            Alunos da Matéria no SUAP (Clique para importar os dados automaticamente):
+                          </span>
+                          <span className="text-[10px] text-slate-400">
+                            {diarioAtual.estudantes.length} estudantes matriculados
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {diarioAtual.estudantes.map((est) => {
+                            const isCurrentEst = nome === est.nome;
+                            return (
+                              <button
+                                key={est.id}
+                                type="button"
+                                onClick={() => {
+                                  setNome(est.nome);
+                                  setMatricula(est.matricula);
+                                  if (est.idade) setIdade(est.idade);
+                                  if (est.observacoesNapne) setEspecificidadesTranstorno(est.observacoesNapne);
+                                }}
+                                className={`px-3 py-1.5 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                                  isCurrentEst
+                                    ? 'bg-[#0099ff] text-white border-[#0099ff] shadow-sm'
+                                    : 'bg-[#1c2026] text-slate-200 border-[#2d3440] hover:bg-[#232830]'
+                                }`}
+                              >
+                                <span>{est.nome}</span>
+                                <span className="text-[10px] opacity-75 font-mono">({est.matricula})</span>
+                                {isCurrentEst && <Check className="w-3.5 h-3.5 text-white" />}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 );
               })()}

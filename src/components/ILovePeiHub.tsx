@@ -21,8 +21,12 @@ import {
   Sparkles,
   Printer,
   ChevronRight,
+  ChevronDown,
   Filter,
   Info,
+  Check,
+  Plus,
+  ExternalLink,
 } from 'lucide-react';
 
 interface ILovePeiHubProps {
@@ -46,351 +50,367 @@ export const ILovePeiHub: React.FC<ILovePeiHubProps> = ({
   onSelectStudent,
   onNavigate,
   onOpenAddStudent,
+  onPrint,
   onRequestDeletePei,
-  filtroDocente = 'todos',
-  onMudarFiltroDocente,
 }) => {
-  const [cursoFiltro, setCursoFiltro] = useState<string>('todos');
-  const [termoBusca, setTermoBusca] = useState<string>('');
+  const [diarioAtivoId, setDiarioAtivoId] = useState<string>(DIARIOS_SUAP_INSTITUCIONAIS[0]?.id || '');
+  const [isDadosGeraisOpen, setIsDadosGeraisOpen] = useState(true);
+  const [isAlunosTurmaOpen, setIsAlunosTurmaOpen] = useState(true);
+  const [termoBusca, setTermoBusca] = useState('');
 
-  // Filtra diários institucionais do SUAP
-  const diariosFiltrados = DIARIOS_SUAP_INSTITUCIONAIS.filter((d) => {
-    if (cursoFiltro !== 'todos' && !d.curso.toLowerCase().includes(cursoFiltro.toLowerCase())) {
-      return false;
-    }
-    if (filtroDocente !== 'todos') {
-      const parts = filtroDocente.split(' ').filter((p) => p.length > 2);
-      const matchDocente = parts.some(
-        (p) =>
-          d.docenteNome.toLowerCase().includes(p.toLowerCase()) ||
-          d.nomeDisciplina.toLowerCase().includes(p.toLowerCase())
-      );
-      if (!matchDocente) return false;
-    }
-    if (termoBusca) {
-      const q = termoBusca.toLowerCase();
-      return (
-        d.nomeDisciplina.toLowerCase().includes(q) ||
-        d.codigoComponente.toLowerCase().includes(q) ||
-        d.curso.toLowerCase().includes(q)
-      );
-    }
-    return true;
-  });
+  const diarioAtual = DIARIOS_SUAP_INSTITUCIONAIS.find((d) => d.id === diarioAtivoId) || DIARIOS_SUAP_INSTITUCIONAIS[0];
 
-  // Filtra PEIs cadastrados no banco de dados SQLite
-  const peisFiltrados = allStudents.filter((pei) => {
-    if (cursoFiltro !== 'todos' && !pei.cabecalho.curso.toLowerCase().includes(cursoFiltro.toLowerCase())) {
-      return false;
-    }
-    if (termoBusca) {
-      const q = termoBusca.toLowerCase();
-      return (
-        pei.cabecalho.estudante.toLowerCase().includes(q) ||
-        pei.cabecalho.codigo_matricula.toLowerCase().includes(q) ||
-        pei.cabecalho.componente_curricular.toLowerCase().includes(q)
-      );
-    }
-    return true;
+  // Filtra alunos da turma do SUAP
+  const alunosTurma = (diarioAtual?.estudantes || []).filter((est) => {
+    if (!termoBusca) return true;
+    const q = termoBusca.toLowerCase();
+    return est.nome.toLowerCase().includes(q) || est.matricula.toLowerCase().includes(q);
   });
 
   return (
-    <div className="space-y-5 font-sans">
-      {/* 1. QUADRO DE APRESENTAÇÃO DO MÓDULO (ESTILO OFICIAL SUAP) */}
-      <div className="bg-white border border-slate-300 rounded shadow-2xs p-4 sm:p-5 space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-black uppercase tracking-wider bg-[#006633] text-white px-2 py-0.5 rounded">
-                MÓDULO OFICIAL SUAP
-              </span>
-              <span className="text-xs text-slate-500 font-semibold">
-                Ano Letivo 2026/1 · Campus Paraíso do Tocantins
-              </span>
-            </div>
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-900">
-              Painel Docente de Planos de Ensino Individualizados (PEI)
-            </h1>
-            <p className="text-xs text-slate-600 max-w-4xl leading-relaxed">
-              Ambiente de elaboração e gestão pedagógica de PEIs integrado ao SUAP. Seus diários, turmas e planos de ensino oficiais são carregados automaticamente para orientar o Agente Ioda na aplicação das diretrizes do <strong>DUA 3.0</strong> e dos <strong>14 Cadernos do MEC (PNEEII)</strong>.
-            </p>
-          </div>
+    <div className="space-y-4 font-sans text-slate-200">
+      {/* 1. Breadcrumbs do SUAP */}
+      <div className="flex items-center text-xs text-slate-400 gap-1.5 flex-wrap">
+        <span className="hover:text-white cursor-pointer">Início</span>
+        <span>&rsaquo;</span>
+        <span className="hover:text-white cursor-pointer">Ensino</span>
+        <span>&rsaquo;</span>
+        <span className="text-slate-200 font-medium">Módulo NAPNE · Gestão de PEIs</span>
+        {diarioAtual && (
+          <>
+            <span>&rsaquo;</span>
+            <span className="text-[#00d284] font-semibold">{diarioAtual.codigoComponente}</span>
+          </>
+        )}
+      </div>
 
-          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 shrink-0">
+      {/* 2. Barra de Título Oficial do SUAP (com Botão Editar / Adicionar) */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-2 border-b border-[#23272d]">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[11px] font-bold text-[#0099ff] bg-[#0099ff]/15 border border-[#0099ff]/30 px-2 py-0.5 rounded">
+              Matriculado no SUAP
+            </span>
+            <span className="text-[11px] font-bold text-[#00d284] bg-[#00d284]/15 border border-[#00d284]/30 px-2 py-0.5 rounded">
+              IFTO · Campus Paraíso
+            </span>
+          </div>
+          <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+            Gestão de PEIs · {diarioAtual?.nomeDisciplina || 'Engenharia de Software II'} ({diarioAtual?.codigoComponente || 'BSI.0406'})
+          </h1>
+          <p className="text-xs text-slate-400">
+            063 - Bacharelado em Sistemas de Informação (Campus Paraíso do Tocantins) · 2026/1
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0 flex-wrap">
+          <button
+            type="button"
+            onClick={onOpenAddStudent}
+            className="px-3.5 py-1.5 bg-[#0099ff] hover:bg-[#0088ee] text-white font-bold text-xs rounded shadow-sm transition-colors cursor-pointer flex items-center gap-1.5"
+          >
+            <UserPlus className="w-3.5 h-3.5" />
+            <span>+ Adicionar Aluno da Matéria para PEI</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onNavigate('normas')}
+            className="px-3 py-1.5 bg-[#1e2227] hover:bg-[#252a31] border border-[#2e343d] text-slate-300 font-semibold text-xs rounded transition-colors cursor-pointer flex items-center gap-1.5"
+          >
+            <BookOpen className="w-3.5 h-3.5 text-[#00d284]" />
+            <span>14 Cadernos MEC (RAG)</span>
+          </button>
+        </div>
+      </div>
+
+      {/* 3. Card Bento: Dados Gerais da Matéria / Diário no SUAP */}
+      <div className="bg-[#171a1e] border border-[#242930] rounded-lg overflow-hidden shadow-sm">
+        <div
+          onClick={() => setIsDadosGeraisOpen(!isDadosGeraisOpen)}
+          className="px-4 py-2.5 bg-[#14171a] border-b border-[#242930] flex items-center justify-between cursor-pointer select-none"
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-[#00d284] uppercase tracking-wider">
+              Dados gerais do diário
+            </span>
+            <span className="text-[11px] text-slate-400">
+              ({diarioAtual?.codigoComponente})
+            </span>
+          </div>
+          <ChevronDown
+            className={`w-4 h-4 text-slate-400 transition-transform ${
+              isDadosGeraisOpen ? 'rotate-180' : ''
+            }`}
+          />
+        </div>
+
+        {isDadosGeraisOpen && (
+          <div className="p-4 space-y-4 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <span className="text-slate-400 block text-[11px]">Componente Curricular:</span>
+                <span className="font-bold text-white text-xs">{diarioAtual?.nomeDisciplina}</span>
+              </div>
+              <div>
+                <span className="text-slate-400 block text-[11px]">Código da Matéria:</span>
+                <span className="font-mono font-bold text-[#00d284] text-xs">{diarioAtual?.codigoComponente}</span>
+              </div>
+              <div>
+                <span className="text-slate-400 block text-[11px]">Período de Referência / Turma:</span>
+                <span className="font-semibold text-slate-200 text-xs">{diarioAtual?.semestrePeriodo}</span>
+              </div>
+              <div>
+                <span className="text-slate-400 block text-[11px]">Carga Horária Semestral:</span>
+                <span className="font-semibold text-slate-200 text-xs">{diarioAtual?.cargaHoraria} (Presencial)</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pt-2 border-t border-[#20252c]">
+              <div className="md:col-span-2">
+                <span className="text-slate-400 block text-[11px]">Curso Vinculado:</span>
+                <span className="font-semibold text-slate-200 text-xs">{diarioAtual?.curso}</span>
+              </div>
+              <div>
+                <span className="text-slate-400 block text-[11px]">Docente / Coordenação AEE:</span>
+                <span className="font-semibold text-slate-200 text-xs">{diarioAtual?.docenteNome}</span>
+              </div>
+            </div>
+
+            <div className="pt-2 border-t border-[#20252c]">
+              <span className="text-slate-400 block text-[11px] mb-1">Ementa Oficial do PPC:</span>
+              <p className="text-slate-300 text-[11px] leading-relaxed bg-[#121417] p-2.5 rounded border border-[#20252c]">
+                {diarioAtual?.planoEnsino.ementa}
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* 4. Card: Estudantes Matriculados no SUAP (O Professor e NAPNE decidem quem precisa de PEI) */}
+      <div className="bg-[#171a1e] border border-[#242930] rounded-lg overflow-hidden shadow-sm">
+        <div
+          onClick={() => setIsAlunosTurmaOpen(!isAlunosTurmaOpen)}
+          className="px-4 py-2.5 bg-[#14171a] border-b border-[#242930] flex items-center justify-between cursor-pointer select-none"
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-[#00d284] uppercase tracking-wider">
+              Estudantes Matriculados no Diário · Indicação e Elaboração de PEI
+            </span>
+            <span className="text-[11px] bg-[#1f242b] text-slate-300 px-2 py-0.5 rounded font-mono">
+              {alunosTurma.length} estudantes na turma
+            </span>
+          </div>
+          <ChevronDown
+            className={`w-4 h-4 text-slate-400 transition-transform ${
+              isAlunosTurmaOpen ? 'rotate-180' : ''
+            }`}
+          />
+        </div>
+
+        {isAlunosTurmaOpen && (
+          <div className="p-4 space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <p className="text-[11px] text-slate-400 leading-relaxed max-w-2xl">
+                O SUAP já possui a lista oficial dos estudantes matriculados nesta disciplina. <strong>O professor regente e a equipe do NAPNE</strong> avaliam em conjunto quais estudantes necessitam de Plano de Ensino Individualizado (PEI) para adaptações pedagógicas DUA 3.0.
+              </p>
+              <div className="relative shrink-0 w-full sm:w-60">
+                <Search className="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Filtrar por nome ou matrícula"
+                  value={termoBusca}
+                  onChange={(e) => setTermoBusca(e.target.value)}
+                  className="w-full pl-8 pr-3 py-1 bg-[#121417] border border-[#262c34] rounded text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-[#00d284]"
+                />
+              </div>
+            </div>
+
+            <div className="overflow-x-auto border border-[#22272e] rounded">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="bg-[#121417] text-slate-400 font-bold border-b border-[#22272e]">
+                    <th className="p-2.5 border-r border-[#1f242a]">Matrícula</th>
+                    <th className="p-2.5 border-r border-[#1f242a]">Nome do Estudante</th>
+                    <th className="p-2.5 border-r border-[#1f242a]">Situação SUAP</th>
+                    <th className="p-2.5 border-r border-[#1f242a] text-center">Status PEI</th>
+                    <th className="p-2.5 text-right">Ação / Elaboração</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#20252c] text-slate-300">
+                  {alunosTurma.map((est) => {
+                    const peiExistente = allStudents.find(
+                      (p) =>
+                        p.cabecalho.codigo_matricula === est.matricula ||
+                        p.cabecalho.estudante.toLowerCase() === est.nome.toLowerCase()
+                    );
+
+                    return (
+                      <tr key={est.id} className="hover:bg-[#1c2026] transition-colors">
+                        <td className="p-2.5 border-r border-[#1f242a] font-mono text-slate-300 font-semibold">
+                          {est.matricula}
+                        </td>
+                        <td className="p-2.5 border-r border-[#1f242a]">
+                          <div className="font-bold text-white">{est.nome}</div>
+                          {est.observacoesNapne && (
+                            <div className="text-[10px] text-amber-300/90 line-clamp-1 mt-0.5">
+                              Indicação: {est.observacoesNapne}
+                            </div>
+                          )}
+                        </td>
+                        <td className="p-2.5 border-r border-[#1f242a]">
+                          <span className="text-[10px] font-bold text-[#00d284] bg-[#00d284]/10 border border-[#00d284]/30 px-1.5 py-0.5 rounded">
+                            Matriculado no SUAP
+                          </span>
+                        </td>
+                        <td className="p-2.5 border-r border-[#1f242a] text-center">
+                          {peiExistente ? (
+                            <span className="text-[10px] font-bold text-emerald-300 bg-emerald-950/60 border border-emerald-600/40 px-2 py-0.5 rounded inline-flex items-center gap-1">
+                              <Check className="w-3 h-3 text-emerald-400" />
+                              <span>PEI Ativo (DUA 3.0)</span>
+                            </span>
+                          ) : (
+                            <span className="text-[10px] text-slate-400 bg-slate-800/60 border border-slate-700/50 px-2 py-0.5 rounded">
+                              Sem PEI Elaborado
+                            </span>
+                          )}
+                        </td>
+                        <td className="p-2.5 text-right">
+                          {peiExistente ? (
+                            <div className="flex items-center justify-end gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  onSelectStudent(peiExistente);
+                                  onNavigate('pei');
+                                }}
+                                className="px-2.5 py-1 bg-[#1e2329] hover:bg-[#282f37] border border-[#343d47] text-white rounded text-[11px] font-semibold cursor-pointer"
+                              >
+                                Visualizar PEI
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  onSelectStudent(peiExistente);
+                                  onNavigate('documento_oficial');
+                                }}
+                                className="px-2 py-1 bg-[#0099ff]/20 hover:bg-[#0099ff]/30 text-[#0099ff] border border-[#0099ff]/40 rounded text-[11px] font-semibold cursor-pointer"
+                                title="Gerar Documento Oficial SEI"
+                              >
+                                SEI
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={onOpenAddStudent}
+                              className="px-2.5 py-1 bg-[#0099ff] hover:bg-[#0088ee] text-white font-bold text-[11px] rounded transition-colors cursor-pointer inline-flex items-center gap-1"
+                            >
+                              <Sparkles className="w-3 h-3 text-amber-300" />
+                              <span>+ Indicar / Elaborar PEI</span>
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* 5. Seção de PEIs Elaborados & Metas Ativas */}
+      <div className="bg-[#171a1e] border border-[#242930] rounded-lg p-4 space-y-3">
+        <div className="flex items-center justify-between border-b border-[#242930] pb-2">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-[#00d284] uppercase tracking-wider">
+              PEIs Ativos nesta Disciplina ({allStudents.length})
+            </span>
+          </div>
+          <span className="text-[11px] text-slate-400">
+            Resolução CONSUP/IFTO nº 48/2021 & Portaria MEC nº 421/2026
+          </span>
+        </div>
+
+        {allStudents.length === 0 ? (
+          <div className="bg-[#121417] border border-[#22272e] rounded-lg p-6 text-center space-y-2">
+            <div className="w-10 h-10 rounded-full bg-[#1b2026] text-[#00d284] border border-[#2d343e] flex items-center justify-center mx-auto text-lg font-bold">
+              PEI
+            </div>
+            <h3 className="text-xs font-bold text-slate-200">
+              Nenhum PEI elaborado nesta matéria até o momento
+            </h3>
+            <p className="text-[11px] text-slate-400 max-w-md mx-auto leading-relaxed">
+              O professor regente e o NAPNE decidem quais estudantes precisam de PEI. Na tabela acima, localize o estudante da turma (como <strong>Jean Carlo Torres de Oliveira</strong>) e clique no botão <strong>"+ Indicar / Elaborar PEI"</strong> para formular o plano adaptado com IA.
+            </p>
             <button
               type="button"
               onClick={onOpenAddStudent}
-              className="px-4 py-2 bg-[#006633] hover:bg-[#005026] text-white font-bold text-xs rounded shadow-xs transition-colors cursor-pointer flex items-center gap-1.5"
+              className="px-3.5 py-1.5 bg-[#0099ff] hover:bg-[#0088ee] text-white font-bold text-xs rounded shadow-sm transition-colors cursor-pointer inline-flex items-center gap-1.5 mt-2"
             >
-              <UserPlus className="w-4 h-4" />
-              <span>+ Cadastrar Novo PEI</span>
+              <UserPlus className="w-3.5 h-3.5" />
+              <span>+ Indicar Estudante da Turma para PEI</span>
             </button>
           </div>
-        </div>
-
-        {/* Barra de Filtros e Seleção de Contexto do SUAP */}
-        <div className="bg-slate-50 border border-slate-200 rounded p-3 text-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-1.5 font-bold text-slate-800">
-              <Filter className="w-3.5 h-3.5 text-[#006633]" />
-              <span>Filtrar por Curso:</span>
-            </div>
-            <select
-              value={cursoFiltro}
-              onChange={(e) => setCursoFiltro(e.target.value)}
-              className="bg-white border border-slate-300 rounded px-2.5 py-1 text-xs text-slate-800 focus:ring-1 focus:ring-[#006633] focus:outline-none"
-            >
-              <option value="todos">Todos os Cursos do Docente</option>
-              <option value="Sistemas para Internet">Tecnologia em Sistemas para Internet (TSI)</option>
-              <option value="Informática">Técnico Integrado em Informática</option>
-            </select>
-
-            <div className="flex items-center gap-1.5 font-bold text-slate-800 ml-2">
-              <span>Docente Regente:</span>
-            </div>
-            <select
-              value={filtroDocente}
-              onChange={(e) => onMudarFiltroDocente && onMudarFiltroDocente(e.target.value)}
-              className="bg-white border border-slate-300 rounded px-2.5 py-1 text-xs text-slate-800 focus:ring-1 focus:ring-[#006633] focus:outline-none"
-            >
-              <option value="todos">Prof. Jean Carlo · SIAPE 1982731 (Todos os Diários)</option>
-              <option value="Web">Diário: Programação Web II (TSI)</option>
-              <option value="Algoritmos">Diário: Algoritmos e Estruturas de Dados (Informática)</option>
-              <option value="Banco">Diário: Banco de Dados Relacionais e Não-Relacionais (TSI)</option>
-              <option value="Redes">Diário: Redes de Computadores e S.O. (Informática)</option>
-            </select>
-          </div>
-
-          <div className="flex items-center gap-1.5 text-slate-600 text-[11px]">
-            <ShieldCheck className="w-4 h-4 text-[#006633]" />
-            <span>Portaria MEC nº 421/2026: PEI funcional sem exigência de laudo prévio</span>
-          </div>
-        </div>
-      </div>
-
-      {/* 2. SEÇÃO: MEUS DIÁRIOS ATRIBUÍDOS NO SUAP (ESTILO TABELA OFICIAL SUAP) */}
-      <div className="bg-white border border-slate-300 rounded shadow-2xs space-y-3 p-4">
-        <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-          <div className="flex items-center gap-2">
-            <Building2 className="w-4 h-4 text-[#006633]" />
-            <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wide">
-              Diários e Turmas Atribuídos no SUAP ({diariosFiltrados.length})
-            </h2>
-          </div>
-          <span className="text-[11px] text-slate-500">
-            Sincronização em tempo real com o banco de dados do SUAP
-          </span>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
-            <thead>
-              <tr className="bg-slate-100 text-slate-700 font-bold border-b border-slate-300">
-                <th className="p-2.5 border-r border-slate-200">Diário / Código</th>
-                <th className="p-2.5 border-r border-slate-200">Componente Curricular</th>
-                <th className="p-2.5 border-r border-slate-200">Curso / Semestre</th>
-                <th className="p-2.5 border-r border-slate-200 text-center">C.H.</th>
-                <th className="p-2.5 border-r border-slate-200">Docente Regente</th>
-                <th className="p-2.5 border-r border-slate-200 text-center">PEIs Ativos</th>
-                <th className="p-2.5 text-center">Ações no Diário</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 text-slate-800">
-              {diariosFiltrados.map((diario, index) => {
-                const peisDoDiario = allStudents.filter((p) =>
-                  p.cabecalho.componente_curricular.toLowerCase().includes(diario.nomeDisciplina.toLowerCase()) ||
-                  diario.nomeDisciplina.toLowerCase().includes(p.cabecalho.componente_curricular.toLowerCase())
-                );
-                return (
-                  <tr
-                    key={diario.id}
-                    className={`hover:bg-slate-50 transition-colors ${index % 2 === 1 ? 'bg-slate-50/50' : 'bg-white'}`}
-                  >
-                    <td className="p-2.5 border-r border-slate-200 font-mono font-bold text-[#006633]">
-                      {diario.codigoComponente}
-                    </td>
-                    <td className="p-2.5 border-r border-slate-200 font-semibold">
-                      <div>{diario.nomeDisciplina}</div>
-                      <div className="text-[10px] text-slate-500 font-normal line-clamp-1">
-                        Ementa: {diario.planoEnsino.ementa}
-                      </div>
-                    </td>
-                    <td className="p-2.5 border-r border-slate-200">
-                      <div>{diario.curso}</div>
-                      <div className="text-[10px] text-slate-500">{diario.semestrePeriodo}</div>
-                    </td>
-                    <td className="p-2.5 border-r border-slate-200 text-center font-mono">
-                      {diario.cargaHoraria}
-                    </td>
-                    <td className="p-2.5 border-r border-slate-200 text-slate-700">
-                      {diario.docenteNome}
-                    </td>
-                    <td className="p-2.5 border-r border-slate-200 text-center">
-                      {peisDoDiario.length === 0 ? (
-                        <span className="text-slate-500 font-normal">0 cadastrados</span>
-                      ) : (
-                        <span className="font-bold text-[#006633] bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                          {peisDoDiario.length} PEI{peisDoDiario.length > 1 ? 's' : ''}
-                        </span>
-                      )}
-                    </td>
-                    <td className="p-2.5 text-center">
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {allStudents.map((pei) => (
+              <div
+                key={pei.id}
+                className="bg-[#121417] border border-[#242a32] hover:border-[#00d284]/50 rounded-lg p-3.5 space-y-2 transition-all"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="font-bold text-white text-xs">
+                    {pei.cabecalho.estudante}
+                  </div>
+                  <span className="text-[10px] font-mono text-[#00d284] bg-[#00d284]/10 border border-[#00d284]/30 px-1.5 py-0.2 rounded">
+                    {pei.cabecalho.codigo_matricula}
+                  </span>
+                </div>
+                <div className="text-[11px] text-slate-400">
+                  {pei.cabecalho.componente_curricular} · {pei.cabecalho.modulo_periodo}
+                </div>
+                <div className="flex items-center justify-between pt-2 border-t border-[#1d2229] text-[11px]">
+                  <span className="text-slate-400">
+                    Metas: <strong className="text-white">{pei.planejamento_pei.objetivos_e_metas.length} cadastradas</strong>
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onSelectStudent(pei);
+                        onNavigate('pei');
+                      }}
+                      className="px-2.5 py-1 bg-[#1e2329] hover:bg-[#282f37] text-white rounded text-[11px] font-semibold cursor-pointer"
+                    >
+                      Abrir PEI
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onSelectStudent(pei);
+                        onNavigate('documento_oficial');
+                      }}
+                      className="px-2 py-1 bg-[#0099ff]/20 hover:bg-[#0099ff]/30 text-[#0099ff] rounded text-[11px] font-semibold cursor-pointer"
+                    >
+                      SEI
+                    </button>
+                    {onRequestDeletePei && (
                       <button
                         type="button"
-                        onClick={onOpenAddStudent}
-                        className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-50 hover:bg-[#006633] text-[#006633] hover:text-white border border-emerald-300 rounded font-bold text-xs transition-colors cursor-pointer"
-                        title="Elaborar PEI para estudante deste diário com apoio da IA"
+                        onClick={() => onRequestDeletePei(pei)}
+                        className="p-1 text-slate-500 hover:text-red-400 rounded cursor-pointer"
+                        title="Remover PEI"
                       >
-                        <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                        <span>+ Criar PEI</span>
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* 3. SEÇÃO: PLANOS DE ENSINO INDIVIDUALIZADOS (PEIs) CADASTRADOS NO BANCO */}
-      <div className="bg-white border border-slate-300 rounded shadow-2xs space-y-3 p-4">
-        <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-          <div className="flex items-center gap-2">
-            <FolderOpen className="w-4 h-4 text-[#006633]" />
-            <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wide">
-              Planos de Ensino Individualizados (PEI) Registrados ({peisFiltrados.length})
-            </h2>
-          </div>
-          <span className="text-[11px] text-slate-500">
-            Armazenamento permanente no banco de dados SQLite institucional
-          </span>
-        </div>
-
-        {peisFiltrados.length === 0 ? (
-          /* ESTADO VAZIO INSTITUCIONAL DO SUAP */
-          <div className="p-6 bg-slate-50 border border-slate-200 rounded text-center space-y-3">
-            <div className="w-12 h-12 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center mx-auto">
-              <FileText className="w-6 h-6" />
-            </div>
-            <div className="space-y-1">
-              <h3 className="text-sm font-bold text-slate-800">
-                Nenhum Plano de Ensino Individualizado (PEI) cadastrado ainda
-              </h3>
-              <p className="text-xs text-slate-600 max-w-xl mx-auto leading-relaxed">
-                O banco de dados SQLite está limpo e pronto para receber os PEIs reais das suas matérias.
-                Clique no botão abaixo para cadastrar o primeiro estudante e gerar as adaptações pedagógicas DUA 3.0 com o Agente Ioda.
-              </p>
-            </div>
-            <div className="pt-2">
-              <button
-                type="button"
-                onClick={onOpenAddStudent}
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#006633] hover:bg-[#005026] text-white font-bold text-xs rounded shadow-xs transition-colors cursor-pointer"
-              >
-                <UserPlus className="w-4 h-4" />
-                <span>+ Cadastrar Primeiro PEI do Diário</span>
-              </button>
-            </div>
-          </div>
-        ) : (
-          /* TABELA DE PEIs CADASTRADOS NO BANCO */
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="bg-slate-100 text-slate-700 font-bold border-b border-slate-300">
-                  <th className="p-2.5 border-r border-slate-200">Matrícula</th>
-                  <th className="p-2.5 border-r border-slate-200">Nome do Estudante</th>
-                  <th className="p-2.5 border-r border-slate-200">Componente / Diário</th>
-                  <th className="p-2.5 border-r border-slate-200">Curso</th>
-                  <th className="p-2.5 border-r border-slate-200">Condição Pedagógica</th>
-                  <th className="p-2.5 border-r border-slate-200 text-center">Status</th>
-                  <th className="p-2.5 text-center">Ações Pedagógicas</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200 text-slate-800">
-                {peisFiltrados.map((pei, index) => {
-                  const isSelected = activePei?.id === pei.id;
-                  const isHipotese = pei.historico_napne.status_diagnostico === 'em_investigacao_hipotese';
-
-                  return (
-                    <tr
-                      key={pei.id}
-                      className={`hover:bg-slate-50 transition-colors ${
-                        isSelected ? 'bg-emerald-50/70 font-semibold' : index % 2 === 1 ? 'bg-slate-50/40' : 'bg-white'
-                      }`}
-                    >
-                      <td className="p-2.5 border-r border-slate-200 font-mono text-slate-600">
-                        {pei.cabecalho.codigo_matricula || pei.id}
-                      </td>
-                      <td className="p-2.5 border-r border-slate-200 font-bold text-slate-900">
-                        <div>{pei.cabecalho.estudante}</div>
-                        <div className="text-[10px] text-slate-500 font-normal">
-                          Docente: {pei.cabecalho.docente_regente}
-                        </div>
-                      </td>
-                      <td className="p-2.5 border-r border-slate-200">
-                        {pei.cabecalho.componente_curricular}
-                      </td>
-                      <td className="p-2.5 border-r border-slate-200 text-slate-600">
-                        {pei.cabecalho.curso}
-                      </td>
-                      <td className="p-2.5 border-r border-slate-200">
-                        <span className="inline-block text-slate-800 font-medium">
-                          {pei.historico_napne.categoria_neurodivergencia || 'Acompanhamento NAPNE'}
-                        </span>
-                        {isHipotese && (
-                          <span className="block text-[10px] text-amber-800 font-bold">
-                            (Em investigação pedagógica · Sem laudo)
-                          </span>
-                        )}
-                      </td>
-                      <td className="p-2.5 border-r border-slate-200 text-center">
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
-                          {pei.metricas?.status_geral || 'EM ANDAMENTO'}
-                        </span>
-                      </td>
-                      <td className="p-2.5 text-center">
-                        <div className="flex items-center justify-center gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              onSelectStudent(pei);
-                              onNavigate('pei');
-                            }}
-                            className="px-2.5 py-1 bg-[#006633] text-white hover:bg-[#005026] rounded text-[11px] font-bold cursor-pointer"
-                            title="Abrir Plano de Ensino Individualizado"
-                          >
-                            Abrir PEI
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              onSelectStudent(pei);
-                              onNavigate('documento_oficial');
-                            }}
-                            className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded text-[11px] font-semibold cursor-pointer"
-                            title="Imprimir documento oficial para o SEI"
-                          >
-                            SEI
-                          </button>
-                          {onRequestDeletePei && (
-                            <button
-                              type="button"
-                              onClick={() => onRequestDeletePei(pei)}
-                              className="p-1 text-red-600 hover:bg-red-50 rounded cursor-pointer"
-                              title="Excluir PEI do banco SQLite"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>

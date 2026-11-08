@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { PEICompleto, MetaPEI, PostItPainel, SolucaoCondicao, EscalaFonte, ModoContraste } from './types/pei';
 import { Navbar } from './components/Navbar';
+import { SuapSidebar } from './components/SuapSidebar';
 import { StudentHeader } from './components/StudentHeader';
 import { PeiView } from './components/PeiView';
 import { CaseStudyView } from './components/CaseStudyView';
@@ -17,7 +18,7 @@ import { ILovePeiHub } from './components/ILovePeiHub';
 import { OfficialKnowledgeBaseView } from './components/OfficialKnowledgeBaseView';
 import { OnboardingTourModal } from './components/OnboardingTourModal';
 import { AiConfigModal } from './components/AiConfigModal';
-import { CheckCircle2, ExternalLink, HelpCircle, ShieldAlert, ShieldCheck, FileText, Search, BookOpen, LayoutDashboard } from 'lucide-react';
+import { CheckCircle2, ExternalLink, HelpCircle, ShieldAlert, ShieldCheck, FileText, Search, BookOpen, LayoutDashboard, Menu, Sparkles } from 'lucide-react';
 import { exportOfficialPeiPdf } from './utils/exportOfficialPdf';
 import { apiService } from './services/apiService';
 
@@ -29,6 +30,7 @@ export default function App() {
   const [studentsList, setStudentsList] = useState<PEICompleto[]>([]);
   const [activePei, setActivePei] = useState<PEICompleto | null>(null);
   const [activeTab, setActiveTab] = useState<string>('hub');
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState<boolean>(false);
   const [isAddStudentOpen, setIsAddStudentOpen] = useState<boolean>(false);
   const [isSolutionBankOpen, setIsSolutionBankOpen] = useState<boolean>(false);
   const [isCampusStatsOpen, setIsCampusStatsOpen] = useState<boolean>(false);
@@ -477,233 +479,328 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
-      {/* Top Bar Navigation */}
-      <Navbar
+    <div className="min-h-screen bg-[#0c0e11] text-slate-100 flex font-sans">
+      {/* 1. Barra Lateral Oficial do SUAP (Sidebar Escura com Logo Ciano e Menus) */}
+      <SuapSidebar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        onOpenAddStudent={() => setIsAddStudentOpen(true)}
-        onOpenSolutionBank={() => setIsSolutionBankOpen(true)}
-        onOpenCampusStats={() => setIsCampusStatsOpen(true)}
-        onPrint={handlePrint}
-        escalaFonte={escalaFonte}
-        onMudarFonte={setEscalaFonte}
-        modoContraste={modoContraste}
-        onMudarContraste={setModoContraste}
-        isPresentationMode={isPresentationMode}
-        onTogglePresentationMode={() => setIsPresentationMode(!isPresentationMode)}
-        onOpenPpcAnalyzer={() => setIsPpcAnalyzerOpen(true)}
-        onOpenSusResearch={() => setIsSusResearchOpen(true)}
-        onResetToDefault={handleResetToDefault}
-        onOpenOnboardingTour={() => setIsOnboardingTourOpen(true)}
+        isOpenMobile={isMobileSidebarOpen}
+        onCloseMobile={() => setIsMobileSidebarOpen(false)}
         onOpenAiConfig={() => setIsAiConfigOpen(true)}
       />
 
-      {/* Presentation Mode Alert Banner */}
-      {isPresentationMode && (
-        <div className="bg-blue-900 text-white px-4 py-2 text-xs font-semibold flex items-center justify-between no-print border-b border-blue-800">
-          <div className="max-w-7xl mx-auto w-full flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-blue-300 shrink-0" />
-            <span>
-              <strong>Modo Apresentação Ativo (LGPD / CEP):</strong> Nomes reais, matrículas e contatos foram anonimizados para exibição em bancas, eventos científicos (JICE) ou projeções públicas.
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={() => setIsPresentationMode(false)}
-            className="text-blue-200 hover:text-white underline text-[11px] shrink-0 cursor-pointer ml-2"
-          >
-            Desativar
-          </button>
-        </div>
-      )}
-
-      {/* Single Clean Student Header when viewing a PEI tab */}
-      {activeTab !== 'hub' && activeTab !== 'normas' && displayedActivePei && (
-        <div className="no-print">
-          <StudentHeader
-            pei={displayedActivePei}
-            allStudents={displayedStudents}
-            onSelectCase={handleSelectStudent}
-            onOpenAddStudent={() => setIsAddStudentOpen(true)}
-            onOpenCampusStats={() => setIsCampusStatsOpen(true)}
-            onRequestDeletePei={handleRequestDeletePei}
-            filtroDocente={filtroDocente}
-            onMudarFiltroDocente={handleMudarFiltroDocente}
-          />
-        </div>
-      )}
-
-      {/* Notification Banner on PEI Deletion */}
-      {deleteNotice && (
-        <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-4 no-print">
-          <div className="p-3 bg-[#006633] text-white rounded shadow-sm flex items-center justify-between gap-3 text-xs">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-300 shrink-0" />
-              <span className="font-semibold">{deleteNotice}</span>
-            </div>
+      {/* 2. Área de Conteúdo Principal do SUAP */}
+      <div className="flex-1 flex flex-col min-w-0 bg-[#0c0e11]">
+        {/* Barra Superior Minimalista do SUAP */}
+        <header className="bg-[#121417] border-b border-[#20252b] px-4 py-2.5 flex items-center justify-between no-print">
+          <div className="flex items-center gap-3">
             <button
-              onClick={() => setDeleteNotice(null)}
-              className="text-emerald-200 hover:text-white font-bold px-2 py-0.5 rounded cursor-pointer"
+              type="button"
+              onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
+              className="lg:hidden p-1.5 text-slate-400 hover:text-white rounded bg-[#1b1f25] border border-[#272e37] cursor-pointer"
             >
-              Fechar
+              <Menu className="w-4 h-4" />
             </button>
-          </div>
-        </div>
-      )}
-
-      {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-6">
-        {activeTab === 'hub' && (
-          <ILovePeiHub
-            activePei={displayedActivePei}
-            allStudents={displayedStudents}
-            onSelectStudent={handleSelectStudent}
-            onNavigate={(tab) => setActiveTab(tab)}
-            onOpenAddStudent={() => setIsAddStudentOpen(true)}
-            onOpenSolutionBank={() => setIsSolutionBankOpen(true)}
-            onOpenCampusStats={() => setIsCampusStatsOpen(true)}
-            onPrint={handlePrint}
-            onRequestDeletePei={handleRequestDeletePei}
-            onOpenOnboardingTour={() => setIsOnboardingTourOpen(true)}
-            filtroDocente={filtroDocente}
-            onMudarFiltroDocente={handleMudarFiltroDocente}
-          />
-        )}
-
-        {activeTab === 'normas' && <OfficialKnowledgeBaseView />}
-
-        {activeTab === 'pei' && (
-          displayedActivePei ? (
-            <PeiView
-              pei={displayedActivePei}
-              onUpdateMetaStatus={handleUpdateMetaStatus}
-              onAddMeta={handleAddMeta}
-              onOpenSolutionBank={() => setIsSolutionBankOpen(true)}
-              onUpdateObservacoes={handleUpdateObservacoes}
-            />
-          ) : (
-            <div className="bg-white border border-slate-300 rounded p-8 text-center space-y-3">
-              <div className="w-12 h-12 rounded-full bg-slate-100 text-[#006633] flex items-center justify-center mx-auto">
-                <FileText className="w-6 h-6" />
-              </div>
-              <h3 className="text-sm font-bold text-slate-900">Nenhum PEI selecionado para visualização</h3>
-              <p className="text-xs text-slate-600 max-w-md mx-auto leading-relaxed">
-                O banco de dados SQLite está limpo e pronto para receber os dados reais da sua matéria. Acesse a aba <strong>Diários & Turmas</strong> ou clique no botão abaixo para elaborar seu primeiro PEI com auxílio do Agente Ioda.
-              </p>
-              <button
-                type="button"
-                onClick={() => setIsAddStudentOpen(true)}
-                className="px-4 py-2 bg-[#006633] hover:bg-[#005026] text-white font-bold text-xs rounded transition-colors cursor-pointer"
-              >
-                + Cadastrar Primeiro PEI do Diário
-              </button>
-            </div>
-          )
-        )}
-
-        {activeTab === 'estudo_caso' && (
-          displayedActivePei ? (
-            <CaseStudyView pei={displayedActivePei} />
-          ) : (
-            <div className="bg-white border border-slate-300 rounded p-8 text-center space-y-3">
-              <div className="w-12 h-12 rounded-full bg-slate-100 text-[#006633] flex items-center justify-center mx-auto">
-                <Search className="w-6 h-6" />
-              </div>
-              <h3 className="text-sm font-bold text-slate-900">Estudo de Caso Indisponível</h3>
-              <p className="text-xs text-slate-600 max-w-md mx-auto leading-relaxed">
-                Cadastre um estudante no diário para visualizar seu estudo de caso, histórico ETEP e mapeamento situacional de gatilhos.
-              </p>
-              <button
-                type="button"
-                onClick={() => setIsAddStudentOpen(true)}
-                className="px-4 py-2 bg-[#006633] hover:bg-[#005026] text-white font-bold text-xs rounded transition-colors cursor-pointer"
-              >
-                + Cadastrar Novo PEI
-              </button>
-            </div>
-          )
-        )}
-
-        {activeTab === 'documento_oficial' && (
-          displayedActivePei ? (
-            <OfficialTemplateView
-              pei={displayedActivePei}
-              onPrint={handlePrint}
-              onUpdatePei={handleUpdatePei}
-            />
-          ) : (
-            <div className="bg-white border border-slate-300 rounded p-8 text-center space-y-3">
-              <div className="w-12 h-12 rounded-full bg-slate-100 text-[#006633] flex items-center justify-center mx-auto">
-                <BookOpen className="w-6 h-6" />
-              </div>
-              <h3 className="text-sm font-bold text-slate-900">Nenhum Documento para Impressão</h3>
-              <p className="text-xs text-slate-600 max-w-md mx-auto leading-relaxed">
-                Cadastre um estudante para gerar o documento formatado nos padrões institucionais de envio ao SEI.
-              </p>
-              <button
-                type="button"
-                onClick={() => setIsAddStudentOpen(true)}
-                className="px-4 py-2 bg-[#006633] hover:bg-[#005026] text-white font-bold text-xs rounded transition-colors cursor-pointer"
-              >
-                + Cadastrar Novo PEI
-              </button>
-            </div>
-          )
-        )}
-
-        {activeTab === 'painel' && (
-          displayedActivePei ? (
-            <PeiPainelView
-              pei={displayedActivePei}
-              onAddPostIt={handleAddPostIt}
-              onDeletePostIt={handleDeletePostIt}
-            />
-          ) : (
-            <div className="bg-white border border-slate-300 rounded p-8 text-center space-y-3">
-              <div className="w-12 h-12 rounded-full bg-slate-100 text-[#006633] flex items-center justify-center mx-auto">
-                <LayoutDashboard className="w-6 h-6" />
-              </div>
-              <h3 className="text-sm font-bold text-slate-900">Painel de Metas DUA Indisponível</h3>
-              <p className="text-xs text-slate-600 max-w-md mx-auto leading-relaxed">
-                Cadastre um estudante para acompanhar o alcance de metas curriculares e registrar observações colaborativas.
-              </p>
-              <button
-                type="button"
-                onClick={() => setIsAddStudentOpen(true)}
-                className="px-4 py-2 bg-[#006633] hover:bg-[#005026] text-white font-bold text-xs rounded transition-colors cursor-pointer"
-              >
-                + Cadastrar Novo PEI
-              </button>
-            </div>
-          )
-        )}
-      </main>
-
-      {/* Institutional SUAP Footer */}
-      <footer className="bg-[#f0f2f5] border-t border-slate-300 py-4 text-xs text-slate-600 no-print mt-auto">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
-          <div className="space-y-0.5">
-            <span className="font-bold text-slate-800">
-              SUAP · Sistema Unificado de Administração Pública
-            </span>
-            <div className="text-[11px] text-slate-500">
-              Instituto Federal do Tocantins · Campus Paraíso do Tocantins · Resolução CONSUP/IFTO nº 48/2021 & Portaria MEC nº 421/2026
+            <div className="flex items-center gap-2">
+              <span className="text-[#00d284] text-lg font-black lowercase tracking-tight select-none">
+                suap
+              </span>
+              <span className="text-[11px] text-slate-500">|</span>
+              <span className="text-xs text-slate-300 font-semibold truncate">
+                IFTO · Campus Paraíso do Tocantins
+              </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 text-xs">
+            <button
+              type="button"
+              onClick={() => setIsAiConfigOpen(true)}
+              className="px-2.5 py-1 bg-[#181c22] hover:bg-[#20252c] border border-[#2b333e] text-slate-300 rounded text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <span className="text-[11px] text-[#00d284] font-bold">IA Conectada (Gemini 3.8)</span>
+            </button>
+
             <button
               type="button"
               onClick={() => setIsCentralAjudaOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 font-semibold text-xs rounded cursor-pointer shadow-2xs"
+              className="p-1.5 text-slate-400 hover:text-white rounded hover:bg-[#181c22] transition-colors cursor-pointer"
+              title="Manual & Legislação MEC"
             >
-              <HelpCircle className="w-3.5 h-3.5 text-[#006633]" />
-              <span>Manuais & Legislação</span>
+              <HelpCircle className="w-4 h-4" />
             </button>
           </div>
+        </header>
+
+        {/* Sub-Abas de Navegação do Módulo NAPNE */}
+        <div className="bg-[#15181c] border-b border-[#23282f] px-4 py-1.5 flex items-center gap-2 overflow-x-auto no-print">
+          <button
+            type="button"
+            onClick={() => setActiveTab('hub')}
+            className={`px-3 py-1 rounded text-xs font-semibold shrink-0 cursor-pointer transition-colors ${
+              activeTab === 'hub'
+                ? 'bg-[#0099ff] text-white shadow-xs'
+                : 'text-slate-300 hover:text-white hover:bg-[#1f242b]'
+            }`}
+          >
+            Diário & Alunos da Turma
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('pei')}
+            className={`px-3 py-1 rounded text-xs font-semibold shrink-0 cursor-pointer transition-colors ${
+              activeTab === 'pei'
+                ? 'bg-[#0099ff] text-white shadow-xs'
+                : 'text-slate-300 hover:text-white hover:bg-[#1f242b]'
+            }`}
+          >
+            Plano PEI (DUA 3.0)
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('estudo_caso')}
+            className={`px-3 py-1 rounded text-xs font-semibold shrink-0 cursor-pointer transition-colors ${
+              activeTab === 'estudo_caso'
+                ? 'bg-[#0099ff] text-white shadow-xs'
+                : 'text-slate-300 hover:text-white hover:bg-[#1f242b]'
+            }`}
+          >
+            Estudo de Caso & Gatilhos
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('painel')}
+            className={`px-3 py-1 rounded text-xs font-semibold shrink-0 cursor-pointer transition-colors ${
+              activeTab === 'painel'
+                ? 'bg-[#0099ff] text-white shadow-xs'
+                : 'text-slate-300 hover:text-white hover:bg-[#1f242b]'
+            }`}
+          >
+            Metas & Acompanhamento
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('documento_oficial')}
+            className={`px-3 py-1 rounded text-xs font-semibold shrink-0 cursor-pointer transition-colors ${
+              activeTab === 'documento_oficial'
+                ? 'bg-[#0099ff] text-white shadow-xs'
+                : 'text-slate-300 hover:text-white hover:bg-[#1f242b]'
+            }`}
+          >
+            Documento Oficial SEI (PDF)
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('normas')}
+            className={`px-3 py-1 rounded text-xs font-semibold shrink-0 cursor-pointer transition-colors ${
+              activeTab === 'normas'
+                ? 'bg-[#00d284] text-[#121417] font-bold shadow-xs'
+                : 'text-emerald-400 hover:text-emerald-300 hover:bg-[#1f242b]'
+            }`}
+          >
+            14 Cadernos MEC (RAG)
+          </button>
         </div>
-      </footer>
+
+        {/* Presentation Mode Alert Banner */}
+        {isPresentationMode && (
+          <div className="bg-blue-950 text-blue-200 px-4 py-2 text-xs font-semibold flex items-center justify-between no-print border-b border-blue-900">
+            <div className="max-w-7xl mx-auto w-full flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-blue-400 shrink-0" />
+              <span>
+                <strong>Modo Apresentação Ativo (LGPD / CEP):</strong> Nomes reais e matrículas foram anonimizados para exibição pública.
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsPresentationMode(false)}
+              className="text-blue-300 hover:text-white underline text-[11px] shrink-0 cursor-pointer ml-2"
+            >
+              Desativar
+            </button>
+          </div>
+        )}
+
+        {/* Single Clean Student Header when viewing a PEI tab */}
+        {activeTab !== 'hub' && activeTab !== 'normas' && displayedActivePei && (
+          <div className="no-print">
+            <StudentHeader
+              pei={displayedActivePei}
+              allStudents={displayedStudents}
+              onSelectCase={handleSelectStudent}
+              onOpenAddStudent={() => setIsAddStudentOpen(true)}
+              onOpenCampusStats={() => setIsCampusStatsOpen(true)}
+              onRequestDeletePei={handleRequestDeletePei}
+              filtroDocente={filtroDocente}
+              onMudarFiltroDocente={handleMudarFiltroDocente}
+            />
+          </div>
+        )}
+
+        {/* Notification Banner on PEI Deletion */}
+        {deleteNotice && (
+          <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-4 no-print">
+            <div className="p-3 bg-[#162a22] border border-[#00d284]/40 text-emerald-200 rounded shadow-sm flex items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-[#00d284] shrink-0" />
+                <span className="font-semibold">{deleteNotice}</span>
+              </div>
+              <button
+                onClick={() => setDeleteNotice(null)}
+                className="text-emerald-300 hover:text-white font-bold px-2 py-0.5 rounded cursor-pointer"
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Main Content Area */}
+        <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-5">
+          {activeTab === 'hub' && (
+            <ILovePeiHub
+              activePei={displayedActivePei}
+              allStudents={displayedStudents}
+              onSelectStudent={handleSelectStudent}
+              onNavigate={(tab) => setActiveTab(tab)}
+              onOpenAddStudent={() => setIsAddStudentOpen(true)}
+              onOpenSolutionBank={() => setIsSolutionBankOpen(true)}
+              onOpenCampusStats={() => setIsCampusStatsOpen(true)}
+              onPrint={handlePrint}
+              onRequestDeletePei={handleRequestDeletePei}
+              onOpenOnboardingTour={() => setIsOnboardingTourOpen(true)}
+              filtroDocente={filtroDocente}
+              onMudarFiltroDocente={handleMudarFiltroDocente}
+            />
+          )}
+
+          {activeTab === 'normas' && <OfficialKnowledgeBaseView />}
+
+          {activeTab === 'pei' && (
+            displayedActivePei ? (
+              <PeiView
+                pei={displayedActivePei}
+                onUpdateMetaStatus={handleUpdateMetaStatus}
+                onAddMeta={handleAddMeta}
+                onOpenSolutionBank={() => setIsSolutionBankOpen(true)}
+                onUpdateObservacoes={handleUpdateObservacoes}
+              />
+            ) : (
+              <div className="bg-[#171a1e] border border-[#242930] rounded-lg p-8 text-center space-y-3">
+                <div className="w-12 h-12 rounded-full bg-[#1b2026] text-[#00d284] border border-[#2b323c] flex items-center justify-center mx-auto">
+                  <FileText className="w-6 h-6" />
+                </div>
+                <h3 className="text-sm font-bold text-white">Nenhum PEI selecionado para visualização</h3>
+                <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
+                  Acesse a aba <strong>Diário & Alunos da Turma</strong> para selecionar ou indicar um estudante e elaborar o PEI com apoio do Agente Ioda.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setIsAddStudentOpen(true)}
+                  className="px-4 py-2 bg-[#0099ff] hover:bg-[#0088ee] text-white font-bold text-xs rounded transition-colors cursor-pointer"
+                >
+                  + Indicar Aluno da Matéria para PEI
+                </button>
+              </div>
+            )
+          )}
+
+          {activeTab === 'estudo_caso' && (
+            displayedActivePei ? (
+              <CaseStudyView pei={displayedActivePei} />
+            ) : (
+              <div className="bg-[#171a1e] border border-[#242930] rounded-lg p-8 text-center space-y-3">
+                <div className="w-12 h-12 rounded-full bg-[#1b2026] text-[#00d284] border border-[#2b323c] flex items-center justify-center mx-auto">
+                  <Search className="w-6 h-6" />
+                </div>
+                <h3 className="text-sm font-bold text-white">Estudo de Caso Indisponível</h3>
+                <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
+                  Indique um estudante da matéria no SUAP para visualizar seu histórico e análise funcional de gatilhos.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setIsAddStudentOpen(true)}
+                  className="px-4 py-2 bg-[#0099ff] hover:bg-[#0088ee] text-white font-bold text-xs rounded transition-colors cursor-pointer"
+                >
+                  + Indicar Estudante da Turma
+                </button>
+              </div>
+            )
+          )}
+
+          {activeTab === 'documento_oficial' && (
+            displayedActivePei ? (
+              <OfficialTemplateView
+                pei={displayedActivePei}
+                onPrint={handlePrint}
+                onUpdatePei={handleUpdatePei}
+              />
+            ) : (
+              <div className="bg-[#171a1e] border border-[#242930] rounded-lg p-8 text-center space-y-3">
+                <div className="w-12 h-12 rounded-full bg-[#1b2026] text-[#00d284] border border-[#2b323c] flex items-center justify-center mx-auto">
+                  <BookOpen className="w-6 h-6" />
+                </div>
+                <h3 className="text-sm font-bold text-white">Nenhum Documento para Impressão</h3>
+                <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
+                  Cadastre um estudante para gerar o documento formatado nos padrões institucionais de envio ao SEI.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setIsAddStudentOpen(true)}
+                  className="px-4 py-2 bg-[#0099ff] hover:bg-[#0088ee] text-white font-bold text-xs rounded transition-colors cursor-pointer"
+                >
+                  + Indicar Estudante da Turma
+                </button>
+              </div>
+            )
+          )}
+
+          {activeTab === 'painel' && (
+            displayedActivePei ? (
+              <PeiPainelView
+                pei={displayedActivePei}
+                onAddPostIt={handleAddPostIt}
+                onDeletePostIt={handleDeletePostIt}
+              />
+            ) : (
+              <div className="bg-[#171a1e] border border-[#242930] rounded-lg p-8 text-center space-y-3">
+                <div className="w-12 h-12 rounded-full bg-[#1b2026] text-[#00d284] border border-[#2b323c] flex items-center justify-center mx-auto">
+                  <LayoutDashboard className="w-6 h-6" />
+                </div>
+                <h3 className="text-sm font-bold text-white">Painel de Metas DUA Indisponível</h3>
+                <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
+                  Cadastre um estudante para acompanhar o alcance de metas curriculares e registrar observações colaborativas.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setIsAddStudentOpen(true)}
+                  className="px-4 py-2 bg-[#0099ff] hover:bg-[#0088ee] text-white font-bold text-xs rounded transition-colors cursor-pointer"
+                >
+                  + Indicar Estudante da Turma
+                </button>
+              </div>
+            )
+          )}
+        </main>
+
+        {/* Rodapé Institucional SUAP */}
+        <footer className="bg-[#121417] border-t border-[#1f2328] py-3 text-xs text-slate-400 no-print mt-auto">
+          <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+            <div>
+              <span className="font-bold text-slate-200">SUAP · Sistema Unificado de Administração Pública</span> — IFTO Campus Paraíso
+            </div>
+            <div className="text-slate-500 text-[11px]">
+              Resolução CONSUP/IFTO nº 48/2021 & Portaria MEC nº 421/2026
+            </div>
+          </div>
+        </footer>
+      </div>
 
       {/* Modals */}
       <AddStudentModal

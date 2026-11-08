@@ -52,144 +52,104 @@ export interface DiarioSuap {
  */
 export const DIARIOS_SUAP_INSTITUCIONAIS: DiarioSuap[] = [
   {
-    id: 'diario-tsi-web2',
-    codigoComponente: 'TSI.2026.1.0042',
-    nomeDisciplina: 'Programação Web II',
-    curso: 'Tecnologia em Sistemas para Internet',
+    id: 'diario-bsi-es2',
+    codigoComponente: 'BSI.0406',
+    nomeDisciplina: 'Engenharia de Software II',
+    curso: '063 - Bacharelado em Sistemas de Informação (Campus Paraíso do Tocantins)',
     modalidade: 'Superior',
     campus: 'Campus Paraíso do Tocantins',
     semestrePeriodo: '2026.1 · 4º Período',
     cargaHoraria: '80h',
-    docenteSiape: '1982731',
-    docenteNome: 'Prof. Jean Carlo',
+    docenteSiape: '1489201',
+    docenteNome: 'Prof. Regente de TI / NAPNE',
     planoEnsino: {
       ementa:
-        'Desenvolvimento de aplicações web full stack, arquiteturas orientadas a serviços e RESTful APIs. Persistência de dados assíncrona, autenticação, controle de sessão, acessibilidade web (WCAG/e-MAG) e boas práticas de engenharia de software.',
+        'Engenharia de requisitos ágeis, arquitetura de sistemas corporativos, padrões de projeto (GoF), testes automatizados de software, acessibilidade digital (e-MAG / WCAG 2.1) e ciclo de vida de projetos de TI.',
       conteudosProgramaticos: [
         {
-          bimestreOuEtapa: '1º Bimestre',
-          topicos: 'Arquitetura cliente-servidor moderna, APIs REST, TypeScript no backend e frontend, integração com banco de dados.',
+          bimestreOuEtapa: '1º Módulo',
+          topicos: 'Modelagem de software, requisitos funcionais e não-funcionais, User Stories e definição de arquitetura.',
         },
         {
-          bimestreOuEtapa: '2º Bimestre',
-          topicos: 'Autenticação segura, gerenciamento de estado global, diretrizes de acessibilidade e implantação contínua.',
+          bimestreOuEtapa: '2º Módulo',
+          topicos: 'Padrões de projeto, Clean Architecture, testes unitários/integração e acessibilidade em interfaces.',
         },
       ],
       habilidadesCompetenciasPpc:
-        'Projetar, implementar e testar aplicações web completas com interfaces acessíveis e serviços de backend escaláveis.',
+        'Projetar e arquitetar sistemas computacionais inclusivos, aplicando metodologias ágeis e padrões internacionais de acessibilidade.',
       metodologiaPadrao:
-        'Aulas teórico-práticas em laboratório de informática com desenvolvimento orientado a projetos e pair programming.',
+        'Aulas em laboratório com desenvolvimento ágil em equipe (Scrum/Kanban) e programação assistida.',
       procedimentosAvaliacaoPadrao:
-        'Projetos práticos de desenvolvimento contínuo, entregas incrementais via Git/GitHub e defesas técnicas.',
+        'Projetos práticos incrementais, entregas de sprints e defesas técnicas com formatos diversificados.',
     },
-    estudantes: [],
+    estudantes: [
+      {
+        id: 'est-jean-carlo',
+        matricula: '202510630025',
+        nome: 'Jean Carlo Torres de Oliveira',
+        idade: '21 anos',
+        acompanhadoNapne: false,
+        observacoesNapne:
+          'Estudante com indicação de adaptações metodológicas, suporte DUA 3.0 e tempo adicional (+50%) em avaliações de código e provas.',
+      },
+      {
+        id: 'est-aluno-02',
+        matricula: '202510630018',
+        nome: 'Carlos Eduardo Rodrigues',
+        idade: '22 anos',
+        acompanhadoNapne: false,
+      },
+      {
+        id: 'est-aluno-03',
+        matricula: '202510630044',
+        nome: 'Mariana Santos Fagundes',
+        idade: '20 anos',
+        acompanhadoNapne: false,
+      },
+    ],
   },
   {
-    id: 'diario-info-algoritmos',
-    codigoComponente: 'INFO.2026.1.0019',
-    nomeDisciplina: 'Algoritmos e Estruturas de Dados',
-    curso: 'Técnico Integrado ao Ensino Médio em Informática',
-    modalidade: 'Tecnico Integrado',
-    campus: 'Campus Paraíso do Tocantins',
-    semestrePeriodo: '2026.1 · 1º Ano A',
-    cargaHoraria: '120h',
-    docenteSiape: '1982731',
-    docenteNome: 'Prof. Jean Carlo',
-    planoEnsino: {
-      ementa:
-        'Fundamentos de lógica de programação. Tipos primitivos, variáveis, estruturas condicionais e de repetição. Vetores, matrizes, funções, modularização e técnicas de depuração de código.',
-      conteudosProgramaticos: [
-        {
-          bimestreOuEtapa: '1º Bimestre',
-          topicos: 'Lógica algorítmica, variáveis, operadores aritméticos/lógicos e estruturas condicionais.',
-        },
-        {
-          bimestreOuEtapa: '2º Bimestre',
-          topicos: 'Laços de repetição (while, for), depuração passo a passo e resolução de problemas.',
-        },
-        {
-          bimestreOuEtapa: '3º Bimestre',
-          topicos: 'Vetores unidimensionais, manipulação de arrays e algoritmos de busca.',
-        },
-        {
-          bimestreOuEtapa: '4º Bimestre',
-          topicos: 'Matrizes bidimensionais, modularização com funções e projeto final integrador.',
-        },
-      ],
-      habilidadesCompetenciasPpc:
-        'Construir algoritmos estruturados para resolução de problemas computacionais com raciocínio lógico e sintaxe precisa.',
-      metodologiaPadrao:
-        'Aulas expositivas dialogadas seguidas de oficinas práticas de programação assistida em bancada.',
-      procedimentosAvaliacaoPadrao:
-        'Avaliações práticas individuais em laboratório com tempo adaptável e listas progressivas de desafios.',
-    },
-    estudantes: [],
-  },
-  {
-    id: 'diario-tsi-banco-dados',
-    codigoComponente: 'TSI.2026.1.0048',
-    nomeDisciplina: 'Banco de Dados Relacionais e Não-Relacionais',
-    curso: 'Tecnologia em Sistemas para Internet',
+    id: 'diario-bsi-bd2',
+    codigoComponente: 'BSI.0408',
+    nomeDisciplina: 'Banco de Dados II',
+    curso: '063 - Bacharelado em Sistemas de Informação (Campus Paraíso do Tocantins)',
     modalidade: 'Superior',
     campus: 'Campus Paraíso do Tocantins',
-    semestrePeriodo: '2026.1 · 3º Período',
+    semestrePeriodo: '2026.1 · 4º Período',
     cargaHoraria: '80h',
-    docenteSiape: '1982731',
-    docenteNome: 'Prof. Jean Carlo',
+    docenteSiape: '1489201',
+    docenteNome: 'Prof. Regente de TI / NAPNE',
     planoEnsino: {
       ementa:
-        'Modelagem conceitual e lógica de banco de dados (DER/MER). Linguagem SQL (DDL, DML, DQL). Integridade referencial, consultas com junções complexas, normalização e introdução a bancos NoSQL orientados a documentos.',
+        'Processamento e otimização de consultas SQL. Índices B-Tree, transações ACID, controle de concorrência, recuperação de falhas e introdução a bancos NoSQL orientados a documentos e chave-valor.',
       conteudosProgramaticos: [
         {
-          bimestreOuEtapa: '1º Bimestre',
-          topicos: 'Modelagem relacional, cardinalidades, álgebra relacional e criação de esquemas em SQL.',
+          bimestreOuEtapa: '1º Módulo',
+          topicos: 'Álgebra relacional aplicada, planos de execução e otimização de consultas complexas.',
         },
         {
-          bimestreOuEtapa: '2º Bimestre',
-          topicos: 'Consultas avançadas (JOINs, GROUP BY, subqueries), índices, transações ACID e NoSQL.',
+          bimestreOuEtapa: '2º Módulo',
+          topicos: 'Transações, locks, isolamento, integridade e bancos NoSQL distribuídos.',
         },
       ],
       habilidadesCompetenciasPpc:
-        'Modelar e administrar esquemas de bancos de dados otimizados, formulando consultas precisas para sistemas corporativos.',
+        'Gerenciar e otimizar bancos de dados relacionais e não-relacionais para aplicações de alto desempenho.',
       metodologiaPadrao:
-        'Laboratório prático de banco de dados com ferramentas visuais e via linha de comando.',
+        'Laboratório prático com scripts SQL e modelagem de cenários práticos.',
       procedimentosAvaliacaoPadrao:
-        'Modelagem de cenários práticos e exercícios de escrita de queries com múltiplos formatos de entrega.',
+        'Avaliações práticas em laboratório com suporte adaptado.',
     },
-    estudantes: [],
-  },
-  {
-    id: 'diario-info-redes',
-    codigoComponente: 'INFO.2026.1.0025',
-    nomeDisciplina: 'Redes de Computadores e Sistemas Operacionais',
-    curso: 'Técnico Integrado ao Ensino Médio em Informática',
-    modalidade: 'Tecnico Integrado',
-    campus: 'Campus Paraíso do Tocantins',
-    semestrePeriodo: '2026.1 · 2º Ano',
-    cargaHoraria: '80h',
-    docenteSiape: '1982731',
-    docenteNome: 'Prof. Jean Carlo',
-    planoEnsino: {
-      ementa:
-        'Topologias e arquiteturas de redes. Modelo OSI e pilha TCP/IP. Endereçamento IPv4 e IPv6. Instalação, configuração e administração básica de sistemas operacionais tipo Linux.',
-      conteudosProgramaticos: [
-        {
-          bimestreOuEtapa: '1º Bimestre',
-          topicos: 'Conceitos de redes, meios físicos, cabeamento estruturado e camadas OSI/TCP-IP.',
-        },
-        {
-          bimestreOuEtapa: '2º Bimestre',
-          topicos: 'Protocolos de transporte e aplicação (DNS, DHCP, HTTP), subredes e comandos Linux de terminal.',
-        },
-      ],
-      habilidadesCompetenciasPpc:
-        'Configurar parâmetros de rede, diagnosticar falhas de conectividade e operar utilitários de linha de comando.',
-      metodologiaPadrao:
-        'Aulas práticas em bancada de simulação de redes (Packet Tracer) e máquinas virtuais Linux.',
-      procedimentosAvaliacaoPadrao:
-        'Relatórios de práticas simuladas e diagnósticos práticos de rede com roteiro acessível.',
-    },
-    estudantes: [],
+    estudantes: [
+      {
+        id: 'est-jean-carlo',
+        matricula: '202510630025',
+        nome: 'Jean Carlo Torres de Oliveira',
+        idade: '21 anos',
+        acompanhadoNapne: false,
+        observacoesNapne:
+          'Estudante com indicação de adaptações metodológicas em consultas analíticas e avaliações práticas de banco de dados.',
+      },
+    ],
   },
 ];
 
