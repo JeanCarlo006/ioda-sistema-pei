@@ -10,7 +10,7 @@ import {
   IODA_GEMINI_RESPONSE_SCHEMA,
 } from './src/services/geminiService';
 import { suapService } from './src/services/suapService';
-import { studentRepo, peiRepo, ppcRepo, knowledgeBaseRepo } from './src/database/db';
+import { studentRepo, peiRepo, ppcRepo, knowledgeBaseRepo, settingsRepo } from './src/database/db';
 import { seedDatabaseIfNeeded } from './src/database/seed';
 
 dotenv.config();
@@ -26,16 +26,6 @@ const port = Number(process.env.PORT) || 3000;
 
 app.use(express.json({ limit: '10mb' }));
 
-// Initialize Google GenAI client (Server-Side only)
-const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY || '',
-  httpOptions: {
-    headers: {
-      'User-Agent': 'aistudio-build',
-    },
-  },
-});
-
 import { synthesizeIodaPei } from './src/services/universalPedagogicalEngine';
 
 // Track quota cooldown to prevent repeated 429 errors
@@ -49,15 +39,65 @@ function triggerQuotaCooldown(durationMs = 300000) {
   quotaCooldownUntil = Date.now() + durationMs;
 }
 
-// API Route: Generate PEI with Ioda AI (LGPD Sanitized + Structured JSON Schema)
+// Rotas de Configuração da Inteligência Artificial (Gemini / Ollama Llama)
+app.get('/api/config/ai', (req: Request, res: Response) => {
+  const savedKey = settingsRepo.get('gemini_api_key');
+  const envKey = process.env.GEMINI_API_KEY || '';
+  const activeProvider = settingsRepo.get('ai_provider') || process.env.AI_PROVIDER || 'gemini';
+  const activeModel = settingsRepo.get('ai_model') || 'gemini-2.5-flash';
+  const ollamaHost = settingsRepo.get('ollama_host') || 'http://localhost:11434';
+  const hasKey = Boolean(envKey || savedKey);
+  const rawKey = savedKey || envKey;
+  const maskedKey = hasKey && rawKey.length > 8 ? `${rawKey.substring(0, 4)}...${rawKey.slice(-4)}` : '';
+
+  res.json({
+    success: true,
+    data: {
+      provider: activeProvider,
+      hasKey,
+      maskedKey,
+      model: activeModel,
+      ollamaHost,
+      isQuotaOnCooldown: isQuotaOnCooldown(),
+    },
+  });
+});
+
+app.post('/api/config/ai', (req: Request, res: Response) => {
+  const { apiKey, provider, model, ollamaHost } = req.body || {};
+  if (apiKey && typeof apiKey === 'string') {
+    settingsRepo.set('gemini_api_key', apiKey.trim());
+  }
+  if (provider && ['gemini', 'ollama'].includes(provider)) {
+    settingsRepo.set('ai_provider', provider);
+  }
+  if (model) {
+    settingsRepo.set('ai_model', model);
+  }
+  if (ollamaHost) {
+    settingsRepo.set('ollama_host', ollamaHost);
+  }
+  res.json({ success: true, message: 'Configurações de IA salvas com sucesso!' });
+});
+
+// API Route: Generate PEI with Ioda AI (LGPD Sanitized + RAG Drive + Structured JSON Schema)
 app.post('/api/gemini/generate-pei', async (req: Request, res: Response) => {
   res.setHeader('Content-Type', 'application/json');
 
   try {
-    // 1. Camada de Privacidade e Tratamento de Dados (LGPD - Lei nº 13.709/2018 & Art. 12, § 5º Decreto nº 12.686/2025)
+    // 1. Camada de Privacidade e Minimização LGPD (Lei nº 13.709/2018 & Portaria MEC nº 421/2026)
     const sanitizedPayload = sanitizePeiPayloadForLgpd(req.body || {}, 1);
-    // Check if API key is not configured or currently on quota cooldown
-    if (!process.env.GEMINI_API_KEY || isQuotaOnCooldown()) {
+
+    const activeApiKey = settingsRepo.get('gemini_api_key') || process.env.GEMINI_API_KEY || '';
+    const activeProvider = settingsRepo.get('ai_provider') || process.env.AI_PROVIDER || 'gemini';
+
+    // 2. Consulta RAG à Base de Conhecimento Institucional no SQLite (Cadernos MEC, DUA 3.0, Diretrizes IFTO)
+    const ragQuery = `${req.body.subject || ''} ${req.body.course || ''} ${req.body.barriers || ''} ${req.body.triggersAndBehavior || ''}`;
+    const ragDocs = knowledgeBaseRepo.search(ragQuery, 3);
+    const ragContext = ragDocs.map((doc: any) => `[DOCUMENTO OFICIAL RAG: ${doc.titulo}]\n${doc.conteudo}`).join('\n\n');
+
+    // 3. Fallback inteligente caso não haja chave de API ou se cota estiver pausada
+    if (!activeApiKey || isQuotaOnCooldown()) {
       console.log('[Ioda Engine] Utilizando Motor Pedagógico Ioda DUA 3.0 com proteção LGPD.');
       const synthesized = synthesizeIodaPei(req.body);
       return res.json({
@@ -65,23 +105,35 @@ app.post('/api/gemini/generate-pei', async (req: Request, res: Response) => {
         data: synthesized,
         isIodaEngine: true,
         lgpdSanitized: true,
+        hasApiKey: Boolean(activeApiKey),
         notice: 'PEI estruturado pelo Motor Pedagógico Ioda (DUA 3.0 Universal)',
       });
     }
 
-    const systemPrompt = buildUniversalIodaSystemInstruction();
+    const baseSystemPrompt = buildUniversalIodaSystemInstruction();
+    const systemPromptWithRag = ragContext ? `${baseSystemPrompt}\n\n=== DIRETRIZES INSTITUCIONAIS RELEVANTES (RAG IFTO/MEC) ===\n${ragContext}` : baseSystemPrompt;
     const userPrompt = buildUniversalUserPrompt(sanitizedPayload);
+
+    // Initialize Google GenAI client with active configured key
+    const clientAi = new GoogleGenAI({
+      apiKey: activeApiKey,
+      httpOptions: {
+        headers: {
+          'User-Agent': 'aistudio-build',
+        },
+      },
+    });
 
     // Attempt Gemini call with quick timeout and structured JSON Schema
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000);
+    const timeoutId = setTimeout(() => controller.abort(), 12000);
 
     try {
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+      const response = await clientAi.models.generateContent({
+        model: settingsRepo.get('ai_model') || 'gemini-2.5-flash',
         contents: userPrompt,
         config: {
-          systemInstruction: systemPrompt,
+          systemInstruction: systemPromptWithRag,
           responseMimeType: 'application/json',
           responseSchema: IODA_GEMINI_RESPONSE_SCHEMA,
         },

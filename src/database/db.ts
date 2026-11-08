@@ -423,3 +423,29 @@ export const knowledgeBaseRepo = {
     stmt.run(doc.id, doc.categoria, doc.titulo, doc.conteudo, JSON.stringify(doc.tags || []));
   },
 };
+
+/**
+ * Repositório de Configurações da Aplicação e Conexão de IA
+ */
+export const settingsRepo = {
+  get(key: string): string | null {
+    const row = db.prepare('SELECT value FROM app_settings WHERE key = ?').get(key) as { value: string } | undefined;
+    return row ? row.value : null;
+  },
+
+  set(key: string, value: string) {
+    const stmt = db.prepare(`
+      INSERT INTO app_settings (key, value, updated_at)
+      VALUES (?, ?, datetime('now'))
+      ON CONFLICT(key) DO UPDATE SET
+        value = excluded.value,
+        updated_at = datetime('now')
+    `);
+    stmt.run(key, value);
+  },
+
+  getAll() {
+    return db.prepare('SELECT key, value FROM app_settings').all() as { key: string; value: string }[];
+  },
+};
+

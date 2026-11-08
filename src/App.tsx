@@ -16,6 +16,7 @@ import { PpcAnalyzerModal } from './components/PpcAnalyzerModal';
 import { SusResearchModal } from './components/SusResearchModal';
 import { ILovePeiHub } from './components/ILovePeiHub';
 import { OnboardingTourModal } from './components/OnboardingTourModal';
+import { AiConfigModal } from './components/AiConfigModal';
 import { CheckCircle2, ExternalLink, HelpCircle, ShieldAlert, ShieldCheck } from 'lucide-react';
 import { exportOfficialPeiPdf } from './utils/exportOfficialPdf';
 import { apiService } from './services/apiService';
@@ -62,6 +63,7 @@ export default function App() {
   const [peiToDelete, setPeiToDelete] = useState<PEICompleto | null>(null);
   const [deleteNotice, setDeleteNotice] = useState<string | null>(null);
   const [filtroDocente, setFiltroDocente] = useState<string>('todos');
+  const [isAiConfigOpen, setIsAiConfigOpen] = useState<boolean>(false);
 
   const [escalaFonte, setEscalaFonte] = useState<EscalaFonte>('normal');
   const [modoContraste, setModoContraste] = useState<ModoContraste>('padrao');
@@ -497,6 +499,7 @@ export default function App() {
         onOpenSusResearch={() => setIsSusResearchOpen(true)}
         onResetToDefault={handleResetToDefault}
         onOpenOnboardingTour={() => setIsOnboardingTourOpen(true)}
+        onOpenAiConfig={() => setIsAiConfigOpen(true)}
       />
 
       {/* Presentation Mode Alert Banner */}
@@ -688,6 +691,11 @@ export default function App() {
         onClose={handleCloseOnboardingTour}
         onStartCreatePei={() => setIsAddStudentOpen(true)}
         onNavigateTab={(tab) => setActiveTab(tab)}
+      />
+
+      <AiConfigModal
+        isOpen={isAiConfigOpen}
+        onClose={() => setIsAiConfigOpen(false)}
       />
     </div>
   );

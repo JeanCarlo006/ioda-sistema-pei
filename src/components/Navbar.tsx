@@ -21,6 +21,7 @@ import {
   Award,
   RotateCcw,
   Compass,
+  Sparkles,
 } from 'lucide-react';
 import { EscalaFonte, ModoContraste } from '../types/pei';
 
@@ -41,6 +42,7 @@ interface NavbarProps {
   onOpenSusResearch: () => void;
   onResetToDefault?: () => void;
   onOpenOnboardingTour?: () => void;
+  onOpenAiConfig?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -60,6 +62,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenSusResearch,
   onResetToDefault,
   onOpenOnboardingTour,
+  onOpenAiConfig,
 }) => {
   const [showSupportMenu, setShowSupportMenu] = useState(false);
 
@@ -118,6 +121,19 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Right Actions */}
           <div className="flex items-center gap-2">
+            {/* Botão de Configuração de IA (Gemini / Llama IFTO) */}
+            {onOpenAiConfig && (
+              <button
+                type="button"
+                onClick={onOpenAiConfig}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-emerald-700 hover:bg-emerald-800 text-white shadow-2xs transition-all cursor-pointer"
+                title="Configurar Inteligência Artificial (Google Gemini / Llama IFTO)"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-emerald-200" />
+                <span className="hidden sm:inline">Configurar IA</span>
+              </button>
+            )}
+
             {/* Guided Tour Button */}
             {onOpenOnboardingTour && (
               <button

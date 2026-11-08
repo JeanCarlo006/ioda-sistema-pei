@@ -133,4 +133,38 @@ export const apiService = {
       return [];
     }
   },
+
+  /**
+   * Busca a configuração atual da IA (provedor, modelo, se possui chave)
+   */
+  async getAiConfig(): Promise<{
+    provider: string;
+    hasKey: boolean;
+    maskedKey: string;
+    model: string;
+    ollamaHost: string;
+    isQuotaOnCooldown: boolean;
+  }> {
+    try {
+      const res = await fetch('/api/config/ai');
+      if (!res.ok) throw new Error('Falha ao obter status de IA');
+      const json = await res.json();
+      return json.data || { provider: 'gemini', hasKey: false, maskedKey: '', model: 'gemini-2.5-flash', ollamaHost: 'http://localhost:11434', isQuotaOnCooldown: false };
+    } catch {
+      return { provider: 'gemini', hasKey: false, maskedKey: '', model: 'gemini-2.5-flash', ollamaHost: 'http://localhost:11434', isQuotaOnCooldown: false };
+    }
+  },
+
+  /**
+   * Salva configurações de IA (Chave do Gemini ou Servidor Local Ollama)
+   */
+  async saveAiConfig(config: { apiKey?: string; provider?: string; model?: string; ollamaHost?: string }): Promise<boolean> {
+    const res = await fetch('/api/config/ai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(config),
+    });
+    return res.ok;
+  },
 };
+
