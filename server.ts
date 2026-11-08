@@ -44,7 +44,7 @@ app.get('/api/config/ai', (req: Request, res: Response) => {
   const savedKey = settingsRepo.get('gemini_api_key');
   const envKey = process.env.GEMINI_API_KEY || '';
   const activeProvider = settingsRepo.get('ai_provider') || process.env.AI_PROVIDER || 'gemini';
-  const activeModel = settingsRepo.get('ai_model') || 'gemini-2.5-flash';
+  const activeModel = settingsRepo.get('ai_model') || process.env.AI_MODEL || 'gemini-3.8-flash';
   const ollamaHost = settingsRepo.get('ollama_host') || 'http://localhost:11434';
   const hasKey = Boolean(envKey || savedKey);
   const rawKey = savedKey || envKey;
@@ -124,93 +124,100 @@ app.post('/api/gemini/generate-pei', async (req: Request, res: Response) => {
       },
     });
 
-    // Attempt Gemini call with quick timeout and structured JSON Schema
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 12000);
+    // Model fallback chain: user preference -> gemini-3.8-flash -> gemini-3.5-flash-lite -> gemini-flash-latest
+    const chosenModel = settingsRepo.get('ai_model') || process.env.AI_MODEL || 'gemini-3.8-flash';
+    const modelsToTry = [chosenModel, 'gemini-3.8-flash', 'gemini-3.5-flash-lite', 'gemini-flash-latest'].filter(
+      (m, idx, arr) => arr.indexOf(m) === idx
+    );
 
-    try {
-      const response = await clientAi.models.generateContent({
-        model: settingsRepo.get('ai_model') || 'gemini-2.5-flash',
-        contents: userPrompt,
-        config: {
-          systemInstruction: systemPromptWithRag,
-          responseMimeType: 'application/json',
-          responseSchema: IODA_GEMINI_RESPONSE_SCHEMA,
-        },
-      });
-      clearTimeout(timeoutId);
+    let parsed: any = null;
+    let groundingChunks: any[] = [];
+    let usedModelName = '';
 
-      const outputText = response.text || '';
-      const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
-
-      let jsonStr = outputText.trim();
-      if (jsonStr.includes('```json')) {
-        jsonStr = jsonStr.split('```json')[1].split('```')[0].trim();
-      } else if (jsonStr.includes('```')) {
-        jsonStr = jsonStr.split('```')[1].split('```')[0].trim();
-      }
-
-      if (jsonStr.startsWith('{')) {
-        const parsed = JSON.parse(jsonStr);
-        const fallbackBase = synthesizeIodaPei(req.body);
-
-        // Merge structured Gemini output with full pedagogical structure
-        const mergedData = {
-          ...fallbackBase,
-          ...parsed,
-          estudo_de_caso_sintese: {
-            ...fallbackBase.estudo_de_caso_sintese,
-            ...(parsed.estudo_de_caso_sintese || {}),
+    for (const modelCandidate of modelsToTry) {
+      try {
+        console.log(`[Ioda AI] Solicitando elaboração de PEI ao modelo ${modelCandidate}...`);
+        const response = await clientAi.models.generateContent({
+          model: modelCandidate,
+          contents: userPrompt,
+          config: {
+            systemInstruction: systemPromptWithRag,
+            responseMimeType: 'application/json',
+            responseSchema: IODA_GEMINI_RESPONSE_SCHEMA,
           },
-          planejamento_pedagogico_pei: {
-            ...fallbackBase.planejamento_pedagogico_pei,
-            ...(parsed.planejamento_pedagogico_pei || {}),
-            estrategias_preventivas_e_dua_3_0: {
-              ...fallbackBase.planejamento_pedagogico_pei.estrategias_preventivas_e_dua_3_0,
-              ...(parsed.planejamento_pedagogico_pei?.estrategias_preventivas_e_dua_3_0 || {}),
-            },
-          },
-          painel_de_acompanhamento: {
-            ...fallbackBase.painel_de_acompanhamento,
-            ...(parsed.painel_de_acompanhamento || {}),
-          },
-        };
-
-        return res.json({
-          success: true,
-          data: mergedData,
-          groundingChunks,
-          isAiGenerated: true,
-          lgpdSanitized: true,
         });
-      } else {
-        throw new Error('Retorno sem JSON');
-      }
-    } catch (genError: any) {
-      clearTimeout(timeoutId);
-      const isQuotaError =
-        genError?.status === 429 ||
-        genError?.code === 429 ||
-        `${genError?.message}`.includes('429') ||
-        `${genError?.message}`.includes('quota') ||
-        `${genError?.message}`.includes('RESOURCE_EXHAUSTED');
 
-      if (isQuotaError) {
-        triggerQuotaCooldown(300000);
-        console.log('[Ioda Pedagogical Engine] Cota de API de IA atingida. Ativando Motor Pedagógico Ioda DUA 3.0.');
-      } else {
-        console.log('[Ioda Pedagogical Engine] Ativando Motor Pedagógico Ioda para sintetizar o PEI com excelência curricular.');
-      }
+        const outputText = response.text || '';
+        groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
 
-      const synthesized = synthesizeIodaPei(req.body);
+        let jsonStr = outputText.trim();
+        if (jsonStr.includes('```json')) {
+          jsonStr = jsonStr.split('```json')[1].split('```')[0].trim();
+        } else if (jsonStr.includes('```')) {
+          jsonStr = jsonStr.split('```')[1].split('```')[0].trim();
+        }
+
+        if (jsonStr.startsWith('{')) {
+          parsed = JSON.parse(jsonStr);
+          usedModelName = modelCandidate;
+          console.log(`[Ioda AI] PEI estruturado com sucesso pelo modelo ${modelCandidate}!`);
+          break;
+        }
+      } catch (genError: any) {
+        console.warn(`[Ioda AI] Modelo ${modelCandidate} indisponível ou em alta demanda:`, genError?.message || genError);
+        const isQuota = `${genError?.message}`.includes('429') || `${genError?.message}`.includes('quota');
+        if (isQuota) {
+          triggerQuotaCooldown(180000);
+        }
+      }
+    }
+
+    if (parsed) {
+      const fallbackBase = synthesizeIodaPei(req.body);
+
+      // Merge structured Gemini output with full pedagogical structure
+      const mergedData = {
+        ...fallbackBase,
+        ...parsed,
+        estudo_de_caso_sintese: {
+          ...fallbackBase.estudo_de_caso_sintese,
+          ...(parsed.estudo_de_caso_sintese || {}),
+        },
+        planejamento_pedagogico_pei: {
+          ...fallbackBase.planejamento_pedagogico_pei,
+          ...(parsed.planejamento_pedagogico_pei || {}),
+          estrategias_preventivas_e_dua_3_0: {
+            ...fallbackBase.planejamento_pedagogico_pei.estrategias_preventivas_e_dua_3_0,
+            ...(parsed.planejamento_pedagogico_pei?.estrategias_preventivas_e_dua_3_0 || {}),
+          },
+        },
+        painel_de_acompanhamento: {
+          ...fallbackBase.painel_de_acompanhamento,
+          ...(parsed.painel_de_acompanhamento || {}),
+        },
+      };
+
       return res.json({
         success: true,
-        data: synthesized,
-        isIodaEngine: true,
+        data: mergedData,
+        groundingChunks,
+        isAiGenerated: true,
+        modelUsed: usedModelName,
         lgpdSanitized: true,
-        notice: 'PEI estruturado pelo Motor Pedagógico Ioda (DUA 3.0 Universal)',
       });
     }
+
+    // Caso nenhum modelo responda a tempo ou ocorra indisponibilidade temporária de nuvem,
+    // o Motor Pedagógico Ioda (DUA 3.0 Universal) garante 100% de disponibilidade sem travar o professor
+    console.log('[Ioda Engine] Ativando Motor Pedagógico Ioda DUA 3.0 para síntese curricular contínua.');
+    const synthesized = synthesizeIodaPei(req.body);
+    return res.json({
+      success: true,
+      data: synthesized,
+      isIodaEngine: true,
+      lgpdSanitized: true,
+      notice: 'PEI estruturado pelo Motor Pedagógico Ioda (DUA 3.0 Universal)',
+    });
   } catch (_error: any) {
     console.log('[Ioda Server] Requisição tratada pelo motor pedagógico resiliente.');
     const fallbackData = synthesizeIodaPei(req.body || {});

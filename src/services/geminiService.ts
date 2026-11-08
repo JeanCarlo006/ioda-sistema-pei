@@ -386,7 +386,7 @@ Gere metas SMART, estratégias DUA 3.0 e procedimentos de avaliação adequados 
  */
 export async function requestPeiGenerationWithLgpd(
   rawPayload: RawPeiRequestPayload,
-  timeoutMs = 9000
+  timeoutMs = 50000
 ): Promise<{
   success: boolean;
   data?: IodaGeminiPeiSchema & Record<string, any>;

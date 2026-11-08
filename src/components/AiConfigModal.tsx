@@ -25,7 +25,7 @@ export const AiConfigModal: React.FC<AiConfigModalProps> = ({ isOpen, onClose })
   const [apiKey, setApiKey] = useState('');
   const [maskedKey, setMaskedKey] = useState('');
   const [hasKey, setHasKey] = useState(false);
-  const [model, setModel] = useState('gemini-2.5-flash');
+  const [model, setModel] = useState('gemini-3.8-flash');
   const [ollamaHost, setOllamaHost] = useState('http://localhost:11434');
   const [feedback, setFeedback] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -36,7 +36,7 @@ export const AiConfigModal: React.FC<AiConfigModalProps> = ({ isOpen, onClose })
       setProvider(cfg.provider === 'ollama' ? 'ollama' : 'gemini');
       setHasKey(cfg.hasKey);
       setMaskedKey(cfg.maskedKey || '');
-      setModel(cfg.model || 'gemini-2.5-flash');
+      setModel(cfg.model || 'gemini-3.8-flash');
       setOllamaHost(cfg.ollamaHost || 'http://localhost:11434');
     }
     loadConfig();
@@ -176,9 +176,24 @@ export const AiConfigModal: React.FC<AiConfigModalProps> = ({ isOpen, onClose })
                 type="password"
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
-                placeholder={hasKey ? 'Digite nova chave para alterar...' : 'Cole aqui sua chave (ex: AIzaSy...)'}
+                placeholder={hasKey ? 'Digite nova chave para alterar...' : 'Cole aqui sua chave (ex: AIzaSy... ou AQ...)'}
                 className="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-xs font-mono focus:ring-2 focus:ring-emerald-600 focus:outline-none"
               />
+
+              <div className="pt-2">
+                <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  Modelo Gemini Selecionado:
+                </label>
+                <select
+                  value={model}
+                  onChange={(e) => setModel(e.target.value)}
+                  className="w-full p-2 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-emerald-600 focus:outline-none"
+                >
+                  <option value="gemini-3.8-flash">gemini-3.8-flash (Padrão Oficial IFTO · Raciocínio & DUA 3.0)</option>
+                  <option value="gemini-3.5-flash-lite">gemini-3.5-flash-lite (Ultra Rápido · 1-2 segundos)</option>
+                  <option value="gemini-flash-latest">gemini-flash-latest (Versão Estável)</option>
+                </select>
+              </div>
 
               <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1">
                 <span>Obtenha sua chave gratuita em:</span>
