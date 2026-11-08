@@ -930,13 +930,7 @@ export const casoCauaSemLaudo: PEICompleto = {
   ],
 };
 
-export const todosOsCasos: PEICompleto[] = [
-  casoLucasTecnico,
-  casoBeatrizSuperior,
-  casoMatheusRedes,
-  casoLarissaSuperior,
-  casoCauaSemLaudo,
-];
+export const todosOsCasos: PEICompleto[] = [];
 
 // BANCO DE SOLUÇÕES PEDAGÓGICAS PARA CONDIÇÕES E NEURODIVERGÊNCIAS EM TI / COMPUTAÇÃO
 // Fundamentado no PPC do Bacharelado em Sistemas de Informação (Campus Paraíso do Tocantins),

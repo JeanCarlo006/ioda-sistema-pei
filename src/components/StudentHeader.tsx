@@ -54,12 +54,11 @@ export const StudentHeader: React.FC<StudentHeaderProps> = ({
               aria-label="Perfil docente autenticado no SUAP"
               className="bg-white border border-slate-300 rounded-lg px-2.5 py-1 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-600 cursor-pointer shadow-2xs"
             >
-              <option value="todos">Todos os Cursos / Alunos (Coordenação NAPNE / ETEP)</option>
-              <option value="Prof. Marcos Aurélio de Souza">Prof. Marcos Aurélio · Agropecuária</option>
-              <option value="Profª. Dra. Cláudia Rezende">Profª. Dra. Cláudia · Edificações</option>
-              <option value="Profª. Mariana Duarte">Profª. Mariana · Química e Alimentos</option>
-              <option value="Prof. Roberto Silveira">Prof. Roberto · Administração</option>
-              <option value="Profª. Dra. Helena Bittencourt">Profª. Dra. Helena · BSI / Informática</option>
+              <option value="todos">Prof. Jean Carlo · SIAPE 1982731 (Todos os Diários)</option>
+              <option value="Web">Diário: Programação Web II (TSI)</option>
+              <option value="Algoritmos">Diário: Algoritmos e Estruturas de Dados (Informática)</option>
+              <option value="Banco">Diário: Banco de Dados Relacionais e Não-Relacionais (TSI)</option>
+              <option value="Redes">Diário: Redes de Computadores e S.O. (Informática)</option>
             </select>
           </div>
           <div className="flex items-center gap-2 text-slate-500 text-[11px]">

@@ -52,199 +52,144 @@ export interface DiarioSuap {
  */
 export const DIARIOS_SUAP_INSTITUCIONAIS: DiarioSuap[] = [
   {
-    id: 'diario-agro-101',
-    codigoComponente: 'AGR.0203',
-    nomeDisciplina: 'Manejo e Conservação do Solo e Água',
-    curso: 'Curso Técnico Integrado ao Ensino Médio em Agropecuária',
+    id: 'diario-tsi-web2',
+    codigoComponente: 'TSI.2026.1.0042',
+    nomeDisciplina: 'Programação Web II',
+    curso: 'Tecnologia em Sistemas para Internet',
+    modalidade: 'Superior',
+    campus: 'Campus Paraíso do Tocantins',
+    semestrePeriodo: '2026.1 · 4º Período',
+    cargaHoraria: '80h',
+    docenteSiape: '1982731',
+    docenteNome: 'Prof. Jean Carlo',
+    planoEnsino: {
+      ementa:
+        'Desenvolvimento de aplicações web full stack, arquiteturas orientadas a serviços e RESTful APIs. Persistência de dados assíncrona, autenticação, controle de sessão, acessibilidade web (WCAG/e-MAG) e boas práticas de engenharia de software.',
+      conteudosProgramaticos: [
+        {
+          bimestreOuEtapa: '1º Bimestre',
+          topicos: 'Arquitetura cliente-servidor moderna, APIs REST, TypeScript no backend e frontend, integração com banco de dados.',
+        },
+        {
+          bimestreOuEtapa: '2º Bimestre',
+          topicos: 'Autenticação segura, gerenciamento de estado global, diretrizes de acessibilidade e implantação contínua.',
+        },
+      ],
+      habilidadesCompetenciasPpc:
+        'Projetar, implementar e testar aplicações web completas com interfaces acessíveis e serviços de backend escaláveis.',
+      metodologiaPadrao:
+        'Aulas teórico-práticas em laboratório de informática com desenvolvimento orientado a projetos e pair programming.',
+      procedimentosAvaliacaoPadrao:
+        'Projetos práticos de desenvolvimento contínuo, entregas incrementais via Git/GitHub e defesas técnicas.',
+    },
+    estudantes: [],
+  },
+  {
+    id: 'diario-info-algoritmos',
+    codigoComponente: 'INFO.2026.1.0019',
+    nomeDisciplina: 'Algoritmos e Estruturas de Dados',
+    curso: 'Técnico Integrado ao Ensino Médio em Informática',
     modalidade: 'Tecnico Integrado',
-    campus: 'Campus Rural / Agrícola',
+    campus: 'Campus Paraíso do Tocantins',
+    semestrePeriodo: '2026.1 · 1º Ano A',
+    cargaHoraria: '120h',
+    docenteSiape: '1982731',
+    docenteNome: 'Prof. Jean Carlo',
+    planoEnsino: {
+      ementa:
+        'Fundamentos de lógica de programação. Tipos primitivos, variáveis, estruturas condicionais e de repetição. Vetores, matrizes, funções, modularização e técnicas de depuração de código.',
+      conteudosProgramaticos: [
+        {
+          bimestreOuEtapa: '1º Bimestre',
+          topicos: 'Lógica algorítmica, variáveis, operadores aritméticos/lógicos e estruturas condicionais.',
+        },
+        {
+          bimestreOuEtapa: '2º Bimestre',
+          topicos: 'Laços de repetição (while, for), depuração passo a passo e resolução de problemas.',
+        },
+        {
+          bimestreOuEtapa: '3º Bimestre',
+          topicos: 'Vetores unidimensionais, manipulação de arrays e algoritmos de busca.',
+        },
+        {
+          bimestreOuEtapa: '4º Bimestre',
+          topicos: 'Matrizes bidimensionais, modularização com funções e projeto final integrador.',
+        },
+      ],
+      habilidadesCompetenciasPpc:
+        'Construir algoritmos estruturados para resolução de problemas computacionais com raciocínio lógico e sintaxe precisa.',
+      metodologiaPadrao:
+        'Aulas expositivas dialogadas seguidas de oficinas práticas de programação assistida em bancada.',
+      procedimentosAvaliacaoPadrao:
+        'Avaliações práticas individuais em laboratório com tempo adaptável e listas progressivas de desafios.',
+    },
+    estudantes: [],
+  },
+  {
+    id: 'diario-tsi-banco-dados',
+    codigoComponente: 'TSI.2026.1.0048',
+    nomeDisciplina: 'Banco de Dados Relacionais e Não-Relacionais',
+    curso: 'Tecnologia em Sistemas para Internet',
+    modalidade: 'Superior',
+    campus: 'Campus Paraíso do Tocantins',
+    semestrePeriodo: '2026.1 · 3º Período',
+    cargaHoraria: '80h',
+    docenteSiape: '1982731',
+    docenteNome: 'Prof. Jean Carlo',
+    planoEnsino: {
+      ementa:
+        'Modelagem conceitual e lógica de banco de dados (DER/MER). Linguagem SQL (DDL, DML, DQL). Integridade referencial, consultas com junções complexas, normalização e introdução a bancos NoSQL orientados a documentos.',
+      conteudosProgramaticos: [
+        {
+          bimestreOuEtapa: '1º Bimestre',
+          topicos: 'Modelagem relacional, cardinalidades, álgebra relacional e criação de esquemas em SQL.',
+        },
+        {
+          bimestreOuEtapa: '2º Bimestre',
+          topicos: 'Consultas avançadas (JOINs, GROUP BY, subqueries), índices, transações ACID e NoSQL.',
+        },
+      ],
+      habilidadesCompetenciasPpc:
+        'Modelar e administrar esquemas de bancos de dados otimizados, formulando consultas precisas para sistemas corporativos.',
+      metodologiaPadrao:
+        'Laboratório prático de banco de dados com ferramentas visuais e via linha de comando.',
+      procedimentosAvaliacaoPadrao:
+        'Modelagem de cenários práticos e exercícios de escrita de queries com múltiplos formatos de entrega.',
+    },
+    estudantes: [],
+  },
+  {
+    id: 'diario-info-redes',
+    codigoComponente: 'INFO.2026.1.0025',
+    nomeDisciplina: 'Redes de Computadores e Sistemas Operacionais',
+    curso: 'Técnico Integrado ao Ensino Médio em Informática',
+    modalidade: 'Tecnico Integrado',
+    campus: 'Campus Paraíso do Tocantins',
     semestrePeriodo: '2026.1 · 2º Ano',
     cargaHoraria: '80h',
-    docenteSiape: '1948201',
-    docenteNome: 'Prof. Marcos Vinícius Ferreira',
+    docenteSiape: '1982731',
+    docenteNome: 'Prof. Jean Carlo',
     planoEnsino: {
       ementa:
-        'Fundamentos de gênese, morfologia e classificação de solos. Propriedades físicas e químicas do solo. Práticas conservacionistas, terraceamento, controle de erosão e dimensionamento de canais de escoamento em campo.',
+        'Topologias e arquiteturas de redes. Modelo OSI e pilha TCP/IP. Endereçamento IPv4 e IPv6. Instalação, configuração e administração básica de sistemas operacionais tipo Linux.',
       conteudosProgramaticos: [
         {
           bimestreOuEtapa: '1º Bimestre',
-          topicos: 'Textura, estrutura e densidade do solo; ensaios granulométricos em laboratório.',
+          topicos: 'Conceitos de redes, meios físicos, cabeamento estruturado e camadas OSI/TCP-IP.',
         },
         {
           bimestreOuEtapa: '2º Bimestre',
-          topicos: 'Erosão hídrica e eólica; cálculo de perdas de solo (Equação Universal de Perdas de Solo - EUPS).',
-        },
-        {
-          bimestreOuEtapa: '3º Bimestre',
-          topicos: 'Práticas de terraceamento em nível e gradiente; levantamento topográfico expedito.',
-        },
-        {
-          bimestreOuEtapa: '4º Bimestre',
-          topicos: 'Manejo de bacias hidrográficas agrícolas e cobertura vegetal de proteção.',
+          topicos: 'Protocolos de transporte e aplicação (DNS, DHCP, HTTP), subredes e comandos Linux de terminal.',
         },
       ],
       habilidadesCompetenciasPpc:
-        'Planejar e executar práticas conservacionistas de solos e recursos hídricos; operar instrumentos de campo e interpretar laudos de fertilidade e capacidade de uso do solo conforme PPC de Agropecuária.',
+        'Configurar parâmetros de rede, diagnosticar falhas de conectividade e operar utilitários de linha de comando.',
       metodologiaPadrao:
-        'Aulas teóricas em sala, práticas em área experimental de campo e elaboração de relatórios técnicos em equipe.',
+        'Aulas práticas em bancada de simulação de redes (Packet Tracer) e máquinas virtuais Linux.',
       procedimentosAvaliacaoPadrao:
-        'Provas escritas dissertativas, avaliação de práticas em campo e entrega de relatório de terraceamento.',
+        'Relatórios de práticas simuladas e diagnósticos práticos de rede com roteiro acessível.',
     },
-    estudantes: [
-      {
-        id: 'est-agro-01',
-        matricula: '2025.1.AGR.012',
-        nome: 'Gabriel Mendes de Oliveira',
-        idade: '16 anos',
-        acompanhadoNapne: true,
-        observacoesNapne:
-          'Estudante em acompanhamento pelo NAPNE. Apresenta alta sensibilidade a sobrecarga de ruídos de maquinário em aulas de campo e necessidade de fracionamento de tarefas de cálculo de perda de solo.',
-      },
-      {
-        id: 'est-agro-02',
-        matricula: '2025.1.AGR.033',
-        nome: 'Juliana Paes Cavalcante',
-        idade: '17 anos',
-        acompanhadoNapne: false,
-      },
-    ],
-  },
-  {
-    id: 'diario-edf-202',
-    codigoComponente: 'EDF.0305',
-    nomeDisciplina: 'Desenho Técnico da Construção Civil e CAD',
-    curso: 'Curso Técnico Integrado ao Ensino Médio em Edificações',
-    modalidade: 'Tecnico Integrado',
-    campus: 'Campus Central',
-    semestrePeriodo: '2026.1 · 3º Ano',
-    cargaHoraria: '100h',
-    docenteSiape: '2049102',
-    docenteNome: 'Profª. Cláudia Helena Ribeiro',
-    planoEnsino: {
-      ementa:
-        'Normas da ABNT para desenho de arquitetura (NBR 6492). Plantas baixas, cortes, fachadas, coberturas e locação de obras. Introdução ao software CAD bidimensional e representação gráfica de projetos arquitetônicos residenciais.',
-      conteudosProgramaticos: [
-        {
-          bimestreOuEtapa: '1º Bimestre',
-          topicos: 'Normas de caligrafia técnica, escalas, cotagem e convenções gráficas em prancha.',
-        },
-        {
-          bimestreOuEtapa: '2º Bimestre',
-          topicos: 'Desenho manual e digital de planta baixa com espessura de paredes e vãos.',
-        },
-        {
-          bimestreOuEtapa: '3º Bimestre',
-          topicos: 'Cortes esquemáticos longitudinais e transversais com especificação de níveis.',
-        },
-        {
-          bimestreOuEtapa: '4º Bimestre',
-          topicos: 'Geração de pranchas finais no CAD, layout de plotagem e memorial descritivo.',
-        },
-      ],
-      habilidadesCompetenciasPpc:
-        'Interpretar e elaborar projetos gráficos de construção civil em conformidade com as normas técnicas vigentes e ferramentas computacionais CAD.',
-      metodologiaPadrao:
-        'Aulas no ateliê de pranchetas e no laboratório de computação gráfica (CAD).',
-      procedimentosAvaliacaoPadrao:
-        'Avaliação prática contínua de pranchas executadas e projeto final de residência unifamiliar.',
-    },
-    estudantes: [
-      {
-        id: 'est-edf-01',
-        matricula: '2024.1.EDF.009',
-        nome: 'Mateus Henrique Silveira',
-        idade: '17 anos',
-        acompanhadoNapne: true,
-        observacoesNapne:
-          'Estudante com tremor fino nas mãos e fadiga ocular ao manusear réguas normógrafas e telas com fundo escuro. Raciocínio espacial excelente.',
-      },
-    ],
-  },
-  {
-    id: 'diario-qui-301',
-    codigoComponente: 'QUI.0102',
-    nomeDisciplina: 'Química Geral e Inorgânica Experimental',
-    curso: 'Licenciatura em Química',
-    modalidade: 'Superior',
-    campus: 'Campus Universitário',
-    semestrePeriodo: '2026.1 · 1º Período',
-    cargaHoraria: '90h',
-    docenteSiape: '1589304',
-    docenteNome: 'Prof. Dr. Ricardo Antunes',
-    planoEnsino: {
-      ementa:
-        'Segurança e normas em laboratório químico. Vidrarias e técnicas de pesagem e volumetria. Estequiometria, preparo e padronização de soluções, reações ácido-base e equilíbrio químico em fase aquosa.',
-      conteudosProgramaticos: [
-        {
-          bimestreOuEtapa: '1º Semestre - Etapa A',
-          topicos: 'Boas práticas de laboratório, manuseio de reagentes, fichas FISPQ e descarte de resíduos.',
-        },
-        {
-          bimestreOuEtapa: '1º Semestre - Etapa B',
-          topicos: 'Preparo de soluções aquosas, cálculos de concentração molar e titulação volumétrica.',
-        },
-      ],
-      habilidadesCompetenciasPpc:
-        'Executar operações fundamentais de bancada química com segurança, rigor volumétrico e capacidade de registro analítico.',
-      metodologiaPadrao:
-        'Aulas práticas em bancada de laboratório de química e relatórios científicos analíticos.',
-      procedimentosAvaliacaoPadrao:
-        'Desempenho procedimental em bancada, caderno de laboratório e prova prática de titulação.',
-    },
-    estudantes: [
-      {
-        id: 'est-qui-01',
-        matricula: '2026.1.QUI.021',
-        nome: 'Camila Vasconcelos',
-        idade: '19 anos',
-        acompanhadoNapne: true,
-        observacoesNapne:
-          'Estudante com diagnóstico de TDAH de predomínio desatento: facilidade com conceitos teóricos, mas oscilação de foco durante procedimentos sequenciais longos de titulação, necessitando de roteiro em checklist visual.',
-      },
-    ],
-  },
-  {
-    id: 'diario-adm-401',
-    codigoComponente: 'ADM.0201',
-    nomeDisciplina: 'Gestão de Pessoas e Comportamento Organizacional',
-    curso: 'Tecnologia em Gestão Pública / Administração',
-    modalidade: 'Superior',
-    campus: 'Campus Avançado',
-    semestrePeriodo: '2026.1 · 3º Período',
-    cargaHoraria: '60h',
-    docenteSiape: '1892043',
-    docenteNome: 'Profª. Ma. Mariana Lacerda',
-    planoEnsino: {
-      ementa:
-        'Teorias da administração e motivação no trabalho. Liderança, dinâmica de equipes e comunicação interpessoal. Gestão de conflitos, avaliação de desempenho e políticas de inclusão no serviço público.',
-      conteudosProgramaticos: [
-        {
-          bimestreOuEtapa: '1º Módulo',
-          topicos: 'Cultura e clima organizacional; modelos clássicos e contemporâneos de motivação.',
-        },
-        {
-          bimestreOuEtapa: '2º Módulo',
-          topicos: 'Comunicação assertiva, gestão de equipes multifuncionais e negociação de conflitos.',
-        },
-      ],
-      habilidadesCompetenciasPpc:
-        'Compreender as dinâmicas humanas nas organizações públicas e privadas, elaborando planos de integração e desenvolvimento de equipes.',
-      metodologiaPadrao:
-        'Estudos de casos reais, dinâmicas de grupo, debates temáticos e seminários expositivos.',
-      procedimentosAvaliacaoPadrao:
-        'Seminário oral em equipe, análise de estudo de caso escrito e autoavaliação formativa.',
-    },
-    estudantes: [
-      {
-        id: 'est-adm-01',
-        matricula: '2025.2.ADM.014',
-        nome: 'Lucas Duarte Costa',
-        idade: '22 anos',
-        acompanhadoNapne: true,
-        observacoesNapne:
-          'Estudante autista (TEA nível 1 de suporte): excelente redação e análise crítica textual, com gatilho de ansiedade intensa diante de apresentações orais em público ou dinâmicas não estruturadas sem aviso prévio.',
-      },
-    ],
+    estudantes: [],
   },
 ];
 

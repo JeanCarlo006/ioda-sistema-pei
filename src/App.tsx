@@ -129,18 +129,20 @@ export default function App() {
   const displayedStudents = filtroDocente === 'todos'
     ? baseStudents
     : baseStudents.filter((s) => {
+        const query = filtroDocente.toLowerCase();
         const docName = s.cabecalho.docente_regente.toLowerCase();
-        const parts = filtroDocente.split(' ').filter((p) => p.length > 2);
-        return parts.some((p) => docName.includes(p.toLowerCase()));
+        const discName = s.cabecalho.componente_curricular.toLowerCase();
+        return docName.includes(query) || discName.includes(query);
       });
 
-  const handleMudarFiltroDocente = (docente: string) => {
-    setFiltroDocente(docente);
-    if (docente !== 'todos') {
-      const parts = docente.split(' ').filter((p) => p.length > 2);
+  const handleMudarFiltroDocente = (filtro: string) => {
+    setFiltroDocente(filtro);
+    if (filtro !== 'todos') {
+      const query = filtro.toLowerCase();
       const matching = studentsList.find((s) => {
         const docName = s.cabecalho.docente_regente.toLowerCase();
-        return parts.some((p) => docName.includes(p.toLowerCase()));
+        const discName = s.cabecalho.componente_curricular.toLowerCase();
+        return docName.includes(query) || discName.includes(query);
       });
       if (matching) {
         setActivePei(matching);

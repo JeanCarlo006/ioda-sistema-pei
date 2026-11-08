@@ -67,38 +67,36 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
   const [mostrarOutrasCondicoes, setMostrarOutrasCondicoes] = useState(false);
   const [showTriggerTooltip, setShowTriggerTooltip] = useState(false);
 
-  const [selectedDiarioId, setSelectedDiarioId] = useState<string>(DIARIOS_SUAP_INSTITUCIONAIS[0].id);
+  const [selectedDiarioId, setSelectedDiarioId] = useState<string>(DIARIOS_SUAP_INSTITUCIONAIS[0]?.id || '');
 
   // Passo 1: Identificação Básica integrada ao SUAP
-  const [nome, setNome] = useState(DIARIOS_SUAP_INSTITUCIONAIS[0].estudantes[0]?.nome || '');
-  const [matricula, setMatricula] = useState(DIARIOS_SUAP_INSTITUCIONAIS[0].estudantes[0]?.matricula || '');
-  const [idade, setIdade] = useState(DIARIOS_SUAP_INSTITUCIONAIS[0].estudantes[0]?.idade || '16 anos');
-  const [curso, setCurso] = useState(DIARIOS_SUAP_INSTITUCIONAIS[0].curso);
-  const [modulo, setModulo] = useState(DIARIOS_SUAP_INSTITUCIONAIS[0].semestrePeriodo);
-  const [docenteRegente, setDocenteRegente] = useState(DIARIOS_SUAP_INSTITUCIONAIS[0].docenteNome);
+  const [nome, setNome] = useState('');
+  const [matricula, setMatricula] = useState('');
+  const [idade, setIdade] = useState('');
+  const [curso, setCurso] = useState(DIARIOS_SUAP_INSTITUCIONAIS[0]?.curso || '');
+  const [modulo, setModulo] = useState(DIARIOS_SUAP_INSTITUCIONAIS[0]?.semestrePeriodo || '');
+  const [docenteRegente, setDocenteRegente] = useState('Prof. Jean Carlo');
   const [docenteAee] = useState('Equipe NAPNE / AEE');
 
   // Passo 2: Detalhamento do Componente Curricular (PPC / Plano de Ensino do SUAP)
-  const [disciplina, setDisciplina] = useState(DIARIOS_SUAP_INSTITUCIONAIS[0].nomeDisciplina);
-  const [ementaOficial, setEmentaOficial] = useState(DIARIOS_SUAP_INSTITUCIONAIS[0].planoEnsino.ementa);
+  const [disciplina, setDisciplina] = useState(DIARIOS_SUAP_INSTITUCIONAIS[0]?.nomeDisciplina || '');
+  const [ementaOficial, setEmentaOficial] = useState(DIARIOS_SUAP_INSTITUCIONAIS[0]?.planoEnsino.ementa || '');
   const [conteudosEspecificosModulo, setConteudosEspecificosModulo] = useState(
-    DIARIOS_SUAP_INSTITUCIONAIS[0].planoEnsino.conteudosProgramaticos
+    DIARIOS_SUAP_INSTITUCIONAIS[0]?.planoEnsino.conteudosProgramaticos
       .map((c) => `${c.bimestreOuEtapa}: ${c.topicos}`)
-      .join('\n\n')
+      .join('\n\n') || ''
   );
   const [habilidadesCompetenciasPpcBncc, setHabilidadesCompetenciasPpcBncc] = useState(
-    DIARIOS_SUAP_INSTITUCIONAIS[0].planoEnsino.habilidadesCompetenciasPpc
+    DIARIOS_SUAP_INSTITUCIONAIS[0]?.planoEnsino.habilidadesCompetenciasPpc || ''
   );
-  const [dificuldadesEspecificasDisciplina, setDificuldadesEspecificasDisciplina] = useState(
-    'Dificuldade com ritmo uniforme de aula e tempo restrito de avaliações práticas.'
-  );
+  const [dificuldadesEspecificasDisciplina, setDificuldadesEspecificasDisciplina] = useState('');
 
   const handleSelectDiarioSuap = (diario: DiarioSuap) => {
     setSelectedDiarioId(diario.id);
     setCurso(diario.curso);
     setDisciplina(diario.nomeDisciplina);
     setModulo(diario.semestrePeriodo);
-    setDocenteRegente(diario.docenteNome);
+    setDocenteRegente(diario.docenteNome || 'Prof. Jean Carlo');
     setEmentaOficial(diario.planoEnsino.ementa);
     const conteudosText = diario.planoEnsino.conteudosProgramaticos
       .map((c) => `${c.bimestreOuEtapa}: ${c.topicos}`)
@@ -121,29 +119,15 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
   const [selectedSolucoes, setSelectedSolucoes] = useState<string[]>(['sol-tdah']);
   const [customComorbidities, setCustomComorbidities] = useState<string[]>([]);
   const [novaComorbidadeInput, setNovaComorbidadeInput] = useState('');
-  const [especificidadesTranstorno, setEspecificidadesTranstorno] = useState(
-    'TDAH com oscilação de atenção sustentada em aulas expositivas longas, porém ótimo engajamento em ciclos curtos de codificação prática (micro-sprints Pomodoro).'
-  );
+  const [especificidadesTranstorno, setEspecificidadesTranstorno] = useState('');
   const [condicao, setCondicao] = useState('');
-  const [potencialidades, setPotentialidades] = useState(
-    'Raciocínio ágil, resolução criativa de bugs lógicos e foco em desafios práticos de codificação quando divididos em etapas curtas.'
-  );
-  const [assistiveTech, setAssistiveTech] = useState(
-    'Quadro Kanban integrado ao GitHub Projects, temporizador Pomodoro, fonte OpenDyslexic Mono e tempo adicional (+50%).'
-  );
+  const [potencialidades, setPotentialidades] = useState('');
+  const [assistiveTech, setAssistiveTech] = useState('');
 
   // Passo 4: Mapeamento de Gatilhos (Análise Funcional) & Histórico ETEP
-  const [mapeamentoGatilhos, setMapeamentoGatilhos] = useState(
-    'Ruídos altos no laboratório, instruções verbais longas sem apoio visual e mudanças bruscas de rotina.'
-  );
-  const [historicoEtepTexto, setHistoricoEtepTexto] = useState(
-    'Roteiros passo a passo antecipados no Moodle e divisão de projetos práticos em micro-entregas (chunking).'
-  );
-  const [etepTags, setEtepTags] = useState<string[]>([
-    'Tempo adicional (+50%) em provas práticas',
-    'Programação em Pares (Pair Programming)',
-    'Cartão de Pausa Sensorial Discreta',
-  ]);
+  const [mapeamentoGatilhos, setMapeamentoGatilhos] = useState('');
+  const [historicoEtepTexto, setHistoricoEtepTexto] = useState('');
+  const [etepTags, setEtepTags] = useState<string[]>([]);
   const [novaTagEtep, setNovaTagEtep] = useState('');
 
   const [isGenerating, setIsGenerating] = useState(false);
@@ -958,43 +942,18 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
               </div>
 
               {/* Estudantes matriculados neste diário no SUAP */}
+              {/* Informações do Diário Selecionado */}
               {(() => {
                 const diarioAtual = DIARIOS_SUAP_INSTITUCIONAIS.find((d) => d.id === selectedDiarioId);
-                if (!diarioAtual || diarioAtual.estudantes.length === 0) return null;
                 return (
-                  <div className="bg-emerald-50/50 border border-emerald-200/80 rounded-2xl p-4 space-y-2">
-                    <span className="text-xs font-bold text-emerald-950 block">
-                      Estudantes Matriculados neste Diário (Selecione com 1 clique):
-                    </span>
-                    <div className="flex flex-wrap gap-2">
-                      {diarioAtual.estudantes.map((est) => {
-                        const isCurrentEst = nome === est.nome;
-                        return (
-                          <button
-                            key={est.id}
-                            type="button"
-                            onClick={() => {
-                              setNome(est.nome);
-                              setMatricula(est.matricula);
-                              if (est.idade) setIdade(est.idade);
-                              if (est.observacoesNapne) setEspecificidadesTranstorno(est.observacoesNapne);
-                            }}
-                            className={`px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
-                              isCurrentEst
-                                ? 'bg-emerald-700 text-white border-emerald-700 shadow-2xs'
-                                : 'bg-white text-slate-800 border-emerald-200 hover:bg-emerald-100'
-                            }`}
-                          >
-                            <span>{est.nome}</span>
-                            {est.acompanhadoNapne && (
-                              <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${isCurrentEst ? 'bg-emerald-800 text-white' : 'bg-emerald-100 text-emerald-900'}`}>
-                                NAPNE
-                              </span>
-                            )}
-                          </button>
-                        );
-                      })}
+                  <div className="bg-emerald-50/60 border border-emerald-200 rounded-xl p-3 text-xs text-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 shrink-0"></span>
+                      <span>Diário ativo: <strong>{diarioAtual?.nomeDisciplina || disciplina}</strong> ({diarioAtual?.codigoComponente})</span>
                     </div>
+                    <span className="text-[11px] font-semibold text-emerald-800 bg-white border border-emerald-200 px-2 py-0.5 rounded self-start sm:self-auto">
+                      SUAP · Campus Paraíso
+                    </span>
                   </div>
                 );
               })()}

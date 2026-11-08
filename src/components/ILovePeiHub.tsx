@@ -140,12 +140,9 @@ export const ILovePeiHub: React.FC<ILovePeiHubProps> = ({
               onChange={(e) => setCursoFiltro(e.target.value)}
               className="bg-white border border-slate-300 rounded px-2.5 py-1 text-xs text-slate-800 focus:ring-1 focus:ring-[#006633] focus:outline-none"
             >
-              <option value="todos">Todos os Cursos do Campus Paraíso</option>
-              <option value="Agropecuária">Técnico em Agropecuária</option>
-              <option value="Edificações">Técnico em Edificações</option>
-              <option value="Química">Técnico em Química / Alimentos</option>
-              <option value="Informática">Técnico em Informática / BSI</option>
-              <option value="Administração">Técnico em Administração</option>
+              <option value="todos">Todos os Cursos do Docente</option>
+              <option value="Sistemas para Internet">Tecnologia em Sistemas para Internet (TSI)</option>
+              <option value="Informática">Técnico Integrado em Informática</option>
             </select>
 
             <div className="flex items-center gap-1.5 font-bold text-slate-800 ml-2">
@@ -156,12 +153,11 @@ export const ILovePeiHub: React.FC<ILovePeiHubProps> = ({
               onChange={(e) => onMudarFiltroDocente && onMudarFiltroDocente(e.target.value)}
               className="bg-white border border-slate-300 rounded px-2.5 py-1 text-xs text-slate-800 focus:ring-1 focus:ring-[#006633] focus:outline-none"
             >
-              <option value="todos">Todos os Docentes (Visão Coordenação NAPNE)</option>
-              <option value="Prof. Marcos Aurélio de Souza">Prof. Marcos Aurélio · Agropecuária</option>
-              <option value="Profª. Dra. Cláudia Rezende">Profª. Dra. Cláudia · Edificações</option>
-              <option value="Profª. Mariana Duarte">Profª. Mariana · Química</option>
-              <option value="Prof. Roberto Silveira">Prof. Roberto · Administração</option>
-              <option value="Profª. Dra. Helena Bittencourt">Profª. Dra. Helena · Informática/BSI</option>
+              <option value="todos">Prof. Jean Carlo · SIAPE 1982731 (Todos os Diários)</option>
+              <option value="Web">Diário: Programação Web II (TSI)</option>
+              <option value="Algoritmos">Diário: Algoritmos e Estruturas de Dados (Informática)</option>
+              <option value="Banco">Diário: Banco de Dados Relacionais e Não-Relacionais (TSI)</option>
+              <option value="Redes">Diário: Redes de Computadores e S.O. (Informática)</option>
             </select>
           </div>
 
@@ -195,13 +191,16 @@ export const ILovePeiHub: React.FC<ILovePeiHubProps> = ({
                 <th className="p-2.5 border-r border-slate-200">Curso / Semestre</th>
                 <th className="p-2.5 border-r border-slate-200 text-center">C.H.</th>
                 <th className="p-2.5 border-r border-slate-200">Docente Regente</th>
-                <th className="p-2.5 border-r border-slate-200 text-center">Matrículas</th>
+                <th className="p-2.5 border-r border-slate-200 text-center">PEIs Ativos</th>
                 <th className="p-2.5 text-center">Ações no Diário</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 text-slate-800">
               {diariosFiltrados.map((diario, index) => {
-                const estudantesNapne = diario.estudantes.filter((e) => e.acompanhadoNapne);
+                const peisDoDiario = allStudents.filter((p) =>
+                  p.cabecalho.componente_curricular.toLowerCase().includes(diario.nomeDisciplina.toLowerCase()) ||
+                  diario.nomeDisciplina.toLowerCase().includes(p.cabecalho.componente_curricular.toLowerCase())
+                );
                 return (
                   <tr
                     key={diario.id}
@@ -227,11 +226,12 @@ export const ILovePeiHub: React.FC<ILovePeiHubProps> = ({
                       {diario.docenteNome}
                     </td>
                     <td className="p-2.5 border-r border-slate-200 text-center">
-                      <span className="font-bold">{diario.estudantes.length} alunos</span>
-                      {estudantesNapne.length > 0 && (
-                        <div className="text-[10px] font-bold text-emerald-800 bg-emerald-100/70 rounded px-1 mt-0.5 inline-block">
-                          {estudantesNapne.length} no NAPNE
-                        </div>
+                      {peisDoDiario.length === 0 ? (
+                        <span className="text-slate-500 font-normal">0 cadastrados</span>
+                      ) : (
+                        <span className="font-bold text-[#006633] bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                          {peisDoDiario.length} PEI{peisDoDiario.length > 1 ? 's' : ''}
+                        </span>
                       )}
                     </td>
                     <td className="p-2.5 text-center">
