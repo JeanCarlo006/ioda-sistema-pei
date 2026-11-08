@@ -1,6 +1,6 @@
 import React from 'react';
 import { PEICompleto } from '../types/pei';
-import { getIdentificadorConfidencial } from '../data/initialCases';
+import { DIARIOS_SUAP_INSTITUCIONAIS, DiarioSuap } from '../services/suapService';
 import { CuradoriaDocenteBanner } from './CuradoriaDocenteBanner';
 import {
   Sparkles,
@@ -8,15 +8,20 @@ import {
   Search,
   BookOpen,
   LayoutDashboard,
-  Printer,
   UserPlus,
   ArrowRight,
   FolderOpen,
   Wrench,
   Trash2,
-  Compass,
-  ExternalLink,
-  ClipboardCheck,
+  CheckCircle2,
+  Layers,
+  GraduationCap,
+  ShieldCheck,
+  Calendar,
+  Clock,
+  Building2,
+  Users,
+  AlertCircle,
 } from 'lucide-react';
 
 interface ILovePeiHubProps {
@@ -30,6 +35,8 @@ interface ILovePeiHubProps {
   onPrint: () => void;
   onRequestDeletePei?: (peiToDelete: PEICompleto) => void;
   onOpenOnboardingTour?: () => void;
+  filtroDocente?: string;
+  onMudarFiltroDocente?: (docente: string) => void;
 }
 
 export const ILovePeiHub: React.FC<ILovePeiHubProps> = ({
@@ -41,248 +48,347 @@ export const ILovePeiHub: React.FC<ILovePeiHubProps> = ({
   onOpenSolutionBank,
   onPrint,
   onRequestDeletePei,
-  onOpenOnboardingTour,
+  filtroDocente = 'todos',
+  onMudarFiltroDocente,
 }) => {
-  const toolCards = [
-    {
-      id: 'novo_pei',
-      title: 'Criar Novo PEI',
-      description: 'Elaborar passo a passo um novo Plano de Aula Individualizado para um estudante.',
-      iconBg: 'bg-emerald-600 text-white',
-      icon: Sparkles,
-      action: onOpenAddStudent,
-    },
-    {
-      id: 'plano_pei',
-      title: 'Plano de Aula (PEI)',
-      description: 'Ver o Guia Prático de Sala de Aula, adaptações de prova, metas e o Guia do Aluno.',
-      iconBg: 'bg-emerald-700 text-white',
-      icon: FileText,
-      action: () => onNavigate('pei'),
-    },
-    {
-      id: 'estudo_caso',
-      title: 'Estudo de Caso',
-      description: 'Consultar as dificuldades observadas, pontos fortes do estudante e recursos de apoio.',
-      iconBg: 'bg-teal-700 text-white',
-      icon: Search,
-      action: () => onNavigate('estudo_caso'),
-    },
-    {
-      id: 'painel_metas',
-      title: 'Metas e Notas',
-      description: 'Acompanhar o progresso das metas e registrar observações rápidas da equipe.',
-      iconBg: 'bg-slate-800 text-white',
-      icon: LayoutDashboard,
-      action: () => onNavigate('painel'),
-    },
-    {
-      id: 'modelo_oficial',
-      title: 'Imprimir p/ SEI',
-      description: 'Visualizar, editar e imprimir o documento formal padronizado do IFTO / NAPNE.',
-      iconBg: 'bg-emerald-900 text-white',
-      icon: BookOpen,
-      action: () => onNavigate('documento_oficial'),
-    },
-    {
-      id: 'banco_solucoes',
-      title: 'Guia de Metodologias',
-      description: 'Consultar como explicar o conteúdo, dividir tarefas e avaliar cada condição.',
-      iconBg: 'bg-slate-900 text-white',
-      icon: Wrench,
-      action: onOpenSolutionBank,
-    },
-  ];
+  // Filtra diários do SUAP conforme o professor selecionado
+  const diariosFiltrados = DIARIOS_SUAP_INSTITUCIONAIS.filter((d) => {
+    if (filtroDocente === 'todos') return true;
+    const parts = filtroDocente.split(' ').filter((p) => p.length > 2);
+    return parts.some(
+      (p) =>
+        d.docenteNome.toLowerCase().includes(p.toLowerCase()) ||
+        d.nomeDisciplina.toLowerCase().includes(p.toLowerCase()) ||
+        d.curso.toLowerCase().includes(p.toLowerCase())
+    );
+  });
 
   return (
     <div className="space-y-6">
       {/* Banner de Curadoria Docente (Human-in-the-Loop) */}
       <CuradoriaDocenteBanner />
 
-      {/* Clean Institutional Header */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="space-y-1.5">
-          <span className="inline-block text-xs font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full">
-            NAPNE · IFTO Campus Paraíso do Tocantins
-          </span>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
-            Central de Planos de Ensino Individualizados (PEI)
-          </h1>
-          <p className="text-sm text-slate-600 max-w-2xl">
-            Escolha uma ferramenta abaixo para planejar aulas, consultar adaptações práticas ou abrir o documento de um estudante.
-          </p>
-        </div>
+      {/* CABEÇALHO INSTITUCIONAL SUAP */}
+      <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-7 shadow-xs space-y-4">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-black tracking-widest text-emerald-800 uppercase bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-md">
+                SUAP · IFTO
+              </span>
+              <span className="text-xs font-semibold text-slate-500">
+                Módulo de Acessibilidade & PEI (Portaria MEC nº 421/2026)
+              </span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+              Painel Docente de Planos de Ensino Individualizados
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-600 max-w-3xl leading-relaxed">
+              Sistema integrado ao SUAP: seus diários, turmas e planos de ensino (PE) são vinculados automaticamente, evitando retrabalho e permitindo ao agente Ioda estruturar adaptações pedagógicas focadas na sua matéria.
+            </p>
+          </div>
 
-        <div className="shrink-0 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
-          {onOpenOnboardingTour && (
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 shrink-0">
             <button
               type="button"
-              onClick={onOpenOnboardingTour}
-              className="w-full sm:w-auto px-4 py-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 font-bold text-xs sm:text-sm rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer"
+              onClick={onOpenAddStudent}
+              className="px-5 py-3 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs sm:text-sm rounded-xl shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
-              <Compass className="w-4 h-4 text-emerald-700" />
-              <span>Tour Rápido (4 Passos)</span>
+              <UserPlus className="w-4 h-4" />
+              <span>+ Criar PEI do Diário</span>
             </button>
-          )}
-          <a
-            href="https://forms.gle/MRK4HQoyP1t3zd289"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full sm:w-auto px-4 py-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 font-bold text-xs sm:text-sm rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer"
-          >
-            <ClipboardCheck className="w-4 h-4 text-emerald-700" />
-            <span>Avaliar Sistema (Forms)</span>
-            <ExternalLink className="w-3.5 h-3.5 text-emerald-600" />
-          </a>
+          </div>
+        </div>
 
-          <button
-            type="button"
-            onClick={onOpenAddStudent}
-            className="w-full sm:w-auto px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm rounded-xl shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
-          >
-            <UserPlus className="w-4 h-4" />
-            <span>+ Elaborar Novo PEI</span>
-          </button>
+        {/* Barra de Perfil Docente e RBAC */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-1.5 font-bold text-slate-800">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-pulse"></span>
+              <span>Docente Autenticado no SUAP:</span>
+            </div>
+            <select
+              value={filtroDocente}
+              onChange={(e) => onMudarFiltroDocente && onMudarFiltroDocente(e.target.value)}
+              className="bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600 cursor-pointer shadow-2xs"
+            >
+              <option value="todos">Todos os Docentes / Cursos (Visão Coordenação NAPNE & ETEP)</option>
+              <option value="Prof. Marcos Aurélio de Souza">Prof. Marcos Aurélio · Agropecuária (Manejo Animal / Solos)</option>
+              <option value="Profª. Dra. Cláudia Rezende">Profª. Dra. Cláudia · Edificações (Desenho Técnico & CAD)</option>
+              <option value="Profª. Mariana Duarte">Profª. Mariana · Química e Alimentos (Química Experimental)</option>
+              <option value="Prof. Roberto Silveira">Prof. Roberto · Administração (Gestão de Pessoas)</option>
+              <option value="Profª. Dra. Helena Bittencourt">Profª. Dra. Helena · BSI / Informática (Engenharia de Software)</option>
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2 text-slate-600 text-[11px]">
+            <ShieldCheck className="w-4 h-4 text-emerald-700" />
+            <span>Acesso nominal autorizado aos estudantes das suas turmas (LGPD/SUAP)</span>
+          </div>
         </div>
       </div>
 
-      {/* Main Grid: Tools on Left + Confidential Saved PEIs on Right */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* Left: 6 Direct Action Cards */}
-        <div className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {toolCards.map((card) => {
-            const Icon = card.icon;
+      {/* SEÇÃO 1: MEUS DIÁRIOS VINCULADOS NO SUAP (SEM DIGITAÇÃO MANUAL) */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Building2 className="w-4 h-4 text-emerald-800" />
+            <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wide">
+              Diários e Turmas Atribuídos no Semestre (SUAP)
+            </h2>
+          </div>
+          <span className="text-xs font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+            {diariosFiltrados.length} diário(s) sincronizado(s)
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {diariosFiltrados.map((diario) => {
+            const estudantesNapne = diario.estudantes.filter((e) => e.acompanhadoNapne);
+
             return (
-              <button
-                key={card.id}
-                type="button"
-                onClick={card.action}
-                className="group bg-white rounded-2xl border border-slate-200 p-6 text-left hover:border-emerald-500 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between min-h-[160px]"
+              <div
+                key={diario.id}
+                className="bg-white border border-slate-200 hover:border-emerald-500 rounded-2xl p-5 shadow-2xs hover:shadow-sm transition-all flex flex-col justify-between gap-4 group"
               >
-                <div>
-                  <div
-                    className={`w-11 h-11 rounded-xl flex items-center justify-center ${card.iconBg}`}
-                  >
-                    <Icon className="w-5 h-5" />
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-900 border border-emerald-200 px-2 py-0.5 rounded-md">
+                      {diario.codigoComponente}
+                    </span>
+                    <span className="text-[11px] font-bold text-slate-500 flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      {diario.cargaHoraria}
+                    </span>
                   </div>
-                  <h2 className="text-base font-bold text-slate-900 mt-4 group-hover:text-emerald-700 transition-colors">
-                    {card.title}
-                  </h2>
-                  <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
-                    {card.description}
-                  </p>
+
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900 group-hover:text-emerald-800 transition-colors leading-snug">
+                      {diario.nomeDisciplina}
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">
+                      {diario.curso}
+                    </p>
+                  </div>
+
+                  {/* Ementa do Plano de Ensino */}
+                  <div className="bg-slate-50 border border-slate-100 rounded-xl p-2.5 text-[11px] text-slate-600 leading-relaxed">
+                    <span className="font-bold text-slate-800 block mb-0.5">Ementa do Plano de Ensino:</span>
+                    <p className="line-clamp-2">{diario.planoEnsino.ementa}</p>
+                  </div>
+
+                  {/* Status de Estudantes NAPNE */}
+                  <div className="flex items-center gap-2 pt-1 text-xs">
+                    <Users className="w-3.5 h-3.5 text-slate-400" />
+                    <span className="text-slate-600">
+                      {diario.estudantes.length} estudantes matriculados
+                    </span>
+                    {estudantesNapne.length > 0 && (
+                      <span className="ml-auto inline-flex items-center gap-1 text-[11px] font-bold text-emerald-900 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
+                        <AlertCircle className="w-3 h-3 text-emerald-700" />
+                        {estudantesNapne.length} no NAPNE
+                      </span>
+                    )}
+                  </div>
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-emerald-700">
-                  <span>Abrir</span>
-                  <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
+                <div className="pt-3 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={onOpenAddStudent}
+                    className="w-full py-2 px-3 bg-emerald-50 hover:bg-emerald-700 hover:text-white text-emerald-900 font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Elaborar PEI desta Disciplina</span>
+                  </button>
                 </div>
-              </button>
+              </div>
             );
           })}
         </div>
+      </div>
 
-        {/* Right: Saved PEIs List (Confidential on Home Screen) */}
-        <div className="lg:col-span-4 bg-white border border-slate-200 rounded-2xl p-5 space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-            <div className="flex items-center gap-2">
-              <FolderOpen className="w-4 h-4 text-emerald-700" />
-              <h3 className="text-sm font-bold text-slate-900">
-                PEIs Cadastrados ({allStudents.length})
-              </h3>
-            </div>
-            <span className="text-[11px] font-medium text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full">
-              Sigilo Ativo
-            </span>
+      {/* SEÇÃO 2: ESTUDANTES COM PEI ATIVO NOS SEUS DIÁRIOS (COM NOMES REAIS) */}
+      <div className="space-y-3 pt-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <FolderOpen className="w-4 h-4 text-emerald-800" />
+            <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wide">
+              Estudantes Acompanhados com PEI Estruturado
+            </h2>
           </div>
+          <span className="text-xs font-semibold text-slate-600">
+            {allStudents.length} estudante(s) sob sua regência
+          </span>
+        </div>
 
-          <p className="text-xs text-slate-500 leading-relaxed">
-            Para proteger a privacidade, o nome do estudante só é exibido após abrir o PEI:
-          </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {allStudents.map((pei) => {
+            const isSelected = pei.id === activePei.id;
+            const isSemLaudo =
+              pei.historico_napne.status_diagnostico === 'em_investigacao_hipotese';
 
-          <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
-            {allStudents.map((s, idx) => {
-              const isSelected = s.id === activePei.id;
-              const isSemLaudo =
-                s.historico_napne.status_diagnostico === 'em_investigacao_hipotese';
-
-              return (
-                <div
-                  key={s.id}
-                  className={`w-full p-3 rounded-xl border transition-all flex items-center justify-between gap-2 group ${
-                    isSelected
-                      ? 'bg-emerald-50/50 border-emerald-600'
-                      : 'bg-slate-50/70 border-slate-200 hover:border-slate-300 hover:bg-white'
-                  }`}
-                >
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onSelectStudent(s);
-                      onNavigate('pei');
-                    }}
-                    className="flex-1 min-w-0 text-left cursor-pointer flex items-center justify-between"
-                  >
-                    <div className="truncate mr-2">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-bold text-slate-900 group-hover:text-emerald-800">
-                          {getIdentificadorConfidencial(s, idx)}
-                        </span>
-                        {isSemLaudo && (
-                          <span className="text-[10px] font-semibold text-amber-900 bg-amber-100 px-1.5 py-0.2 rounded">
-                            s/ laudo
+            return (
+              <div
+                key={pei.id}
+                className={`bg-white rounded-2xl border p-5 shadow-2xs flex flex-col justify-between gap-4 transition-all ${
+                  isSelected
+                    ? 'border-emerald-600 ring-2 ring-emerald-500/20'
+                    : 'border-slate-200 hover:border-slate-300'
+                }`}
+              >
+                <div className="space-y-3">
+                  {/* Top: Student Name + Matricula */}
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-sm font-bold text-slate-900">
+                          {pei.cabecalho.estudante}
+                        </h3>
+                        {isSemLaudo ? (
+                          <span className="text-[10px] font-bold text-amber-900 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded">
+                            Observação Pedagógica
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-bold text-emerald-900 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded">
+                            Com Laudo
                           </span>
                         )}
                       </div>
-                      <div className="text-xs text-slate-500 truncate mt-0.5">
-                        {s.cabecalho.componente_curricular}
-                      </div>
+                      <span className="text-xs font-mono text-slate-500 mt-0.5 block">
+                        Matrícula: {pei.cabecalho.codigo_matricula} · {pei.cabecalho.idade}
+                      </span>
                     </div>
 
-                    <span className="text-xs font-bold text-emerald-700 shrink-0">
-                      Abrir →
-                    </span>
+                    <div className="text-right">
+                      <span className="text-xs font-bold text-emerald-800 font-mono">
+                        {pei.metricas.percentual_metas_alcancadas}%
+                      </span>
+                      <span className="text-[10px] text-slate-400 block">avanço</span>
+                    </div>
+                  </div>
+
+                  {/* Course & Subject */}
+                  <div className="space-y-1 text-xs">
+                    <p className="text-slate-800 font-semibold line-clamp-1">
+                      {pei.cabecalho.componente_curricular}
+                    </p>
+                    <p className="text-slate-500 text-[11px] line-clamp-1">
+                      {pei.cabecalho.curso}
+                    </p>
+                    <p className="text-emerald-800 font-medium text-[11px]">
+                      Docente: {pei.cabecalho.docente_regente}
+                    </p>
+                  </div>
+
+                  {/* Functional Condition & Triggers */}
+                  <div className="bg-slate-50 border border-slate-100 rounded-xl p-2.5 space-y-1.5 text-xs">
+                    <div className="flex items-center gap-1.5 text-slate-700 font-bold">
+                      <Layers className="w-3.5 h-3.5 text-emerald-700" />
+                      <span>{pei.historico_napne.categoria_neurodivergencia || 'Especificidade'}</span>
+                    </div>
+                    {pei.estudo_de_caso.mapeamento_de_gatilhos_e_crises &&
+                      pei.estudo_de_caso.mapeamento_de_gatilhos_e_crises.length > 0 && (
+                        <p className="text-[11px] text-amber-900 line-clamp-2">
+                          <strong>Gatilho observável:</strong>{' '}
+                          {pei.estudo_de_caso.mapeamento_de_gatilhos_e_crises[0]}
+                        </p>
+                      )}
+                  </div>
+                </div>
+
+                {/* Bottom Actions */}
+                <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelectStudent(pei);
+                      onNavigate('pei');
+                    }}
+                    className="flex-1 py-2 px-3 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+                  >
+                    <span>Abrir Plano (PEI)</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelectStudent(pei);
+                      onNavigate('documento_oficial');
+                    }}
+                    className="py-2 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl transition-colors cursor-pointer"
+                    title="Exportar Word (.docx) ou PDF para processo SEI"
+                  >
+                    <BookOpen className="w-3.5 h-3.5 text-slate-600" />
                   </button>
 
                   {onRequestDeletePei && allStudents.length > 1 && (
                     <button
                       type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onRequestDeletePei(s);
-                      }}
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors shrink-0 cursor-pointer"
-                      title={`Excluir ${getIdentificadorConfidencial(s, idx)}`}
-                      aria-label="Excluir PEI"
+                      onClick={() => onRequestDeletePei(pei)}
+                      className="p-2 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                      title="Excluir este PEI"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   )}
                 </div>
-              );
-            })}
-          </div>
-
-          <div className="pt-2 border-t border-slate-100 flex flex-col gap-2">
-            <button
-              type="button"
-              onClick={onOpenAddStudent}
-              className="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition-colors flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <UserPlus className="w-4 h-4" />
-              <span>+ Criar Novo PEI</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={onPrint}
-              className="w-full py-2 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl transition-colors flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <Printer className="w-3.5 h-3.5" />
-              <span>Imprimir PEI Selecionado</span>
-            </button>
-          </div>
+              </div>
+            );
+          })}
         </div>
+      </div>
+
+      {/* SEÇÃO 3: ATALHOS PEDAGÓGICOS E RECURSOS DUA */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+        <button
+          type="button"
+          onClick={() => onNavigate('pei')}
+          className="bg-white border border-slate-200 hover:border-emerald-500 rounded-2xl p-4 text-left transition-all cursor-pointer group"
+        >
+          <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center mb-3">
+            <FileText className="w-4 h-4" />
+          </div>
+          <h3 className="text-xs font-bold text-slate-900 group-hover:text-emerald-800 transition-colors">
+            Plano de Aula DUA 3.0
+          </h3>
+          <p className="text-[11px] text-slate-500 mt-1">
+            Flexibilização em engajamento, representação e tecnologia assistiva.
+          </p>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => onNavigate('estudo_caso')}
+          className="bg-white border border-slate-200 hover:border-emerald-500 rounded-2xl p-4 text-left transition-all cursor-pointer group"
+        >
+          <div className="w-9 h-9 rounded-xl bg-teal-100 text-teal-800 flex items-center justify-center mb-3">
+            <Search className="w-4 h-4" />
+          </div>
+          <h3 className="text-xs font-bold text-slate-900 group-hover:text-teal-800 transition-colors">
+            Gatilhos & Comportamento
+          </h3>
+          <p className="text-[11px] text-slate-500 mt-1">
+            Análise funcional do estudante e boas práticas validadas pelo ETEP.
+          </p>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => onNavigate('documento_oficial')}
+          className="bg-white border border-slate-200 hover:border-emerald-500 rounded-2xl p-4 text-left transition-all cursor-pointer group"
+        >
+          <div className="w-9 h-9 rounded-xl bg-sky-100 text-sky-800 flex items-center justify-center mb-3">
+            <BookOpen className="w-4 h-4" />
+          </div>
+          <h3 className="text-xs font-bold text-slate-900 group-hover:text-sky-800 transition-colors">
+            Exportar Word (.docx) & PDF (SEI)
+          </h3>
+          <p className="text-[11px] text-slate-500 mt-1">
+            Documento padronizado pelo IFTO pronto para processo no SEI.
+          </p>
+        </button>
       </div>
     </div>
   );

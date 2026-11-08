@@ -566,6 +566,8 @@ export default function App() {
             onPrint={handlePrint}
             onRequestDeletePei={handleRequestDeletePei}
             onOpenOnboardingTour={() => setIsOnboardingTourOpen(true)}
+            filtroDocente={filtroDocente}
+            onMudarFiltroDocente={handleMudarFiltroDocente}
           />
         )}
 
