@@ -343,7 +343,7 @@ export const ILovePeiHub: React.FC<ILovePeiHubProps> = ({
               Nenhum PEI elaborado nesta matéria até o momento
             </h3>
             <p className="text-[11px] text-slate-400 max-w-md mx-auto leading-relaxed">
-              O professor regente e o NAPNE decidem quais estudantes precisam de PEI. Na tabela acima, localize o estudante da turma (como <strong>Jean Carlo Torres de Oliveira</strong>) e clique no botão <strong>"+ Indicar / Elaborar PEI"</strong> para formular o plano adaptado com IA.
+              O professor regente e o NAPNE decidem quais estudantes precisam de PEI. Na tabela de estudantes da turma acima, localize o aluno desejado e clique no botão <strong>"+ Indicar / Elaborar PEI"</strong> para formular o plano adaptado com IA.
             </p>
             <button
               type="button"

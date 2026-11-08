@@ -52,7 +52,7 @@ export const StudentHeader: React.FC<StudentHeaderProps> = ({
           </div>
           <div className="flex items-center gap-2 text-slate-400 text-[11px]">
             <span className="font-semibold text-slate-300 bg-[#20252d] border border-[#2f3642] px-2 py-0.5 rounded">
-              Jean Oliveira · BSI (202510630025)
+              {cabecalho.estudante} ({cabecalho.codigo_matricula || 'SUAP'})
             </span>
             <span className="hidden sm:inline">·</span>
             <span className="hidden sm:inline">Portaria MEC nº 421/2026</span>

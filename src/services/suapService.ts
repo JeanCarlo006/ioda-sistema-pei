@@ -84,9 +84,9 @@ export const DIARIOS_SUAP_INSTITUCIONAIS: DiarioSuap[] = [
     },
     estudantes: [
       {
-        id: 'est-jean-carlo',
-        matricula: '202510630025',
-        nome: 'Jean Carlo Torres de Oliveira',
+        id: 'est-aluno-01',
+        matricula: '202610630001',
+        nome: 'Gabriel Martins de Sousa',
         idade: '21 anos',
         acompanhadoNapne: false,
         observacoesNapne:
@@ -141,9 +141,9 @@ export const DIARIOS_SUAP_INSTITUCIONAIS: DiarioSuap[] = [
     },
     estudantes: [
       {
-        id: 'est-jean-carlo',
-        matricula: '202510630025',
-        nome: 'Jean Carlo Torres de Oliveira',
+        id: 'est-aluno-01',
+        matricula: '202610630001',
+        nome: 'Gabriel Martins de Sousa',
         idade: '21 anos',
         acompanhadoNapne: false,
         observacoesNapne:

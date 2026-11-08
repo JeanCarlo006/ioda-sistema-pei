@@ -63,16 +63,16 @@ export const SuapSidebar: React.FC<SuapSidebarProps> = ({
         </div>
       </div>
 
-      {/* 2. Usuário Autenticado no SUAP: Jean Oliveira */}
+      {/* 2. Usuário Autenticado no SUAP */}
       <div className="px-3 py-3 border-b border-[#1f2328]">
         <div className="bg-[#1c1f24] hover:bg-[#23272d] border border-[#282d34] rounded-lg p-2 flex items-center justify-between transition-colors">
           <div className="flex items-center gap-2.5 overflow-hidden">
             <div className="w-8 h-8 rounded-full bg-[#2a2f36] border border-[#373d47] flex items-center justify-center text-slate-300 font-bold text-xs shrink-0">
-              JO
+              IF
             </div>
             <div className="truncate">
-              <div className="text-xs font-bold text-white truncate">Jean Oliveira</div>
-              <div className="text-[10px] text-slate-400 truncate">Matrícula: 202510630025</div>
+              <div className="text-xs font-bold text-white truncate">Usuário SUAP</div>
+              <div className="text-[10px] text-slate-400 truncate">Docente / Equipe NAPNE</div>
             </div>
           </div>
         </div>
@@ -128,7 +128,7 @@ export const SuapSidebar: React.FC<SuapSidebarProps> = ({
           {/* Submenus Oficiais do Ensino */}
           <div className="pl-6 space-y-0.5 text-[11px] text-slate-400 border-l border-[#20252c] ml-4 my-1">
             <div className="px-2.5 py-1.5 hover:text-white hover:bg-[#181b20] rounded cursor-pointer">
-              Dados do Aluno (202510630025)
+              Dados do Aluno / Matrícula
             </div>
             <div className="px-2.5 py-1.5 hover:text-white hover:bg-[#181b20] rounded cursor-pointer">
               Minhas disciplinas

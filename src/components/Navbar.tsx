@@ -160,10 +160,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </div>
                 <div className="hidden xl:flex flex-col text-left">
                   <span className="text-[11px] font-bold text-white leading-tight">
-                    Prof. Jean Carlo
+                    Docente / NAPNE
                   </span>
                   <span className="text-[9px] text-emerald-200 leading-tight">
-                    Matrícula: 1982731 · Docente EBTT
+                    Servidor · IFTO Campus Paraíso
                   </span>
                 </div>
               </div>

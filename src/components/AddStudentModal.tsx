@@ -75,7 +75,7 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
   const [idade, setIdade] = useState('');
   const [curso, setCurso] = useState(DIARIOS_SUAP_INSTITUCIONAIS[0]?.curso || '');
   const [modulo, setModulo] = useState(DIARIOS_SUAP_INSTITUCIONAIS[0]?.semestrePeriodo || '');
-  const [docenteRegente, setDocenteRegente] = useState('Prof. Jean Carlo');
+  const [docenteRegente, setDocenteRegente] = useState('Prof. Regente da Disciplina');
   const [docenteAee] = useState('Equipe NAPNE / AEE');
 
   // Passo 2: Detalhamento do Componente Curricular (PPC / Plano de Ensino do SUAP)
@@ -96,7 +96,7 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
     setCurso(diario.curso);
     setDisciplina(diario.nomeDisciplina);
     setModulo(diario.semestrePeriodo);
-    setDocenteRegente(diario.docenteNome || 'Prof. Jean Carlo');
+    setDocenteRegente(diario.docenteNome || 'Prof. Regente da Disciplina');
     setEmentaOficial(diario.planoEnsino.ementa);
     const conteudosText = diario.planoEnsino.conteudosProgramaticos
       .map((c) => `${c.bimestreOuEtapa}: ${c.topicos}`)
